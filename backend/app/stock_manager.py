@@ -50,24 +50,26 @@ class StockManager:
                 # Check if this item can be edited
                 edit_check = self.can_edit_stock_item(item_name)
                 
-                stock_list.append({
-                    "id": f"{category}_{item_name}",
-                    "name": item_name,
-                    "category": category,
-                    "current_stock": item_data.get("current_stock", 0),
-                    "min_stock": item_data.get("min_stock_level", 0),
-                    "unit": item_data.get("unit", ""),
-                    "package_size": item_data.get("package_size", 0),
-                    "package_unit": item_data.get("package_unit", ""),
-                    "cost_per_unit": item_data.get("cost_per_unit", 0.0),
-                    "is_ready_made": item_data.get("is_ready_made", False),
-                    "usage_per_order": item_data.get("usage_per_order", 0),
-                    "usage_per_day": item_data.get("usage_per_day", 0),
-                    "usage_type": item_data.get("usage_type", ""),
-                    "can_edit": edit_check["can_edit"],
-                    "edit_reason": edit_check["reason"],
-                    "edit_message": edit_check["message"]
-                })
+                # Only include items that can be edited (filter out non-editable items)
+                if edit_check["can_edit"]:
+                    stock_list.append({
+                        "id": f"{category}_{item_name}",
+                        "name": item_name,
+                        "category": category,
+                        "current_stock": item_data.get("current_stock", 0),
+                        "min_stock": item_data.get("min_stock_level", 0),
+                        "unit": item_data.get("unit", ""),
+                        "package_size": item_data.get("package_size", 0),
+                        "package_unit": item_data.get("package_unit", ""),
+                        "cost_per_unit": item_data.get("cost_per_unit", 0.0),
+                        "is_ready_made": item_data.get("is_ready_made", False),
+                        "usage_per_order": item_data.get("usage_per_order", 0),
+                        "usage_per_day": item_data.get("usage_per_day", 0),
+                        "usage_type": item_data.get("usage_type", ""),
+                        "can_edit": True,
+                        "edit_reason": "editable",
+                        "edit_message": f"{item_name} can be edited"
+                    })
         
         return stock_list
     
@@ -338,14 +340,7 @@ class StockManager:
                 for item_name, item_data in items.items():
                     # Check both formats: category_itemname and just itemname
                     if f"{category}_{item_name}" == material_id or item_name == material_id:
-                        # Check if this item can be edited
-                        edit_check = self.can_edit_stock_item(item_name)
-                        if not edit_check["can_edit"]:
-                            return {
-                                "success": False, 
-                                "message": edit_check["message"],
-                                "reason": edit_check["reason"]
-                            }
+                        
                         
                         old_stock = item_data.get("current_stock", 0)
                         item_data["current_stock"] = new_stock
