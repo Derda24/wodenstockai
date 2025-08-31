@@ -48,7 +48,7 @@ export default function LoginModal({ onLogin }: LoginModalProps) {
                  {/* Logo and Title */}
          <div className="text-center mb-8">
            <div className="mx-auto w-24 h-24 bg-white rounded-full shadow-lg flex items-center justify-center mb-4">
-             <img src="/AI-LOGO.png" alt="WODEN AI" className="w-16 h-16" />
+             <img src="/logo.svg" alt="WODEN AI" className="w-16 h-16" />
            </div>
            <h1 className="text-3xl font-bold text-brand-500 mb-2">WODEN Stock AI</h1>
            <p className="text-gray-600">Intelligent Stock Management System</p>

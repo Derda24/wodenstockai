@@ -21,6 +21,8 @@ app.add_middleware(
         "http://127.0.0.1:3000",
         "https://wodenstockai.vercel.app",
         "https://wodenstockai.vercel.app/",
+        "https://www.wodenstockai.com",
+        "https://www.wodenstockai.com/",
         # Add any other domains you might use in the future
     ],
     allow_credentials=True,

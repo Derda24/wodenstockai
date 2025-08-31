@@ -74,7 +74,7 @@ export default function Dashboard() {
               {isSidebarOpen ? <X size={20} /> : <Menu size={20} />}
             </button>
                          <div className="flex items-center space-x-3">
-               <img src="/AI-LOGO.png" alt="WODEN AI" className="h-10 w-10" />
+               <img src="/logo.svg" alt="WODEN AI" className="h-10 w-10" />
                <h1 className="text-xl font-bold text-brand-500">WODEN Stock AI</h1>
              </div>
           </div>
