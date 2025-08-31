@@ -13,13 +13,20 @@ app = FastAPI(
     version="2.0.0"
 )
 
-# CORS middleware
+# CORS middleware - Allow both local development and production domains
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
+    allow_origins=[
+        "http://localhost:3000", 
+        "http://127.0.0.1:3000",
+        "https://wodenstockai.vercel.app",
+        "https://wodenstockai.vercel.app/",
+        # Add any other domains you might use in the future
+    ],
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
+    expose_headers=["*"],
 )
 
 # Initialize stock manager
