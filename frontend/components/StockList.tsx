@@ -99,8 +99,15 @@ export default function StockList() {
       formData.append('new_stock', newStock.toString());
       formData.append('reason', change > 0 ? 'stock_added' : 'stock_used');
 
+      const token = localStorage.getItem('authToken');
+      const headers: Record<string, string> = {};
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
       const response = await fetch('https://wodenstockai.onrender.com/api/stock/update', {
         method: 'POST',
+        headers,
         body: formData,
       });
 
@@ -130,8 +137,15 @@ export default function StockList() {
       const formData = new FormData();
       formData.append('item_name', itemName);
 
+      const token = localStorage.getItem('authToken');
+      const headers: Record<string, string> = {};
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
       const response = await fetch('https://wodenstockai.onrender.com/api/stock/remove', {
         method: 'POST',
+        headers,
         body: formData,
       });
 
@@ -162,10 +176,17 @@ export default function StockList() {
     const formData = new FormData();
     formData.append('file', selectedFile);
 
+    const token = localStorage.getItem('authToken');
+    const headers: Record<string, string> = {};
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
     try {
       console.log('Sending request to backend...');
       const response = await fetch('https://wodenstockai.onrender.com/api/sales/upload', {
         method: 'POST',
+        headers,
         body: formData,
       });
 

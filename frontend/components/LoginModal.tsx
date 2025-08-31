@@ -7,12 +7,6 @@ interface LoginModalProps {
   onLogin: (success: boolean) => void;
 }
 
-// Admin users - only these 2 can access
-const ADMIN_USERS = [
-  { username: 'derda2412', password: 'woden2025' },
-  { username: 'caner0119', password: 'stock2025' }
-];
-
 export default function LoginModal({ onLogin }: LoginModalProps) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -25,21 +19,32 @@ export default function LoginModal({ onLogin }: LoginModalProps) {
     setError('');
     setIsLoading(true);
 
-    // Simulate API call delay
-    await new Promise(resolve => setTimeout(resolve, 500));
+    try {
+      const response = await fetch('https://wodenstockai.onrender.com/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ username, password }),
+      });
 
-    // Check credentials
-    const isValidUser = ADMIN_USERS.some(
-      user => user.username === username && user.password === password
-    );
-
-    if (isValidUser) {
-      onLogin(true);
-    } else {
-      setError('Invalid username or password. Only authorized users can access this system.');
+      if (response.ok) {
+        const data = await response.json();
+        // Store the token if provided
+        if (data.token) {
+          localStorage.setItem('authToken', data.token);
+        }
+        onLogin(true);
+      } else {
+        const errorData = await response.json();
+        setError(errorData.message || 'Invalid username or password. Only authorized users can access this system.');
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+      setError('Connection error. Please try again.');
+    } finally {
+      setIsLoading(false);
     }
-
-    setIsLoading(false);
   };
 
   return (

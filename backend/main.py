@@ -1,11 +1,15 @@
-from fastapi import FastAPI, HTTPException, UploadFile, File, Form
+from fastapi import FastAPI, HTTPException, UploadFile, File, Form, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 import json
 import os
 import shutil
-from datetime import datetime
+import hashlib
+import secrets
+from datetime import datetime, timedelta
 from app.stock_manager import StockManager
+from pydantic import BaseModel
 
 app = FastAPI(
     title="Woden AI Stock Management System",
@@ -34,6 +38,65 @@ app.add_middleware(
 # Initialize stock manager
 stock_manager = StockManager()
 
+# Authentication models
+class LoginRequest(BaseModel):
+    username: str
+    password: str
+
+class User(BaseModel):
+    username: str
+    password_hash: str
+
+# Admin users with hashed passwords (use environment variables in production)
+ADMIN_USERS = [
+    User(
+        username="derda2412",
+        password_hash=hashlib.sha256("woden2025".encode()).hexdigest()
+    ),
+    User(
+        username="caner0119", 
+        password_hash=hashlib.sha256("stock2025".encode()).hexdigest()
+    )
+]
+
+# Simple token storage (use Redis or database in production)
+active_tokens = {}
+
+# Security
+security = HTTPBearer()
+
+def hash_password(password: str) -> str:
+    """Hash a password using SHA-256"""
+    return hashlib.sha256(password.encode()).hexdigest()
+
+def verify_user(username: str, password: str) -> bool:
+    """Verify user credentials"""
+    password_hash = hash_password(password)
+    return any(user.username == username and user.password_hash == password_hash for user in ADMIN_USERS)
+
+def create_token(username: str) -> str:
+    """Create a new authentication token"""
+    token = secrets.token_urlsafe(32)
+    active_tokens[token] = {
+        "username": username,
+        "created_at": datetime.now(),
+        "expires_at": datetime.now() + timedelta(hours=24)
+    }
+    return token
+
+def verify_token(credentials: HTTPAuthorizationCredentials = Depends(security)) -> str:
+    """Verify authentication token"""
+    token = credentials.credentials
+    if token not in active_tokens:
+        raise HTTPException(status_code=401, detail="Invalid token")
+    
+    token_data = active_tokens[token]
+    if datetime.now() > token_data["expires_at"]:
+        del active_tokens[token]
+        raise HTTPException(status_code=401, detail="Token expired")
+    
+    return token_data["username"]
+
 @app.get("/")
 async def root():
     return {"message": "Woden AI Stock Management System API", "version": "2.0.0"}
@@ -44,6 +107,7 @@ async def api_info():
         "name": "Woden AI Stock Management System",
         "version": "2.0.0",
         "endpoints": {
+            "auth": "/api/auth/login",
             "stock": "/api/stock",
             "stock_update": "/api/stock/update",
             "sales_upload": "/api/sales/upload",
@@ -53,6 +117,20 @@ async def api_info():
             "summary": "/api/summary"
         }
     }
+
+@app.post("/api/auth/login")
+async def login(login_request: LoginRequest):
+    """Authenticate user and return access token"""
+    if verify_user(login_request.username, login_request.password):
+        token = create_token(login_request.username)
+        return {
+            "success": True,
+            "message": "Login successful",
+            "token": token,
+            "username": login_request.username
+        }
+    else:
+        raise HTTPException(status_code=401, detail="Invalid username or password")
 
 @app.get("/api/stock")
 async def get_stock():
@@ -64,7 +142,12 @@ async def get_stock():
         raise HTTPException(status_code=500, detail=f"Error retrieving stock: {str(e)}")
 
 @app.post("/api/stock/update")
-async def update_stock(material_id: str = Form(...), new_stock: float = Form(...), reason: str = Form("manual_update")):
+async def update_stock(
+    material_id: str = Form(...), 
+    new_stock: float = Form(...), 
+    reason: str = Form("manual_update"),
+    username: str = Depends(verify_token)
+):
     """Update stock for a specific material"""
     try:
         result = stock_manager.update_stock_manually(material_id, new_stock, reason)
@@ -76,7 +159,10 @@ async def update_stock(material_id: str = Form(...), new_stock: float = Form(...
         raise HTTPException(status_code=500, detail=f"Error updating stock: {str(e)}")
 
 @app.post("/api/stock/remove")
-async def remove_stock_item(item_name: str = Form(...)):
+async def remove_stock_item(
+    item_name: str = Form(...),
+    username: str = Depends(verify_token)
+):
     """Remove an item from the stock list"""
     try:
         result = stock_manager.remove_item_from_stock(item_name)
@@ -88,7 +174,10 @@ async def remove_stock_item(item_name: str = Form(...)):
         raise HTTPException(status_code=500, detail=f"Error removing stock item: {str(e)}")
 
 @app.post("/api/sales/upload")
-async def upload_sales_excel(file: UploadFile = File(...)):
+async def upload_sales_excel(
+    file: UploadFile = File(...),
+    username: str = Depends(verify_token)
+):
     """Upload and process daily sales Excel file"""
     try:
         # Validate file type
