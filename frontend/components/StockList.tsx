@@ -17,6 +17,9 @@ interface StockItem {
   usage_per_order?: number;
   usage_per_day?: number;
   usage_type?: string;
+  can_edit: boolean;
+  edit_reason: string;
+  edit_message: string;
 }
 
 interface StockResponse {
@@ -83,6 +86,12 @@ export default function StockList() {
       const item = stockData.find(i => i.id === itemId);
       if (!item) return;
 
+      // Check if item can be edited
+      if (!item.can_edit) {
+        alert(item.edit_message);
+        return;
+      }
+
       const newStock = Math.max(0, item.current_stock + change);
       
       const formData = new FormData();
@@ -103,10 +112,41 @@ export default function StockList() {
             : item
         ));
       } else {
-        console.error('Failed to update stock');
+        const errorData = await response.json();
+        alert(errorData.message || 'Failed to update stock');
       }
     } catch (error) {
       console.error('Error updating stock:', error);
+      alert('Error updating stock. Please try again.');
+    }
+  };
+
+  const removeStockItem = async (itemName: string) => {
+    try {
+      if (!confirm(`Are you sure you want to remove "${itemName}" from the stock list?`)) {
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append('item_name', itemName);
+
+      const response = await fetch('https://wodenstockai.onrender.com/api/stock/remove', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        alert(result.message);
+        // Reload stock data to reflect the removal
+        loadStockData();
+      } else {
+        const errorData = await response.json();
+        alert(errorData.message || 'Failed to remove item');
+      }
+    } catch (error) {
+      console.error('Error removing stock item:', error);
+      alert('Error removing stock item. Please try again.');
     }
   };
 
@@ -312,7 +352,14 @@ export default function StockList() {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
                         {getStatusIcon(status)}
-                        <span className="ml-2 font-medium text-gray-900">{item.name}</span>
+                        <span className={`ml-2 font-medium ${!item.can_edit ? 'text-gray-500' : 'text-gray-900'}`}>
+                          {item.name}
+                          {!item.can_edit && (
+                            <span className="ml-2 text-xs text-gray-400">
+                              ({item.edit_reason === 'remove_from_stock_list' ? 'Remove from list' : 'Cannot edit'})
+                            </span>
+                          )}
+                        </span>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -330,40 +377,56 @@ export default function StockList() {
                       {item.unit}
                     </td>
                                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                       <div className="flex items-center space-x-2">
-                         <input
-                           type="number"
-                           min="0"
-                           step="0.01"
-                           placeholder={item.current_stock.toString()}
-                           className="w-20 px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                           onKeyPress={(e) => {
-                             if (e.key === 'Enter') {
-                               const target = e.target as HTMLInputElement;
-                               const newValue = parseFloat(target.value);
-                               if (!isNaN(newValue) && newValue >= 0) {
-                                 updateStock(item.id, newValue - item.current_stock);
-                                 target.value = '';
+                       {item.can_edit ? (
+                         <div className="flex items-center space-x-2">
+                           <input
+                             type="number"
+                             min="0"
+                             step="0.01"
+                             placeholder={item.current_stock.toString()}
+                             className="w-20 px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                             onKeyPress={(e) => {
+                               if (e.key === 'Enter') {
+                                 const target = e.target as HTMLInputElement;
+                                 const newValue = parseFloat(target.value);
+                                 if (!isNaN(newValue) && newValue >= 0) {
+                                   updateStock(item.id, newValue - item.current_stock);
+                                   target.value = '';
+                                 }
                                }
-                             }
-                           }}
-                         />
-                         <button
-                           onClick={() => {
-                             const input = document.querySelector(`input[placeholder="${item.current_stock}"]`) as HTMLInputElement;
-                             if (input && input.value) {
-                               const newValue = parseFloat(input.value);
-                               if (!isNaN(newValue) && newValue >= 0) {
-                                 updateStock(item.id, newValue - item.current_stock);
-                                 input.value = '';
+                             }}
+                           />
+                           <button
+                             onClick={() => {
+                               const input = document.querySelector(`input[placeholder="${item.current_stock}"]`) as HTMLInputElement;
+                               if (input && input.value) {
+                                 const newValue = parseFloat(input.value);
+                                 if (!isNaN(newValue) && newValue >= 0) {
+                                   updateStock(item.id, newValue - item.current_stock);
+                                   input.value = '';
+                                 }
                                }
-                             }
-                           }}
-                           className="inline-flex items-center px-2 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                         >
-                           Update
-                         </button>
-                       </div>
+                             }}
+                             className="inline-flex items-center px-2 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                           >
+                             Update
+                           </button>
+                         </div>
+                                               ) : (
+                          <div className="flex items-center space-x-2">
+                            <span className="text-xs text-gray-500 px-2 py-1 bg-gray-100 rounded">
+                              {item.edit_reason === 'remove_from_stock_list' ? 'Remove from list' : 'Cannot edit'}
+                            </span>
+                            {item.edit_reason === 'remove_from_stock_list' && (
+                              <button
+                                onClick={() => removeStockItem(item.name)}
+                                className="inline-flex items-center px-2 py-1 text-xs bg-red-600 text-white rounded hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                              >
+                                Remove
+                              </button>
+                            )}
+                          </div>
+                        )}
                      </td>
                   </tr>
                 );

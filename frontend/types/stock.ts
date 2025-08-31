@@ -49,3 +49,27 @@ export interface StockUpdate {
   industry?: string
   description?: string
 }
+
+export interface StockItem {
+  id: string
+  name: string
+  category: string
+  current_stock: number
+  min_stock: number
+  unit: string
+  package_size: number
+  package_unit: string
+  cost_per_unit: number
+  is_ready_made: boolean
+  usage_per_order: number
+  usage_per_day: number
+  usage_type: string
+  can_edit: boolean
+  edit_reason: string
+  edit_message: string
+}
+
+export interface StockResponse {
+  stock_data: StockItem[]
+  total_items: number
+}

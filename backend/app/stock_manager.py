@@ -47,6 +47,9 @@ class StockManager:
         
         for category, items in self.stock_data.get("stock_data", {}).items():
             for item_name, item_data in items.items():
+                # Check if this item can be edited
+                edit_check = self.can_edit_stock_item(item_name)
+                
                 stock_list.append({
                     "id": f"{category}_{item_name}",
                     "name": item_name,
@@ -60,7 +63,10 @@ class StockManager:
                     "is_ready_made": item_data.get("is_ready_made", False),
                     "usage_per_order": item_data.get("usage_per_order", 0),
                     "usage_per_day": item_data.get("usage_per_day", 0),
-                    "usage_type": item_data.get("usage_type", "")
+                    "usage_type": item_data.get("usage_type", ""),
+                    "can_edit": edit_check["can_edit"],
+                    "edit_reason": edit_check["reason"],
+                    "edit_message": edit_check["message"]
                 })
         
         return stock_list
@@ -225,17 +231,122 @@ class StockManager:
         
         return alerts
     
+    def can_edit_stock_item(self, item_name: str) -> Dict:
+        """Check if a stock item can be edited based on business rules"""
+        # List of items that cannot have their stock status changed
+        non_editable_items = [
+            "Yeşil Çay",
+            "Hibiskus Çayı", 
+            "Ada Çayı",
+            "Kış Çayı",
+            "ANANASLI BADEM PASTA",
+            "MONO LATTE",
+            "FISTIK KARAMEL",
+            "İBİZA",
+            "LİMONLU CHEESECAKE",
+            "FRAMBUAZLI CHEESECAKE",
+            "RULO KREP",
+            "LOTUS MAGNOLİA",
+            "FİT POĞAÇA",
+            "FRAMBUAZ BOMBA",
+            "TİRAMİSU",
+            "FISTIK RÜYASI",
+            "Çikolata Tozu",
+            "Karamel Tozu",
+            "Çilek Tozu",
+            "Kırmızı Orman Tozu",
+            "Mango Püresi",
+            "Çilek Püresi"
+        ]
+        
+        # List of items that should be removed from stock list
+        items_to_remove = [
+            "MANGO",
+            "RED BERRIES", 
+            "FRUIT CARNIVAL",
+            "COOKİE"
+        ]
+        
+        # Normalize the item name for comparison
+        normalized_name = item_name.upper().replace('İ', 'I').replace('Ğ', 'G').replace('Ü', 'U').replace('Ş', 'S').replace('Ö', 'O').replace('Ç', 'C')
+        
+        # Check if item should be removed
+        for remove_item in items_to_remove:
+            normalized_remove = remove_item.upper().replace('İ', 'I').replace('Ğ', 'G').replace('Ü', 'U').replace('Ş', 'S').replace('Ö', 'O').replace('Ç', 'C')
+            if normalized_name == normalized_remove:
+                return {
+                    "can_edit": False,
+                    "reason": "remove_from_stock_list",
+                    "message": f"{item_name} should be removed from stock list"
+                }
+        
+        # Check if item cannot be edited
+        for non_editable in non_editable_items:
+            normalized_non_editable = non_editable.upper().replace('İ', 'I').replace('Ğ', 'G').replace('Ü', 'U').replace('Ş', 'S').replace('Ö', 'O').replace('Ç', 'C')
+            if normalized_name == normalized_non_editable:
+                return {
+                    "can_edit": False,
+                    "reason": "cannot_change_stock_status",
+                    "message": f"{item_name} cannot have its stock status changed"
+                }
+        
+        return {
+            "can_edit": True,
+            "reason": "editable",
+            "message": f"{item_name} can be edited"
+        }
+
+    def remove_item_from_stock(self, item_name: str) -> Dict:
+        """Remove an item from the stock list"""
+        try:
+            # Find the item in stock data
+            item_found = False
+            item_category = ""
+            
+            for category, items in self.stock_data.get("stock_data", {}).items():
+                if item_name in items:
+                    del items[item_name]
+                    item_category = category
+                    item_found = True
+                    break
+            
+            if not item_found:
+                return {"success": False, "message": f"Item {item_name} not found in stock"}
+            
+            if self.save_stock_data():
+                return {
+                    "success": True,
+                    "message": f"{item_name} removed from {item_category} category",
+                    "removed_item": item_name,
+                    "category": item_category
+                }
+            else:
+                return {"success": False, "message": "Failed to save stock data after removal"}
+                
+        except Exception as e:
+            return {"success": False, "message": f"Error removing item: {str(e)}"}
+
     def update_stock_manually(self, material_id: str, new_stock: float, reason: str = "manual_update") -> Dict:
         """Manually update stock for a specific item"""
         try:
             # Find the item by ID across all categories
             item_found = False
             old_stock = 0
+            item_name = ""
             
             for category, items in self.stock_data.get("stock_data", {}).items():
                 for item_name, item_data in items.items():
                     # Check both formats: category_itemname and just itemname
                     if f"{category}_{item_name}" == material_id or item_name == material_id:
+                        # Check if this item can be edited
+                        edit_check = self.can_edit_stock_item(item_name)
+                        if not edit_check["can_edit"]:
+                            return {
+                                "success": False, 
+                                "message": edit_check["message"],
+                                "reason": edit_check["reason"]
+                            }
+                        
                         old_stock = item_data.get("current_stock", 0)
                         item_data["current_stock"] = new_stock
                         item_data["last_updated"] = datetime.now().isoformat()

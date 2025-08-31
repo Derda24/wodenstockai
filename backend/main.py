@@ -75,6 +75,18 @@ async def update_stock(material_id: str = Form(...), new_stock: float = Form(...
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error updating stock: {str(e)}")
 
+@app.post("/api/stock/remove")
+async def remove_stock_item(item_name: str = Form(...)):
+    """Remove an item from the stock list"""
+    try:
+        result = stock_manager.remove_item_from_stock(item_name)
+        if result["success"]:
+            return result
+        else:
+            raise HTTPException(status_code=400, detail=result["message"])
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error removing stock item: {str(e)}")
+
 @app.post("/api/sales/upload")
 async def upload_sales_excel(file: UploadFile = File(...)):
     """Upload and process daily sales Excel file"""
