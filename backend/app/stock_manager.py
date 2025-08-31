@@ -230,18 +230,33 @@ class StockManager:
         try:
             # Find the item by ID across all categories
             item_found = False
+            old_stock = 0
+            
             for category, items in self.stock_data.get("stock_data", {}).items():
                 for item_name, item_data in items.items():
-                    if f"{category}_{item_name}" == material_id:
-                        old_stock = item_data["current_stock"]
+                    # Check both formats: category_itemname and just itemname
+                    if f"{category}_{item_name}" == material_id or item_name == material_id:
+                        old_stock = item_data.get("current_stock", 0)
                         item_data["current_stock"] = new_stock
                         item_data["last_updated"] = datetime.now().isoformat()
+                        item_data["last_manual_update"] = {
+                            "timestamp": datetime.now().isoformat(),
+                            "reason": reason,
+                            "old_stock": old_stock,
+                            "new_stock": new_stock
+                        }
                         item_found = True
                         break
                 if item_found:
                     break
             
             if not item_found:
+                # Debug: Let's see what material_id we're looking for
+                print(f"DEBUG: Looking for material_id: {material_id}")
+                print(f"DEBUG: Available items:")
+                for category, items in self.stock_data.get("stock_data", {}).items():
+                    for item_name, item_data in items.items():
+                        print(f"  - {category}_{item_name} or {item_name}")
                 return {"success": False, "message": f"Item with ID {material_id} not found"}
             
             if self.save_stock_data():
@@ -365,9 +380,16 @@ class StockManager:
             "last_updated": datetime.now().isoformat()
         }
     
-    def apply_daily_consumption(self) -> Dict:
+    def apply_daily_consumption(self, force: bool = False) -> Dict:
         """Apply daily consumption for raw materials based on daily_usage_config.json"""
         try:
+            # Check if daily consumption is enabled
+            if not force:
+                # Check if we should skip daily consumption (e.g., if manual updates were made recently)
+                skip_consumption = self.check_skip_daily_consumption()
+                if skip_consumption:
+                    return {"success": True, "message": "Daily consumption skipped - manual updates detected recently"}
+            
             # Load daily usage configuration
             config_file = "daily_usage_config.json"
             if not os.path.exists(config_file):
@@ -453,3 +475,30 @@ class StockManager:
                 
         except Exception as e:
             return {"success": False, "message": f"Error applying daily consumption: {str(e)}"}
+    
+    def check_skip_daily_consumption(self) -> bool:
+        """Check if daily consumption should be skipped due to recent manual updates"""
+        try:
+            from datetime import datetime, timedelta
+            
+            # Check if any items were manually updated in the last 2 hours
+            cutoff_time = datetime.now() - timedelta(hours=2)
+            
+            for category, items in self.stock_data.get("stock_data", {}).items():
+                for item_name, item_data in items.items():
+                    last_manual_update = item_data.get("last_manual_update", {})
+                    if last_manual_update:
+                        update_time_str = last_manual_update.get("timestamp", "")
+                        if update_time_str:
+                            try:
+                                update_time = datetime.fromisoformat(update_time_str.replace('Z', '+00:00'))
+                                if update_time > cutoff_time:
+                                    print(f"DEBUG: Skipping daily consumption due to recent manual update of {item_name}")
+                                    return True
+                            except ValueError:
+                                continue
+            
+            return False
+        except Exception as e:
+            print(f"Error checking skip daily consumption: {e}")
+            return False

@@ -107,10 +107,22 @@ async def upload_sales_excel(file: UploadFile = File(...)):
         raise HTTPException(status_code=500, detail=f"Error processing sales file: {str(e)}")
 
 @app.post("/api/daily-consumption/apply")
-async def apply_daily_consumption():
+async def apply_daily_consumption(force: bool = False):
     """Apply daily consumption for raw materials based on daily_usage_config.json"""
     try:
-        result = stock_manager.apply_daily_consumption()
+        result = stock_manager.apply_daily_consumption(force=force)
+        if result["success"]:
+            return result
+        else:
+            raise HTTPException(status_code=400, detail=result["message"])
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error applying daily consumption: {str(e)}")
+
+@app.post("/api/daily-consumption/force")
+async def force_daily_consumption():
+    """Force apply daily consumption regardless of recent manual updates"""
+    try:
+        result = stock_manager.apply_daily_consumption(force=True)
         if result["success"]:
             return result
         else:
@@ -304,6 +316,20 @@ async def get_sales_debug():
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error retrieving sales debug info: {str(e)}")
+
+@app.get("/api/stock/debug")
+async def get_stock_debug():
+    """Debug endpoint to view stock data structure"""
+    try:
+        stock_list = stock_manager.get_stock_list()
+        return {
+            "total_items": len(stock_list),
+            "stock_items": stock_list,
+            "sample_item_ids": [item["id"] for item in stock_list[:10]],
+            "categories": list(stock_manager.stock_data.get("stock_data", {}).keys())
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error retrieving stock debug info: {str(e)}")
 
 if __name__ == "__main__":
     import uvicorn
