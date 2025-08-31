@@ -1,0 +1,160 @@
+{
+  "daily_usage_config": {
+    "milk_products": {
+      "Laktozsuz Süt": {
+        "daily_amount": 800,
+        "unit": "ml",
+        "category": "sut_turleri",
+        "description": "Günlük ortalama tüketim"
+      },
+      "Badem Süt": {
+        "daily_amount": 200,
+        "unit": "ml",
+        "category": "sut_turleri",
+        "description": "Günlük ortalama tüketim"
+      },
+      "Yulaf Süt": {
+        "daily_amount": 200,
+        "unit": "ml",
+        "category": "sut_turleri",
+        "description": "Günlük ortalama tüketim"
+      }
+    },
+    "syrups": {
+      "Vanilya Şurup": {
+        "daily_amount": 250,
+        "unit": "ml",
+        "category": "surup_pureler",
+        "description": "Günlük ortalama tüketim"
+      },
+      "Badem Şurup": {
+        "daily_amount": 150,
+        "unit": "ml",
+        "category": "surup_pureler",
+        "description": "Günlük ortalama tüketim"
+      },
+      "Cookie Şurup": {
+        "daily_amount": 50,
+        "unit": "ml",
+        "category": "surup_pureler",
+        "description": "Günlük ortalama tüketim"
+      },
+      "Pecan Şurubu": {
+        "daily_amount": 20,
+        "unit": "ml",
+        "category": "surup_pureler",
+        "description": "Günlük ortalama tüketim"
+      },
+      "Europan Çilek Şurup": {
+        "daily_amount": 50,
+        "unit": "ml",
+        "category": "surup_pureler",
+        "description": "Günlük ortalama tüketim"
+      },
+      "Coconat Şurup": {
+        "daily_amount": 50,
+        "unit": "ml",
+        "category": "surup_pureler",
+        "description": "Günlük ortalama tüketim"
+      },
+      "Fındık Şurubu": {
+        "daily_amount": 100,
+        "unit": "ml",
+        "category": "surup_pureler",
+        "description": "Günlük ortalama tüketim"
+      },
+      "Lavanta Şurup": {
+        "daily_amount": 20,
+        "unit": "ml",
+        "category": "surup_pureler",
+        "description": "Günlük ortalama tüketim"
+      },
+      "Nane Şurup": {
+        "daily_amount": 5,
+        "unit": "ml",
+        "category": "surup_pureler",
+        "description": "Günlük ortalama tüketim"
+      },
+      "Cheesecake Sos": {
+        "daily_amount": 5,
+        "unit": "ml",
+        "category": "surup_pureler",
+        "description": "Günlük ortalama tüketim"
+      }
+    },
+    "paper_packaging": {
+      "Kraft Peçete": {
+        "daily_amount": 150,
+        "unit": "adet",
+        "category": "kullan_at_urunleri",
+        "description": "Günlük ortalama tüketim"
+      },
+      "Tuvalet Kağıdı": {
+        "daily_amount": 3,
+        "unit": "adet",
+        "category": "kullan_at_urunleri",
+        "description": "Günlük ortalama tüketim"
+      },
+      "Filtre Kağıdı": {
+        "daily_amount": 25,
+        "unit": "adet",
+        "category": "kullan_at_urunleri",
+        "description": "Günlük ortalama tüketim"
+      },
+      "Tugo 2'li": {
+        "daily_amount": 2,
+        "unit": "adet",
+        "category": "kullan_at_urunleri",
+        "description": "Günlük ortalama tüketim"
+      },
+      "Tugo 4'lü": {
+        "daily_amount": 4,
+        "unit": "adet",
+        "category": "kullan_at_urunleri",
+        "description": "Günlük ortalama tüketim"
+      },
+      "Islak Mendil": {
+        "daily_amount": 50,
+        "unit": "adet",
+        "category": "kullan_at_urunleri",
+        "description": "Günlük ortalama tüketim"
+      },
+      "Çöp Torbası": {
+        "daily_amount": 10,
+        "unit": "adet",
+        "category": "kullan_at_urunleri",
+        "description": "Günlük ortalama tüketim"
+      },
+      "Küçük Çöp Torbası": {
+        "daily_amount": 2,
+        "unit": "adet",
+        "category": "kullan_at_urunleri",
+        "description": "Günlük ortalama tüketim"
+      },
+      "Kraft Çanta": {
+        "daily_amount": 3,
+        "unit": "adet",
+        "category": "kullan_at_urunleri",
+        "description": "Günlük ortalama tüketim"
+      },
+      "Z Peçete": {
+        "daily_amount": 4,
+        "unit": "adet",
+        "category": "kullan_at_urunleri",
+        "description": "Günlük ortalama tüketim"
+      },
+      "Stick Şeker": {
+        "daily_amount": 40,
+        "unit": "adet",
+        "category": "kullan_at_urunleri",
+        "description": "Günlük ortalama tüketim"
+      },
+      "Kraft Çanta": {
+        "daily_amount": 3,
+        "unit": "adet",
+        "category": "kullan_at_urunleri",
+        "description": "Günlük ortalama tüketim"
+      }
+    }
+  }
+}

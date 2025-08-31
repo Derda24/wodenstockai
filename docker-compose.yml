@@ -1,0 +1,74 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: woden_postgres
+    environment:
+      POSTGRES_DB: woden_stock_db
+      POSTGRES_USER: woden_user
+      POSTGRES_PASSWORD: woden_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./backend/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - woden_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U woden_user -d woden_stock_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # FastAPI Backend
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: woden_backend
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql://woden_user:woden_password@postgres:5432/woden_stock_db
+      - ENVIRONMENT=development
+      - DEBUG=true
+    volumes:
+      - ./backend:/app
+      - /app/__pycache__
+      - /app/.pytest_cache
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - woden_network
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+
+  # Next.js Frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: woden_frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:8000
+      - NODE_ENV=development
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+      - /app/.next
+    depends_on:
+      - backend
+    networks:
+      - woden_network
+    command: npm run dev
+
+volumes:
+  postgres_data:
+
+networks:
+  woden_network:
+    driver: bridge

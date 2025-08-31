@@ -1,0 +1,2875 @@
+{
+    "recipes":[
+      {
+        "id": 1,
+        "name": "AMERİCANO",
+        "description": "Klasik Americano - küçük boy",
+        "category": "Kahve",
+        "difficulty": "kolay",
+        "prep_time": 3,
+        "product_type": "recipe_based",
+        "ingredients": [
+          {
+            "name": "Espresso Çekirdeği",
+            "quantity": 9,
+            "unit": "gr"
+          },
+          {
+            "name": "Small Bardak",
+            "quantity": 1,
+            "unit": "adet"
+          },
+          {
+            "name": "Small Kapak",
+            "quantity": 1,
+            "unit": "adet"
+          }
+        ],
+        "is_active": true
+      },
+      {
+        "id": 2,
+        "name": "AMERİCANO",
+        "description": "Klasik Americano - orta boy",
+        "category": "Kahve",
+        "difficulty": "kolay",
+        "prep_time": 3,
+        "product_type": "recipe_based",
+        "ingredients": [
+          {
+            "name": "Espresso Çekirdeği",
+            "quantity": 18,
+            "unit": "gr"
+          },
+          {
+            "name": "Medium Bardak",
+            "quantity": 1,
+            "unit": "adet"
+          },
+          {
+            "name": "Medium Kapak",
+            "quantity": 1,
+            "unit": "adet"
+          }
+        ],
+        "is_active": true
+      },
+      {
+        "id": 3,
+        "name": "FİLTRE KAHVE",
+        "description": "Filtre kahve - küçük boy",
+        "category": "Kahve",
+        "difficulty": "kolay",
+        "prep_time": 5,
+        "product_type": "recipe_based",
+        "ingredients": [
+          {
+            "name": "Filtre Çekirdeği",
+            "quantity": 10,
+            "unit": "gr"
+          },
+          {
+            "name": "Small Bardak",
+            "quantity": 1,
+            "unit": "adet"
+          },
+          {
+            "name": "Small Kapak",
+            "quantity": 1,
+            "unit": "adet"
+          }
+        ],
+        "is_active": true
+      },
+      {
+        "id": 4,
+        "name": "FİLTRE KAHVE",
+        "description": "Filtre kahve - orta boy",
+        "category": "Kahve",
+        "difficulty": "kolay",
+        "prep_time": 5,
+        "product_type": "recipe_based",
+        "ingredients": [
+          {
+            "name": "Filtre Çekirdeği",
+            "quantity": 12,
+            "unit": "gr"
+          },
+          {
+            "name": "Medium Bardak",
+            "quantity": 1,
+            "unit": "adet"
+          },
+          {
+            "name": "Medium Kapak",
+            "quantity": 1,
+            "unit": "adet"
+          }
+        ],
+        "is_active": true
+      },
+      {
+        "id": 5,
+        "name": "TÜRK KAHVESİ",
+        "description": "Geleneksel Türk kahvesi - fincan",
+        "category": "Kahve",
+        "difficulty": "orta",
+        "prep_time": 8,
+        "product_type": "recipe_based",
+        "ingredients": [
+          {
+            "name": "Türk Kahvesi Çekirdeği",
+            "quantity": 9,
+            "unit": "gr"
+          },
+          {
+            "name": "Paketli Su (330ml)",
+            "quantity": 1,
+            "unit": "adet"
+          }
+        ],
+        "is_active": true
+      },
+      {
+        "id": 6,
+        "name": "TÜRK KAHVESİ",
+        "description": "Geleneksel Türk kahvesi - süvari",
+        "category": "Kahve",
+        "difficulty": "orta",
+        "prep_time": 8,
+        "product_type": "recipe_based",
+        "ingredients": [
+          {
+            "name": "Türk Kahvesi Çekirdeği",
+            "quantity": 15,
+            "unit": "gr"
+          },
+          {
+            "name": "Paketli Su (330ml)",
+            "quantity": 1,
+            "unit": "adet"
+          }
+        ],
+        "is_active": true
+      },
+      {
+        "id": 7,
+        "name": "ESPRESSO",
+        "description": "Saf espresso - küçük",
+        "category": "Kahve",
+        "difficulty": "kolay",
+        "prep_time": 1,
+        "product_type": "recipe_based",
+        "ingredients": [
+          {
+            "name": "Espresso Çekirdeği",
+            "quantity": 9,
+            "unit": "gr"
+          }
+        ],
+        "is_active": true
+      },
+      {
+        "id": 8,
+        "name": "ESPRESSO",
+        "description": "Saf espresso - orta",
+        "category": "Kahve",
+        "difficulty": "kolay",
+        "prep_time": 1,
+        "product_type": "recipe_based",
+        "ingredients": [
+          {
+            "name": "Espresso Çekirdeği",
+            "quantity": 18,
+            "unit": "gr"
+          }
+        ],
+        "is_active": true
+      },
+      {
+        "id": 9,
+        "name": "LATTE",
+        "description": "Sütlü kahve - küçük boy",
+        "category": "Kahve",
+        "difficulty": "kolay",
+        "prep_time": 4,
+        "product_type": "recipe_based",
+        "ingredients": [
+          {
+            "name": "Espresso Çekirdeği",
+            "quantity": 9,
+            "unit": "gr"
+          },
+          {
+            "name": "Torku Süt",
+            "quantity": 150,
+            "unit": "ml"
+          },
+          {
+            "name": "Small Bardak",
+            "quantity": 1,
+            "unit": "adet"
+          },
+          {
+            "name": "Small Kapak",
+            "quantity": 1,
+            "unit": "adet"
+          }
+        ],
+        "is_active": true
+      },
+      {
+        "id": 10,
+        "name": "LATTE",
+        "description": "Sütlü kahve - orta boy",
+        "category": "Kahve",
+        "difficulty": "kolay",
+        "prep_time": 4,
+        "product_type": "recipe_based",
+        "ingredients": [
+          {
+            "name": "Espresso Çekirdeği",
+            "quantity": 18,
+            "unit": "gr"
+          },
+          {
+            "name": "Torku Süt",
+            "quantity": 300,
+            "unit": "ml"
+          },
+          {
+            "name": "Medium Bardak",
+            "quantity": 1,
+            "unit": "adet"
+          },
+          {
+            "name": "Medium Kapak",
+            "quantity": 1,
+            "unit": "adet"
+          }
+        ],
+        "is_active": true
+      },
+      {
+        "id": 11,
+        "name": "FLAT WHITE",
+        "description": "Flat White - küçük boy",
+        "category": "Kahve",
+        "difficulty": "orta",
+        "prep_time": 4,
+        "product_type": "recipe_based",
+        "ingredients": [
+          {
+            "name": "Espresso Çekirdeği",
+            "quantity": 18,
+            "unit": "gr"
+          },
+          {
+            "name": "Torku Süt",
+            "quantity": 150,
+            "unit": "ml"
+          },
+          {
+            "name": "Small Bardak",
+            "quantity": 1,
+            "unit": "adet"
+          },
+          {
+            "name": "Small Kapak",
+            "quantity": 1,
+            "unit": "adet"
+          }
+        ],
+        "is_active": true
+      },
+      {
+        "id": 12,
+        "name": "FLAT WHITE",
+        "description": "Flat White - orta boy",
+        "category": "Kahve",
+        "difficulty": "orta",
+        "prep_time": 4,
+        "product_type": "recipe_based",
+        "ingredients": [
+          {
+            "name": "Espresso Çekirdeği",
+            "quantity": 27,
+            "unit": "gr"
+          },
+          {
+            "name": "Torku Süt",
+            "quantity": 300,
+            "unit": "ml"
+          },
+          {
+            "name": "Medium Bardak",
+            "quantity": 1,
+            "unit": "adet"
+          },
+          {
+            "name": "Medium Kapak",
+            "quantity": 1,
+            "unit": "adet"
+          }
+        ],
+        "is_active": true
+      },
+      {
+        "id": 13,
+        "name": "CORTADA",
+        "description": "Cortada - küçük boy",
+        "category": "Kahve",
+        "difficulty": "orta",
+        "prep_time": 4,
+        "product_type": "recipe_based",
+        "ingredients": [
+          {
+            "name": "Espresso Çekirdeği",
+            "quantity": 18,
+            "unit": "gr"
+          },
+          {
+            "name": "Torku Süt",
+            "quantity": 60,
+            "unit": "ml"
+          },
+          {
+            "name": "Small Bardak",
+            "quantity": 1,
+            "unit": "adet"
+          },
+          {
+            "name": "Small Kapak",
+            "quantity": 1,
+            "unit": "adet"
+          }
+        ],
+        "is_active": true
+      },
+      {
+        "id": 14,
+        "name": "CAPPUCCİNO",
+        "description": "Cappuccino - küçük boy",
+        "category": "Kahve",
+        "difficulty": "kolay",
+        "prep_time": 4,
+        "product_type": "recipe_based",
+        "ingredients": [
+          {
+            "name": "Espresso Çekirdeği",
+            "quantity": 9,
+            "unit": "gr"
+          },
+          {
+            "name": "Torku Süt",
+            "quantity": 150,
+            "unit": "ml"
+          },
+          {
+            "name": "Small Bardak",
+            "quantity": 1,
+            "unit": "adet"
+          },
+          {
+            "name": "Small Kapak",
+            "quantity": 1,
+            "unit": "adet"
+          }
+        ],
+        "is_active": true
+      },
+      {
+        "id": 15,
+        "name": "CAPPUCCİNO",
+        "description": "Cappuccino - orta boy",
+        "category": "Kahve",
+        "difficulty": "kolay",
+        "prep_time": 4,
+        "product_type": "recipe_based",
+        "ingredients": [
+          {
+            "name": "Espresso Çekirdeği",
+            "quantity": 18,
+            "unit": "gr"
+          },
+          {
+            "name": "Torku Süt",
+            "quantity": 300,
+            "unit": "ml"
+          },
+          {
+            "name": "Medium Bardak",
+            "quantity": 1,
+            "unit": "adet"
+          },
+          {
+            "name": "Small Kapak",
+            "quantity": 1,
+            "unit": "adet"
+          }
+        ],
+        "is_active": true
+      },
+      {
+        "id": 16,
+        "name": "CARAMEL LATTE",
+        "description": "Karamel aromalı latte - küçük boy",
+        "category": "Kahve",
+        "difficulty": "orta",
+        "prep_time": 5,
+        "product_type": "recipe_based",
+        "ingredients": [
+          {
+            "name": "Espresso Çekirdeği",
+            "quantity": 9,
+            "unit": "gr"
+          },
+          {
+            "name": "Torku Süt",
+            "quantity": 150,
+            "unit": "ml"
+          },
+          {
+            "name": "Small Bardak",
+            "quantity": 1,
+            "unit": "adet"
+          },
+          {
+            "name": "Small Kapak",
+            "quantity": 1,
+            "unit": "adet"
+          },
+          {
+            "name": "Caramel Püresi",
+            "quantity": 30,
+            "unit": "ml"
+          }
+        ],
+        "is_active": true
+      },
+      {
+        "id": 17,
+        "name": "CARAMEL LATTE",
+        "description": "Karamel aromalı latte - orta boy",
+        "category": "Kahve",
+        "difficulty": "orta",
+        "prep_time": 5,
+        "product_type": "recipe_based",
+        "ingredients": [
+          {
+            "name": "Espresso Çekirdeği",
+            "quantity": 18,
+            "unit": "gr"
+          },
+          {
+            "name": "Torku Süt",
+            "quantity": 300,
+            "unit": "ml"
+          },
+          {
+            "name": "Medium Bardak",
+            "quantity": 1,
+            "unit": "adet"
+          },
+          {
+            "name": "Medium Kapak",
+            "quantity": 1,
+            "unit": "adet"
+          },
+          {
+            "name": "Caramel Püresi",
+            "quantity": 60,
+            "unit": "ml"
+          }
+        ],
+        "is_active": true
+      },
+      {
+        "id": 18,
+        "name": "WHITE C. MOCHA",
+        "description": "Beyaz çikolatalı mocha - küçük boy",
+        "category": "Kahve",
+        "difficulty": "orta",
+        "prep_time": 5,
+        "product_type": "recipe_based",
+        "ingredients": [
+          {
+            "name": "Espresso Çekirdeği",
+            "quantity": 9,
+            "unit": "gr"
+          },
+          {
+            "name": "Torku Süt",
+            "quantity": 150,
+            "unit": "ml"
+          },
+          {
+            "name": "Small Bardak",
+            "quantity": 1,
+            "unit": "adet"
+          },
+          {
+            "name": "Small Kapak",
+            "quantity": 1,
+            "unit": "adet"
+          },
+          {
+            "name": "White Mocha Püresi",
+            "quantity": 30,
+            "unit": "ml"
+          }
+        ],
+        "is_active": true
+      },
+      {
+        "id": 19,
+        "name": "WHITE C. MOCHA",
+        "description": "Beyaz çikolatalı mocha - orta boy",
+        "category": "Kahve",
+        "difficulty": "orta",
+        "prep_time": 5,
+        "product_type": "recipe_based",
+        "ingredients": [
+          {
+            "name": "Espresso Çekirdeği",
+            "quantity": 18,
+            "unit": "gr"
+          },
+          {
+            "name": "Torku Süt",
+            "quantity": 300,
+            "unit": "ml"
+          },
+          {
+            "name": "Medium Bardak",
+            "quantity": 1,
+            "unit": "adet"
+          },
+          {
+            "name": "Medium Kapak",
+            "quantity": 1,
+            "unit": "adet"
+          },
+          {
+            "name": "White Mocha Püresi",
+            "quantity": 60,
+            "unit": "ml"
+          }
+        ],
+        "is_active": true
+      },
+      {
+        "id": 20,
+        "name": "MOCHA",
+        "description": "Mocha - küçük boy",
+        "category": "Kahve",
+        "difficulty": "orta",
+        "prep_time": 5,
+        "product_type": "recipe_based",
+        "ingredients": [
+          {
+            "name": "Espresso Çekirdeği",
+            "quantity": 9,
+            "unit": "gr"
+          },
+          {
+            "name": "Torku Süt",
+            "quantity": 150,
+            "unit": "ml"
+          },
+          {
+            "name": "Small Bardak",
+            "quantity": 1,
+            "unit": "adet"
+          },
+          {
+            "name": "Small Kapak",
+            "quantity": 1,
+            "unit": "adet"
+          },
+          {
+            "name": "Mocha Püresi",
+            "quantity": 30,
+            "unit": "ml"
+          }
+        ],
+        "is_active": true
+      },
+      {
+        "id": 21,
+        "name": "MOCHA",
+        "description": "Beyaz çikolatalı mocha - orta boy",
+        "category": "Kahve",
+        "difficulty": "orta",
+        "prep_time": 5,
+        "product_type": "recipe_based",
+        "ingredients": [
+          {
+            "name": "Espresso Çekirdeği",
+            "quantity": 18,
+            "unit": "gr"
+          },
+          {
+            "name": "Torku Süt",
+            "quantity": 300,
+            "unit": "ml"
+          },
+          {
+            "name": "Medium Bardak",
+            "quantity": 1,
+            "unit": "adet"
+          },
+          {
+            "name": "Medium Kapak",
+            "quantity": 1,
+            "unit": "adet"
+          },
+          {
+            "name": "Mocha Püresi",
+            "quantity": 60,
+            "unit": "ml"
+          }
+        ],
+        "is_active": true
+      },
+      {
+        "id": 22,
+        "name": "SİYAH ÇAY",
+        "description": "Geleneksel siyah çay - ince belli",
+        "category": "Çay",
+        "difficulty": "kolay",
+        "prep_time": 3,
+        "product_type": "recipe_based",
+        "ingredients": [
+          {
+            "name": "Çay",
+            "quantity": 1,
+            "unit": "gr"
+          }
+        ],
+        "is_active": true
+      },
+      {
+        "id": 23,
+        "name": "SİYAH ÇAY",
+        "description": "Geleneksel siyah çay - kupa",
+        "category": "Çay",
+        "difficulty": "kolay",
+        "prep_time": 3,
+        "product_type": "recipe_based",
+        "ingredients": [
+          {
+            "name": "Çay",
+            "quantity": 1,
+            "unit": "gr"
+          }
+        ],
+        "is_active": true
+      },
+      {
+        "id": 24,
+        "name": "SİYAH SICAK ÇİKOLATA",
+        "description": "Siyah sıcak çikolata - küçük boy",
+        "category": "Çay",
+        "difficulty": "kolay",
+        "prep_time": 4,
+        "ingredients": [
+          {
+            "name": "Siyah Sıcak Çikolata Tozu",
+            "quantity": 45,
+            "unit": "gr"
+          },
+          {
+            "name": "Torku Süt",
+            "quantity": 200,
+            "unit": "ml"
+          },
+          {
+            "name": "Small Bardak",
+            "quantity": 1,
+            "unit": "adet"
+          },
+          {
+            "name": "Small Kapak",
+            "quantity": 1,
+            "unit": "adet"
+          }
+        ],
+        "is_active": true
+      },
+      {
+        "id": 25,
+        "name": "SİYAH SICAK ÇİKOLATA",
+        "description": "Siyah sıcak çikolata - orta boy",
+        "category": "Çay",
+        "difficulty": "kolay",
+        "prep_time": 4,
+        "ingredients": [
+          {
+            "name": "Siyah Sıcak Çikolata Tozu",
+            "quantity": 60,
+            "unit": "gr"
+          },
+          {
+            "name": "Torku Süt",
+            "quantity": 300,
+            "unit": "ml"
+          },
+          {
+            "name": "Medium Bardak",
+            "quantity": 1,
+            "unit": "adet"
+          },
+          {
+            "name": "Medium Kapak",
+            "quantity": 1,
+            "unit": "adet"
+          }
+        ],
+        "is_active": true
+      },
+      {
+        "id": 26,
+        "name": "CHAI TEA LATTE",
+        "description": "Chai tea latte - küçük boy",
+        "category": "Çay",
+        "difficulty": "kolay",
+        "prep_time": 4,
+        "product_type": "recipe_based",
+        "ingredients": [
+          {
+            "name": "Chai Tea Şurup",
+            "quantity": 45,
+            "unit": "ml"
+          },
+          {
+            "name": "Torku Süt",
+            "quantity": 200,
+            "unit": "ml"
+          },
+          {
+            "name": "Small Bardak",
+            "quantity": 1,
+            "unit": "adet"
+          },
+          {
+            "name": "Small Kapak",
+            "quantity": 1,
+            "unit": "adet"
+          }
+        ],
+        "is_active": true
+      },
+      {
+        "id": 27,
+        "name": "CHAI TEA LATTE",
+        "description": "Chai tea latte - orta boy",
+        "category": "Çay",
+        "difficulty": "kolay",
+        "prep_time": 4,
+        "product_type": "recipe_based",
+        "ingredients": [
+          {
+            "name": "Chai Tea Şurup",
+            "quantity": 60,
+            "unit": "ml"
+          },
+          {
+            "name": "Torku Süt",
+            "quantity": 300,
+            "unit": "ml"
+          },
+          {
+            "name": "Medium Bardak",
+            "quantity": 1,
+            "unit": "adet"
+          },
+          {
+            "name": "Medium Kapak",
+            "quantity": 1,
+            "unit": "adet"
+          }
+        ],
+        "is_active": true
+      },
+      {
+        "id": 28,
+        "name": "SALEP",
+        "description": "Geleneksel salep - küçük boy",
+        "category": "Çay",
+        "difficulty": "orta",
+        "prep_time": 5,
+        "product_type": "recipe_based",
+        "ingredients": [
+          {
+            "name": "Salep",
+            "quantity": 45,
+            "unit": "gr"
+          },
+          {
+            "name": "Torku Süt",
+            "quantity": 200,
+            "unit": "ml"
+          },
+          {
+            "name": "Small Bardak",
+            "quantity": 1,
+            "unit": "adet"
+          },
+          {
+            "name": "Small Kapak",
+            "quantity": 1,
+            "unit": "adet"
+          }
+        ],
+        "is_active": true
+      },
+      {
+        "id": 29,
+        "name": "SALEP",
+        "description": "Geleneksel salep - orta boy",
+        "category": "Çay",
+        "difficulty": "orta",
+        "prep_time": 5,
+        "product_type": "recipe_based",
+        "ingredients": [
+          {
+            "name": "Salep",
+            "quantity": 60,
+            "unit": "gr"
+          },
+          {
+            "name": "Torku Süt",
+            "quantity": 300,
+            "unit": "ml"
+          },
+          {
+            "name": "Medium Bardak",
+            "quantity": 1,
+            "unit": "adet"
+          },
+          {
+            "name": "Medium Kapak",
+            "quantity": 1,
+            "unit": "adet"
+          }
+        ],
+        "is_active": true
+      },
+      {
+        "id": 30,
+        "name": "ICED FILTER COFFEE",
+        "description": "Soğuk filtre kahve",
+        "category": "Soğuk İçecek",
+        "difficulty": "kolay",
+        "prep_time": 6,
+        "product_type": "recipe_based",
+        "ingredients": [
+          {
+            "name": "Filtre Çekirdeği",
+            "quantity": 10,
+            "unit": "gr"
+          },
+          {
+            "name": "Buz",
+            "quantity": 1,
+            "unit": "bardak"
+          },
+          {
+            "name": "Ice Bardak",
+            "quantity": 1,
+            "unit": "adet"
+          },
+          {
+            "name": "Ice Kapak",
+            "quantity": 1,
+            "unit": "adet"
+          },
+          {
+            "name": "Pipet",
+            "quantity": 1,
+            "unit": "adet"
+          }
+        ],
+        "is_active": true
+      },
+      {
+        "id": 31,
+        "name": "ICED AMERICANO",
+        "description": "Soğuk Americano",
+        "category": "Soğuk İçecek",
+        "difficulty": "kolay",
+        "prep_time": 4,
+        "product_type": "recipe_based",
+        "ingredients": [
+          {
+            "name": "Espresso Çekirdeği",
+            "quantity": 18,
+            "unit": "gr"
+          },
+          {
+            "name": "Buz",
+            "quantity": 1,
+            "unit": "bardak"
+          },
+          {
+            "name": "Ice Bardak",
+            "quantity": 1,
+            "unit": "adet"
+          },
+          {
+            "name": "Ice Kapak",
+            "quantity": 1,
+            "unit": "adet"
+          },
+          {
+            "name": "Pipet",
+            "quantity": 1,
+            "unit": "adet"
+          }
+        ],
+        "is_active": true
+      },
+      {
+        "id": 32,
+        "name": "COLD BREW",
+        "description": "Soğuk demlenmiş kahve",
+        "category": "Soğuk İçecek",
+        "difficulty": "orta",
+        "prep_time": 8,
+        "product_type": "recipe_based",
+        "ingredients": [
+          {
+            "name": "Filtre Çekirdeği",
+            "quantity": 15,
+            "unit": "gr"
+          },
+          {
+            "name": "Buz",
+            "quantity": 1,
+            "unit": "bardak"
+          },
+          {
+            "name": "Ice Bardak",
+            "quantity": 1,
+            "unit": "adet"
+          },
+          {
+            "name": "Ice Kapak",
+            "quantity": 1,
+            "unit": "adet"
+          },
+          {
+            "name": "Pipet",
+            "quantity": 1,
+            "unit": "adet"
+          }
+        ],
+        "is_active": true
+      },
+      {
+        "id": 33,
+        "name": "ÇİKOLATA",
+        "description": "Çikolata aromalı milkshake",
+        "category": "Soğuk İçecek",
+        "difficulty": "kolay",
+        "prep_time": 3,
+        "product_type": "recipe_based",
+        "ingredients": [
+          {
+            "name": "Çikolata Tozu",
+            "quantity": 40,
+            "unit": "gr"
+          },
+          {
+            "name": "Torku Süt",
+            "quantity": 150,
+            "unit": "ml"
+          },
+          {
+            "name": "Buz",
+            "quantity": 2,
+            "unit": "bardak"
+          },
+          {
+            "name": "Ice Bardak",
+            "quantity": 1,
+            "unit": "adet"
+          },
+          {
+            "name": "Ice Kapak",
+            "quantity": 1,
+            "unit": "adet"
+          },
+          {
+            "name": "Pipet",
+            "quantity": 1,
+            "unit": "adet"
+          }
+        ],
+        "is_active": true
+      },
+      {
+        "id": 34,
+        "name": "ÇİLEK",
+        "description": "Çilek aromalı milkshake",
+        "category": "Soğuk İçecek",
+        "difficulty": "kolay",
+        "prep_time": 3,
+        "product_type": "recipe_based",
+        "ingredients": [
+          {
+            "name": "Çilek Tozu",
+            "quantity": 40,
+            "unit": "gr"
+          },
+          {
+            "name": "Torku Süt",
+            "quantity": 150,
+            "unit": "ml"
+          },
+          {
+            "name": "Buz",
+            "quantity": 2,
+            "unit": "bardak"
+          },
+          {
+            "name": "Ice Bardak",
+            "quantity": 1,
+            "unit": "adet"
+          },
+          {
+            "name": "Ice Kapak",
+            "quantity": 1,
+            "unit": "adet"
+          },
+          {
+            "name": "Pipet",
+            "quantity": 1,
+            "unit": "adet"
+          }
+        ],
+        "is_active": true
+      },
+      {
+        "id": 35,
+        "name": "LİMONATA",
+        "description": "Geleneksel limonata",
+        "category": "Soğuk İçecek",
+        "difficulty": "kolay",
+        "prep_time": 4,
+        "product_type": "recipe_based",
+        "ingredients": [
+          {
+            "name": "Menta Cubano Şurup",
+            "quantity": 20,
+            "unit": "ml"
+          },
+          {
+            "name": "Limonata",
+            "quantity": 150,
+            "unit": "ml"
+          },
+          {
+            "name": "Buz",
+            "quantity": 2,
+            "unit": "bardak"
+          },
+          {
+            "name": "Ice Bardak",
+            "quantity": 1,
+            "unit": "adet"
+          },
+          {
+            "name": "Ice Kapak",
+            "quantity": 1,
+            "unit": "adet"
+          },
+          {
+            "name": "Pipet",
+            "quantity": 1,
+            "unit": "adet"
+          }
+        ],
+        "is_active": true
+      },
+      {
+        "id": 36,
+        "name": "POĞAÇA",
+        "description": "Taze poğaça",
+        "category": "Tatlı",
+        "difficulty": "orta",
+        "prep_time": 0,
+        "product_type": "ready_made",
+        "ingredients": [],
+        "is_active": true
+      },
+      {
+        "id": 37,
+        "name": "PROFİTEROL",
+        "description": "Çikolata soslu profiterol",
+        "category": "Tatlı",
+        "difficulty": "orta",
+        "prep_time": 0,
+        "product_type": "ready_made",
+        "ingredients": [],
+        "is_active": true
+      },
+      {
+        "id": 38,
+        "name": "ÇİLEK MAGNOLİA",
+        "description": "Çilek aromalı magnolia",
+        "category": "Tatlı",
+        "difficulty": "orta",
+        "prep_time": 0,
+        "product_type": "ready_made",
+        "ingredients": [],
+        "is_active": true
+      },
+      {
+        "id": 39,
+        "name": "COOKİE",
+        "description": "Taze cookie",
+        "category": "Tatlı",
+        "difficulty": "orta",
+        "prep_time": 0,
+        "product_type": "ready_made",
+        "ingredients": [],
+        "is_active": true
+      },
+      {
+        "id": 40,
+        "name": "FISTIK ŞÖLENİ",
+        "description": "Fıstık aromalı şölen",
+        "category": "Tatlı",
+        "difficulty": "orta",
+        "prep_time": 0,
+        "product_type": "ready_made",
+        "ingredients": [],
+        "is_active": true
+      },
+      {
+        "id": 41,
+        "name": "SAN SEBASTİAN CHEESECAKE",
+        "description": "Klasik cheesecake",
+        "category": "Tatlı",
+        "difficulty": "orta",
+        "prep_time": 0,
+        "product_type": "ready_made",
+        "ingredients": [],
+        "is_active": true
+      },
+      {
+        "id": 42,
+        "name": "ANANASLI BADEM PASTA",
+        "description": "Ananas ve bademli pasta",
+        "category": "Tatlı",
+        "difficulty": "orta",
+        "prep_time": 0,
+        "product_type": "ready_made",
+        "ingredients": [],
+        "is_active": true
+      },
+      {
+        "id": 43,
+        "name": "MONO LATTE",
+        "description": "Oreo aromalı cheesecake",
+        "category": "Tatlı",
+        "difficulty": "orta",
+        "prep_time": 0,
+        "product_type": "ready_made",
+        "ingredients": [],
+        "is_active": true
+      },
+      {
+        "id": 44,
+        "name": "FISTIK KARAMEL",
+        "description": "Fıstık ve karamel kombinasyonu",
+        "category": "Tatlı",
+        "difficulty": "orta",
+        "prep_time": 0,
+        "product_type": "ready_made",
+        "ingredients": [],
+        "is_active": true
+      },
+      {
+        "id": 45,
+        "name": "İBİZA",
+        "description": "Özel Ibıza turta",
+        "category": "Tatlı",
+        "difficulty": "orta",
+        "prep_time": 0,
+        "product_type": "ready_made",
+        "ingredients": [],
+        "is_active": true
+      },
+      {
+        "id": 46,
+        "name": "LİMONLU CHEESECAKE",
+        "description": "Limon aromalı cheesecake",
+        "category": "Tatlı",
+        "difficulty": "orta",
+        "prep_time": 0,
+        "product_type": "ready_made",
+        "ingredients": [],
+        "is_active": true
+      },
+      {
+        "id": 47,
+        "name": "FRAMBUAZLI CHEESECAKE",
+        "description": "Frambuaz aromalı cheesecake",
+        "category": "Tatlı",
+        "difficulty": "orta",
+        "prep_time": 0,
+        "product_type": "ready_made",
+        "ingredients": [],
+        "is_active": true
+      },
+      {
+        "id": 48,
+        "name": "RULO KREP",
+        "description": "Taze rulo krep",
+        "category": "Tatlı",
+        "difficulty": "orta",
+        "prep_time": 0,
+        "product_type": "ready_made",
+        "ingredients": [],
+        "is_active": true
+      },
+      {
+        "id": 49,
+        "name": "LOTUS MAGNOLİA",
+        "description": "Nutella ve Lotus aromalı magnolia",
+        "category": "Tatlı",
+        "difficulty": "orta",
+        "prep_time": 0,
+        "product_type": "ready_made",
+        "ingredients": [],
+        "is_active": true
+      },
+      {
+        "id": 50,
+        "name": "FİT POĞAÇA",
+        "description": "Sağlıklı fit poğaça",
+        "category": "Tatlı",
+        "difficulty": "orta",
+        "prep_time": 0,
+        "product_type": "ready_made",
+        "ingredients": [],
+        "is_active": true
+      },
+      {
+        "id": 51,
+        "name": "LOTUS CHEESECAKE",
+        "description": "Lotus aromalı cheesecake",
+        "category": "Tatlı",
+        "difficulty": "orta",
+        "prep_time": 0,
+        "product_type": "ready_made",
+        "ingredients": [],
+        "is_active": true
+      },
+      {
+        "id": 52,
+        "name": "FRAMBUAZ BOMBA",
+        "description": "Frambuaz aromalı bomba",
+        "category": "Tatlı",
+        "difficulty": "orta",
+        "prep_time": 0,
+        "product_type": "ready_made",
+        "ingredients": [],
+        "is_active": true
+      },
+      {
+        "id": 53,
+        "name": "TİRAMİSU",
+        "description": "Klasik İtalyan tiramisu",
+        "category": "Tatlı",
+        "difficulty": "orta",
+        "prep_time": 0,
+        "product_type": "ready_made",
+        "ingredients": [],
+        "is_active": true
+      },
+      {
+        "id": 54,
+        "name": "FISTIK RÜYASI",
+        "description": "Fıstık aromalı rüya",
+        "category": "Tatlı",
+        "difficulty": "orta",
+        "prep_time": 0,
+        "product_type": "ready_made",
+        "ingredients": [],
+        "is_active": true
+      },
+      {
+        "id": 55,
+        "name": "CHURCHİLL",
+        "description": "Churchill tarzı su",
+        "category": "Diğer",
+        "difficulty": "kolay",
+        "prep_time": 2,
+        "product_type": "recipe_based",
+        "ingredients": [
+          {
+            "name": "Soda",
+            "quantity": 1,
+            "unit": "adet"
+          },
+          {
+            "name": "Limon",
+            "quantity": 1,
+            "unit": "adet"
+          },
+          {
+            "name": "Buz",
+            "quantity": 1,
+            "unit": "bardak"
+          },
+          {
+            "name": "Ice Bardak",
+            "quantity": 1,
+            "unit": "adet"
+          },
+          {
+            "name": "Ice Kapak",
+            "quantity": 1,
+            "unit": "adet"
+          }
+        ],
+        "is_active": true
+      },
+      {
+        "id": 56,
+        "name": "MEYVE SODA",
+        "description": "Meyve aromalı soda",
+        "category": "Diğer",
+        "difficulty": "kolay",
+        "prep_time": 2,
+        "product_type": "recipe_based",
+        "ingredients": [
+          {
+            "name": "Buz",
+            "quantity": 1,
+            "unit": "bardak"
+          }
+        ],
+        "is_active": true
+      },
+      {
+        "id": 57,
+        "name": "BLUECITRUS",
+        "description": "BLUECITRUS reçetesi",
+        "category": "Diğer",
+        "difficulty": "orta",
+        "prep_time": 2,
+        "product_type": "recipe_based",
+        "ingredients": [ 
+            {
+              "name": "Blue Ocean Şurup",
+              "quantity": 50,
+              "unit": "ml"
+            },
+            {
+              "name": "Menta Cubano Şurup",
+              "quantity": 50,
+              "unit": "ml"
+            },
+          {
+            "name": "Limonata",
+            "quantity": 200,
+            "unit": "ml"
+          },
+          {
+            "name": "Ice Bardak",
+            "quantity": 1,
+            "unit": "adet"
+          },
+          {
+            "name": "Ice Kapak",
+            "quantity": 1,
+            "unit": "adet"
+          },
+          {
+            "name": "Pipet",
+            "quantity": 1,
+            "unit": "adet"
+          }
+          ],
+        "is_active": true
+      },
+      {
+        "id": 58,
+       "name": "MANGO F.",
+        "description": "Mangolu frappe",
+        "category": "FRUIT FROZEN",
+        "difficulty": "orta",
+        "prep_time": 4,
+        "product_type": "recipe_based",
+        "ingredients": [
+          {
+            "name": "Mango Püresi",
+            "quantity": 50,
+            "unit": "ml"
+          },
+          {
+            "name": "Mango Suyu",
+            "quantity": 200,
+            "unit": "ml"
+          },
+          {
+            "name": "Ice Bardak",
+            "quantity": 1,
+            "unit": "adet"
+          },
+          {
+            "name": "Ice Kapak",
+            "quantity": 1,
+            "unit": "adet"
+          },
+          {
+            "name": "Pipet",
+            "quantity": 1,
+            "unit": "adet"
+          }
+        ],
+        "is_active": true
+      },
+      {
+        "id": 59,
+        "name": "WODEN LIME",
+        "description": "WODEN LIME reçetesi",
+        "category": "Diğer",
+        "difficulty": "orta",
+        "prep_time": 2,
+        "product_type": "recipe_based",
+        "ingredients":[ 
+          {
+            "name": "Jucy Lime Şurup",
+            "quantity": 50,
+            "unit": "ml"
+          },
+          {
+            "name": "Menta Cubano Şurup",
+            "quantity": 50,
+            "unit": "ml"
+          },
+        {
+          "name": "Limonata",
+          "quantity": 200,
+          "unit": "ml"
+        },
+        {
+          "name": "Ice Bardak",
+          "quantity": 1,
+          "unit": "adet"
+        },
+        {
+          "name": "Ice Kapak",
+          "quantity": 1,
+          "unit": "adet"
+        },
+        {
+          "name": "Pipet",
+          "quantity": 1,
+          "unit": "adet"
+        }
+        ],
+        "is_active": true
+      },
+      {
+        "id": 60,
+       "name": "KIRMIZI ORMAN F.",
+        "description": "Kırmızı Orman frappe",
+        "category": "FRUIT FROZEN",
+        "difficulty": "orta",
+        "prep_time": 4,
+        "product_type": "recipe_based",
+        "ingredients": [
+          {
+            "name": "Kırmızı Orman Püresi",
+            "quantity": 50,
+            "unit": "ml"
+          },
+          {
+            "name": "Kırmızı Orman Suyu",
+            "quantity": 200,
+            "unit": "ml"
+          },
+          {
+            "name": "Ice Bardak",
+            "quantity": 1,
+            "unit": "adet"
+          },
+          {
+            "name": "Ice Kapak",
+            "quantity": 1,
+            "unit": "adet"
+          },
+          {
+            "name": "Pipet",
+            "quantity": 1,
+            "unit": "adet"
+          }
+        ],
+        "is_active": true
+      },
+      {
+        "id": 61,
+        "name": "EKSTRA ÖDEME",
+        "description": "EKSTRA ÖDEME reçetesi",
+        "category": "Diğer",
+        "difficulty": "orta",
+        "prep_time": 2,
+        "product_type": "ready_made",
+        "ingredients": [],
+        "is_active": true
+      },
+      {
+        "id": 62,
+        "name": "MAVİ ROOİBOS",
+        "description": "MAVİ ROOİBOS reçetesi",
+        "category": "Diğer",
+        "difficulty": "orta",
+        "prep_time": 2,
+        "product_type": "ready_made",
+        "ingredients": [],
+        "is_active": true
+      },
+      {
+        "id": 63,
+        "name": "FREYA DRAGON",
+        "description": "FREYA DRAGON reçetesi ",
+        "category": "Diğer",
+        "difficulty": "orta",
+        "prep_time": 2,
+        "product_type": "recipe_based",
+        "ingredients": [
+      {
+          "name": "Dragon Püresi",
+          "quantity": 30,
+          "unit": "ml"
+      },
+      {
+          "name": "Menta Cubano Şurup",
+          "quantity": 15,
+          "unit": "ml"
+      },
+        
+      {
+          "name": "Nar Şurup",
+          "quantity": 15,
+          "unit": "ml"
+      },
+      {
+        "name": "Limonata",
+        "quantity": 200,
+        "unit": "ml"
+      },
+      {
+        "name": "Ice Bardak",
+        "quantity": 1,
+        "unit": "adet"
+      },
+      {
+        "name": "Ice Kapak",
+        "quantity": 1,
+        "unit": "adet"
+      },
+      {
+        "name": "Pipet",
+        "quantity": 1,
+        "unit": "adet"
+      }
+    ],
+        "is_active": false
+      },
+      {
+        "id": 64,
+        "name": "HIBISLIME",
+        "description": "HIBISLIME reçetesi",
+        "category": "Diğer",
+        "difficulty": "orta",
+        "prep_time": 2,
+        "product_type": "ready_made",
+        "ingredients": [],
+        "is_active": true
+      },
+      {
+        "id": 65,
+        "name": "BUZLU BARDAK",
+        "description": "BUZLU BARDAK reçetesi",
+        "category": "Diğer",
+        "difficulty": "orta",
+        "prep_time": 2,
+        "product_type": "ready_made",
+        "ingredients": [],
+        "is_active": true
+      },
+      {
+        "id": 66,
+        "name": "MANGO",
+        "description": "MANGO reçetesi",
+        "category": "Diğer",
+        "difficulty": "orta",
+        "prep_time": 2,
+        "product_type": "ready_made",
+        "ingredients": [],
+        "is_active": true
+      },
+      {
+        "id": 67,
+        "name": "RED BERRIES",
+        "description": "RED BERRIES reçetesi",
+        "category": "Diğer",
+        "difficulty": "orta",
+        "prep_time": 2,
+        "product_type": "ready_made",
+        "ingredients": [],
+        "is_active": true
+      },
+      {
+        "id": 68,
+        "name": "COSMOS",
+        "description": "COSMOS reçetesi",
+        "category": "Diğer",
+        "difficulty": "orta",
+        "prep_time": 2,
+        "product_type": "recipe_based",
+        "ingredients": [
+      {
+            "name": "Dragon Püresi",
+          "quantity": 30,
+          "unit": "ml"
+      },
+      {
+          "name": "Acı Portakal Şurup",
+          "quantity": 15,
+          "unit": "ml"
+      },
+        
+      {
+          "name": "Greyfurt Şurup",
+          "quantity": 15,
+          "unit": "ml"
+      },
+      {
+        "name": "Limonata",
+        "quantity": 200,
+        "unit": "ml"
+      },
+      {
+        "name": "Ice Bardak",
+        "quantity": 1,
+        "unit": "adet"
+      },
+      {
+        "name": "Ice Kapak",
+        "quantity": 1,
+        "unit": "adet"
+      },
+      {
+        "name": "Pipet",
+        "quantity": 1,
+        "unit": "adet"
+      }],
+        "is_active": true
+      },
+      {
+        "id": 69,
+        "name": "WODEN DRAGON",
+        "description": "WODEN DRAGON reçetesi",
+        "category": "Diğer",
+        "difficulty": "orta",
+        "prep_time": 2,
+        "product_type": "recipe_based",
+        "ingredients": [
+      {
+            "name": "Dragon Püresi",
+        "quantity": 30,
+        "unit": "ml"
+      },
+      {
+        "name": "SuperBerries Şurup",
+        "quantity": 15,
+        "unit": "ml"
+      },
+      
+      {
+        "name": "Menta Cubano Şurup",
+        "quantity": 15,
+        "unit": "ml"
+    },
+    {
+      "name": "Mango Suyu",
+      "quantity": 100,
+      "unit": "ml"
+    },
+    {
+      "name": "Ice Bardak",
+      "quantity": 1,
+      "unit": "adet"
+    },
+    {
+      "name": "Ice Kapak",
+      "quantity": 1,
+      "unit": "adet"
+    },
+    {
+      "name": "Pipet",
+      "quantity": 1,
+      "unit": "adet"
+    }],
+        "is_active": true
+      },
+      {
+        "id": 70,
+        "name": "FRUIT CARNIVAL",
+        "description": "FRUIT CARNIVAL reçetesi",
+        "category": "Diğer",
+        "difficulty": "orta",
+        "prep_time": 2,
+        "product_type": "ready_made",
+        "ingredients": [],
+        "is_active": true
+      },
+      {
+        "id": 71,
+        "name": "BETTERSCOTCH LATTE",
+        "description": "Batterscotch aromalı latte",
+        "category": "FLAVOURED COFFEE",
+        "difficulty": "kolay",
+        "prep_time": 4,
+        "product_type": "recipe_based",
+        "ingredients": [
+          {
+            "name": "Espresso Çekirdeği",
+            "quantity": 18,
+            "unit": "gr"
+          },
+          {
+            "name": "Torku Süt",
+            "quantity": 200,
+            "unit": "ml"
+          },
+          {
+            "name": "Better Scotch Püresi",
+            "quantity": 45,
+            "unit": "ml"
+          },
+          {
+            "name": "Medium Bardak",
+            "quantity": 1,
+            "unit": "adet"
+          },
+          {
+            "name": "Medium Kapak",
+            "quantity": 1,
+            "unit": "adet"
+          }
+        ],
+        "is_active": true
+      },
+      {
+        "id": 72,
+        "name": "CARAMEL MACCHIATO",
+        "description": "Karamel macchiato - süt, espresso ve karamel katmanları",
+        "category": "FLAVOURED COFFEE",
+        "difficulty": "orta",
+        "prep_time": 4,
+        "product_type": "recipe_based",
+        "ingredients": [
+          {
+            "name": "Espresso Çekirdeği",
+            "quantity": 18,
+            "unit": "gr"
+          },
+          {
+            "name": "Torku Süt",
+            "quantity": 180,
+            "unit": "ml"
+          },
+          {
+            "name": "Caramel Püresi",
+            "quantity": 20,
+            "unit": "ml"
+          },
+          {
+            "name": "Medium Bardak",
+            "quantity": 1,
+            "unit": "adet"
+          },
+          {
+            "name": "Medium Kapak",
+            "quantity": 1,
+            "unit": "adet"
+          }
+        ],
+        "is_active": true
+      },
+      {
+        "id": 73,
+        "name": "MOCHA",
+        "description": "Çikolata aromalı mocha",
+        "category": "FLAVOURED COFFEE",
+        "difficulty": "kolay",
+        "prep_time": 4,
+        "product_type": "recipe_based",
+        "ingredients": [
+          {
+            "name": "Espresso Çekirdeği",
+            "quantity": 18,
+            "unit": "gr"
+          },
+          {
+            "name": "Torku Süt",
+            "quantity": 180,
+            "unit": "ml"
+          },
+          {
+            "name": "Mocha Püresi",
+            "quantity": 15,
+            "unit": "ml"
+          },
+          {
+            "name": "Medium Bardak",
+            "quantity": 1,
+            "unit": "adet"
+          },
+          {
+            "name": "Medium Kapak",
+            "quantity": 1,
+            "unit": "adet"
+          }
+        ],
+        "is_active": true
+      },
+      {
+        "id": 74,
+        "name": "ICED CAPPUCCİNO",
+        "description": "Soğuk cappuccino",
+        "category": "ICED COFFEE & MİLK",
+        "difficulty": "kolay",
+        "prep_time": 4,
+        "product_type": "recipe_based",
+        "ingredients": [
+          {
+            "name": "Espresso Çekirdeği",
+            "quantity": 18,
+            "unit": "gr"
+          },
+          {
+            "name": "Torku Süt",
+            "quantity": 120,
+            "unit": "ml"
+          },
+          {
+            "name": "Ice Bardak",
+            "quantity": 1,
+            "unit": "adet"
+          },
+          {
+            "name": "Ice Kapak",
+            "quantity": 1,
+            "unit": "adet"
+          },
+          {
+            "name": "Pipet",
+            "quantity": 1,
+            "unit": "adet"
+          }
+        ],
+        "is_active": true
+      },
+      {
+        "id": 75,
+        "name": "ICE LOTUS LATTE",
+        "description": "Lotus bisküvi aromalı soğuk latte",
+        "category": "ICED FLAVOURED COFFEE",
+        "difficulty": "orta",
+        "prep_time": 4,
+        "product_type": "recipe_based",
+        "ingredients": [
+          {
+            "name": "Espresso Çekirdeği",
+            "quantity": 18,
+            "unit": "gr"
+          },
+          {
+            "name": "Torku Süt",
+            "quantity": 200,
+            "unit": "ml"
+          },
+          {
+            "name": "Lotus Püresi",
+            "quantity": 15,
+            "unit": "ml"
+          },
+          {
+            "name": "Ice Bardak",
+            "quantity": 1,
+            "unit": "adet"
+          },
+          {
+            "name": "Ice Kapak",
+            "quantity": 1,
+            "unit": "adet"
+          },
+          {
+            "name": "Pipet",
+            "quantity": 1,
+            "unit": "adet"
+          }
+        ],
+        "is_active": true
+      },
+      {
+        "id": 76,
+        "name": "ICED OREO COOKİES LATTE",
+        "description": "Oreo bisküvi aromalı soğuk latte",
+        "category": "ICED FLAVOURED COFFEE",
+        "difficulty": "orta",
+        "prep_time": 4,
+        "product_type": "recipe_based",
+        "ingredients": [
+          {
+            "name": "Espresso Çekirdeği",
+            "quantity": 18,
+            "unit": "gr"
+          },
+          {
+            "name": "Torku Süt",
+            "quantity": 200,
+            "unit": "ml"
+          },
+          {
+            "name": "Cookie Şurup",
+            "quantity": 45,
+            "unit": "ml"
+          },
+          {
+            "name": "Ice Bardak",
+            "quantity": 1,
+            "unit": "adet"
+          },
+          {
+            "name": "Ice Kapak",
+            "quantity": 1,
+            "unit": "adet"
+          },
+          {
+            "name": "Pipet",
+            "quantity": 1,
+            "unit": "adet"
+          }
+        ],
+        "is_active": true
+      },
+      {
+        "id": 77,
+        "name": "ICED SALTED CARAMEL LATTE",
+        "description": "Tuzlu karamel aromalı soğuk latte",
+        "category": "ICED FLAVOURED COFFEE",
+        "difficulty": "orta",
+        "prep_time": 4,
+        "product_type": "recipe_based",
+        "ingredients": [
+          {
+            "name": "Espresso Çekirdeği",
+            "quantity": 18,
+            "unit": "gr"
+          },
+          {
+            "name": "Torku Süt",
+            "quantity": 200,
+            "unit": "ml"
+          },
+          {
+            "name": "Salted Karamel Püresi",
+            "quantity": 15,
+            "unit": "ml"
+          },
+          {
+            "name": "Ice Bardak",
+            "quantity": 1,
+            "unit": "adet"
+          },
+          {
+            "name": "Ice Kapak",
+            "quantity": 1,
+            "unit": "adet"
+          },
+          {
+            "name": "Pipet",
+            "quantity": 1,
+            "unit": "adet"
+          }
+        ],
+        "is_active": true
+      },
+      {
+        "id": 78,
+        "name": "FRAPPE",
+        "description": "Kahve frappe",
+        "category": "FRAPPE",
+        "difficulty": "orta",
+        "prep_time": 4,
+        "product_type": "recipe_based",
+        "ingredients": [
+          {
+            "name": "Espresso Çekirdeği",
+            "quantity": 18,
+            "unit": "gr"
+          },
+          {
+            "name": "Torku Süt",
+            "quantity": 150,
+            "unit": "gr"
+          },
+          {
+            "name": "Ice Bardak",
+            "quantity": 1,
+            "unit": "adet"
+          },
+          {
+            "name": "Ice Kapak",
+            "quantity": 1,
+            "unit": "adet"
+          },
+          {
+            "name": "Pipet",
+            "quantity": 1,
+            "unit": "adet"
+          }
+        ],
+        "is_active": true
+      },
+      {
+        "id": 79,
+        "name": "ÇİLEK F.",
+        "description": "Çilekli frappe",
+        "category": "FRUIT FROZEN",
+        "difficulty": "orta",
+        "prep_time": 4,
+        "product_type": "recipe_based",
+        "ingredients": [
+          {
+            "name": "Çilek Püresi",
+            "quantity": 50,
+            "unit": "ml"
+          },
+          {
+            "name": "Çilek Suyu",
+            "quantity": 200,
+            "unit": "ml"
+          },
+          {
+            "name": "Ice Bardak",
+            "quantity": 1,
+            "unit": "adet"
+          },
+          {
+            "name": "Ice Kapak",
+            "quantity": 1,
+            "unit": "adet"
+          },
+          {
+            "name": "Pipet",
+            "quantity": 1,
+            "unit": "adet"
+          }
+        ],
+        "is_active": true
+      },
+      {
+        "id": 80,
+        "name": "ELMA F.",
+        "description": "Elmalı frappe",
+        "category": "FRUIT FROZEN",
+        "difficulty": "orta",
+        "prep_time": 4,
+        "product_type": "recipe_based",
+        "ingredients": [
+          {
+            "name": "Elma Püresi",
+            "quantity": 50,
+            "unit": "ml"
+          },
+          {
+            "name": "Elma Suyu",
+            "quantity": 200,
+            "unit": "ml"
+          },
+          {
+            "name": "Ice Bardak",
+            "quantity": 1,
+            "unit": "adet"
+          },
+          {
+            "name": "Ice Kapak",
+            "quantity": 1,
+            "unit": "adet"
+          },
+          {
+            "name": "Pipet",
+            "quantity": 1,
+            "unit": "adet"
+          }
+        ],
+        "is_active": true
+      },
+      {
+        "id": 81,
+        "name": "OCEAN FROZEN",
+        "description": "Okyanus mavisi frappe",
+        "category": "FRUIT FROZEN",
+        "difficulty": "orta",
+        "prep_time": 4,
+        "product_type": "recipe_based",
+        "ingredients": [
+          {
+            "name": "Blue Ocean Şurup",
+            "quantity": 20,
+            "unit": "ml"
+          },
+          {
+            "name": "Mango Püresi",
+            "quantity": 30,
+            "unit": "ml"
+          },
+          {
+            "name": "Limonata",
+            "quantity": 200,
+            "unit": "ml"
+          },
+          {
+            "name": "Ice Bardak",
+            "quantity": 1,
+            "unit": "adet"
+          },
+          {
+            "name": "Ice Kapak",
+            "quantity": 1,
+            "unit": "adet"
+          },
+          {
+            "name": "Pipet",
+            "quantity": 1,
+            "unit": "adet"
+          }
+        ],
+        "is_active": true
+      },
+      {
+        "id": 82,
+        "name": "FREYA DRAGON",
+        "description": "Freya dragon frappe",
+        "category": "FRUIT ICED BEVERAGES",
+        "difficulty": "orta",
+        "prep_time": 4,
+        "product_type": "recipe_based",
+        "ingredients": [
+          {
+            "name": "Superberries Şurup",
+            "quantity": 20,
+            "unit": "ml"
+          },
+          {
+            "name": "Dragon Püresi",
+            "quantity": 30,
+            "unit": "ml"
+          },
+          {
+            "name": "Mango Suyu",
+            "quantity": 200,
+            "unit": "ml"
+          },
+          {
+            "name": "Ice Bardak",
+            "quantity": 1,
+            "unit": "adet"
+          },
+          {
+            "name": "Ice Kapak",
+            "quantity": 1,
+            "unit": "adet"
+          },
+          {
+            "name": "Pipet",
+            "quantity": 1,
+            "unit": "adet"
+          }
+        ],
+        "is_active": true
+      },
+      {
+        "id": 83,
+        "name": "HIBISLIME",
+        "description": "Hibiskus çayı",
+        "category": "HERBAL ICED TEA",
+        "difficulty": "kolay",
+        "prep_time": 3,
+        "product_type": "recipe_based",
+        "ingredients": [
+          {
+            "name": "Hibiskus Çayı",
+            "quantity": 5,
+            "unit": "gr"
+          },
+          {
+            "name": "Ice Bardak",
+            "quantity": 1,
+            "unit": "adet"
+          },
+          {
+            "name": "Ice Kapak",
+            "quantity": 1,
+            "unit": "adet"
+          },
+          {
+            "name": "Pipet",
+            "quantity": 1,
+            "unit": "adet"
+          }
+        ],
+        "is_active": true
+      },
+      {
+        "id": 84,
+        "name": "ICED CHAI TEA LATTE",
+        "description": "Soğuk chai tea latte",
+        "category": "HERBAL ICED TEA",
+        "difficulty": "orta",
+        "prep_time": 4,
+        "product_type": "recipe_based",
+        "ingredients": [
+          {
+            "name": "Chai Tea Şurup",
+            "quantity": 45,
+            "unit": "gr"
+          },
+          {
+            "name": "Torku Süt",
+            "quantity": 150,
+            "unit": "ml"
+          },
+          {
+            "name": "Ice Bardak",
+            "quantity": 1,
+            "unit": "adet"
+          },
+          {
+            "name": "Ice Kapak",
+            "quantity": 1,
+            "unit": "adet"
+          },
+          {
+            "name": "Pipet",
+            "quantity": 1,
+            "unit": "adet"
+          }
+        ],
+        "is_active": true
+      },
+      {
+        "id": 85,
+        "name": "ADA ÇAYI",
+        "description": "Ada çayı",
+        "category": "HOT HERBAL TEA",
+        "difficulty": "kolay",
+        "prep_time": 3,
+        "product_type": "recipe_based",
+        "ingredients": [
+          {
+            "name": "Ada Çayı",
+            "quantity": 5,
+            "unit": "gr"
+          },
+          {
+            "name": "Karıştırıcı",
+            "quantity": 1,
+            "unit": "adet"
+          }
+        ],
+        "is_active": true
+      },
+      {
+        "id": 86,
+        "name": "KIŞ ÇAYI",
+        "description": "Kış çayı karışımı",
+        "category": "HOT HERBAL TEA",
+        "difficulty": "kolay",
+        "prep_time": 3,
+        "product_type": "recipe_based",
+        "ingredients": [
+          {
+            "name": "Kış Çayı",
+            "quantity": 5,
+            "unit": "gr"
+          },
+          {
+            "name": "Karıştırıcı",
+            "quantity": 1,
+            "unit": "adet"
+          }
+        ],
+        "is_active": true
+      },
+      {
+        "id": 87,
+        "name": "MAVİ ROOİBOS",
+        "description": "Mavi rooibos çayı",
+        "category": "HOT HERBAL TEA",
+        "difficulty": "kolay",
+        "prep_time": 3,
+        "product_type": "recipe_based",
+        "ingredients": [
+          {
+            "name": "Mavi Rooibos",
+            "quantity": 5,
+            "unit": "gr"
+          },
+          {
+            "name": "Karıştırıcı",
+            "quantity": 1,
+            "unit": "adet"
+          }
+        ],
+        "is_active": true
+      },
+      {
+        "id": 88,
+        "name": "MEYVE KARNAVALI",
+        "description": "Meyve karnavalı çay",
+        "category": "HOT HERBAL TEA",
+        "difficulty": "kolay",
+        "prep_time": 3,
+        "product_type": "recipe_based",
+        "ingredients": [
+          {
+            "name": "Meyve Karnavalı",
+            "quantity": 5,
+            "unit": "gr"
+          },
+          {
+            "name": "Karıştırıcı",
+            "quantity": 1,
+            "unit": "adet"
+          }
+        ],
+        "is_active": true
+      },
+      {
+        "id": 89,
+        "name": "PAPATYA ÇAYI",
+        "description": "Papatya çayı",
+        "category": "HOT HERBAL TEA",
+        "difficulty": "kolay",
+        "prep_time": 3,
+        "product_type": "recipe_based",
+        "ingredients": [
+          {
+            "name": "Papatya Çayı",
+            "quantity": 5,
+            "unit": "gr"
+          },
+          {
+            "name": "Karıştırıcı",
+            "quantity": 1,
+            "unit": "adet"
+          }
+        ],
+        "is_active": true
+      },
+      {
+        "id": 90,
+        "name": "YEŞİL ÇAY",
+        "description": "Yeşil çay",
+        "category": "HOT HERBAL TEA",
+        "difficulty": "kolay",
+        "prep_time": 3,
+        "product_type": "recipe_based",
+        "ingredients": [
+          {
+            "name": "Yeşil Çay",
+            "quantity": 5,
+            "unit": "gr"
+          },
+          {
+            "name": "Karıştırıcı",
+            "quantity": 1,
+            "unit": "adet"
+          }
+        ],
+        "is_active": true
+      },
+      {
+        "id": 91,
+        "name": "EKSTRA ÖDEME",
+        "description": "Ekstra hizmet ücreti",
+        "category": "DİĞER İÇECEKLER",
+        "difficulty": "kolay",
+        "prep_time": 1,
+        "product_type": "recipe_based",
+        "ingredients": [
+          {
+            "name": "Hizmet Ücreti",
+            "quantity": 1,
+            "unit": "adet"
+          }
+        ],
+        "is_active": true
+      },
+      {
+        "id": 92,
+        "name": "CARAMEL MACCHIATO SMALL",
+        "description": "Caramel Macchiato - küçük boy",
+        "category": "FLAVOURED COFFEE",
+        "difficulty": "orta",
+        "prep_time": 4,
+        "product_type": "recipe_based",
+        "ingredients": [
+          {
+            "name": "Espresso Çekirdeği",
+            "quantity": 9,
+            "unit": "gr"
+          },
+          {
+            "name": "Caramel Püresi",
+            "quantity": 20,
+            "unit": "ml"
+          },
+          {
+            "name": "Vanilya Şurup",
+            "quantity": 20,
+            "unit": "ml"
+          },
+          {
+            "name": "Torku Süt",
+            "quantity": 150,
+            "unit": "ml"
+          },
+          {
+            "name": "Small Bardak",
+            "quantity": 1,
+            "unit": "adet"
+          },
+          {
+            "name": "Small Kapak",
+            "quantity": 1,
+            "unit": "adet"
+          }
+        ],
+        "is_active": true
+      },
+      {
+        "id": 93,
+        "name": "CARAMEL MACCHIATO MEDIUM",
+        "description": "Caramel Macchiato - orta boy",
+        "category": "FLAVOURED COFFEE",
+        "difficulty": "orta",
+        "prep_time": 4,
+        "product_type": "recipe_based",
+        "ingredients": [
+          {
+            "name": "Espresso Çekirdeği",
+            "quantity": 18,
+            "unit": "gr"
+          },
+          {
+            "name": "Caramel Püresi",
+            "quantity": 30,
+            "unit": "ml"
+          },
+          {
+            "name": "Vanilya Şurup",
+            "quantity": 30,
+            "unit": "ml"
+          },
+          {
+            "name": "Torku Süt",
+            "quantity": 250,
+            "unit": "ml"
+          },
+          {
+            "name": "Medium Bardak",
+            "quantity": 1,
+            "unit": "adet"
+          },
+          {
+            "name": "Medium Kapak",
+            "quantity": 1,
+            "unit": "adet"
+          }
+        ],
+        "is_active": true
+      },
+      {
+        "id": 94,
+        "name": "ICED LATTE",
+        "description": "Ice Latte Tarifi",
+        "category": "Kahve",
+        "difficulty": "kolay",
+        "prep_time": 5,
+        "product_type": "recipe_based",
+        "ingredients": [
+        {
+            "name": "Espresso Çekirdeği",
+            "quantity": 18,
+            "unit": "gr"
+        },
+        {
+            "name": "Torku Süt",
+            "quantity": 150,
+            "unit": "ml"
+        },
+        {
+            "name": "Ice Bardak",
+            "quantity": 1,
+            "unit": "adet"
+        },
+        {
+            "name": "Ice Kapak",
+            "quantity": 1,
+            "unit": "adet"
+        },
+        {
+            "name": "Pipet",
+            "quantity": 1,
+            "unit": "adet"
+      }
+    ],
+    "is_active": true
+  },
+      {
+            "id": 95,
+            "name": "ICE CARAMEL LATTE",
+            "description": "Ice Caramel Latte Tarifi",
+            "category": "Kahve",
+            "difficulty": "kolay",
+            "prep_time": 5,
+            "product_type": "recipe_based",
+            "ingredients": [
+          {
+                "name": "Espresso Çekirdeği",
+                "quantity": 18,
+                "unit": "gr"
+          },
+          {
+                "name": "Torku Süt",
+                "quantity": 150,
+                "unit": "ml"
+          },
+          {
+                "name": "Karamel Püresi",
+                "quantity": 45,
+                "unit": "ml"
+          },
+          {
+                "name": "Ice Bardak",
+                "quantity": 1,
+                "unit": "adet"
+          },
+          {
+                "name": "Ice Kapak",
+                "quantity": 1,
+                "unit": "adet"
+          },
+          {
+                "name": "Pipet",
+                "quantity": 1,
+                "unit": "adet"
+          }
+        ],
+        "is_active": true
+      },
+      {
+        "id": 96,
+        "name": "ICE WHITE MOCHA",
+        "description": "Ice White Mocha Tarifi",
+        "category": "Kahve",
+        "difficulty": "kolay",
+        "prep_time": 5,
+        "product_type": "recipe_based",
+        "ingredients": [
+          {
+            "name": "Espresso Çekirdeği",
+            "quantity": 18,
+            "unit": "gr"
+          },
+          {
+            "name": "Torku Süt",
+            "quantity": 150,
+            "unit": "ml"
+          },
+          {
+            "name": "White Mocha Püresi",
+            "quantity": 45,
+            "unit": "ml"
+          },
+          {
+            "name": "Ice Bardak",
+            "quantity": 1,
+            "unit": "adet"
+          },
+          {
+            "name": "Ice Kapak",
+            "quantity": 1,
+            "unit": "adet"
+          },
+          {
+            "name": "Pipet",
+            "quantity": 1,
+            "unit": "adet"
+          }
+        ],
+        "is_active": true
+      },
+      {
+        "id": 97,
+        "name": "ICE MOCHA",
+        "description": "Ice Mocha Tarifi",
+        "category": "Kahve",
+        "difficulty": "kolay",
+        "prep_time": 5,
+        "product_type": "recipe_based",
+        "ingredients": [
+          {
+            "name": "Espresso Çekirdeği",
+            "quantity": 18,
+            "unit": "gr"
+          },
+          {
+            "name": "Torku Süt",
+            "quantity": 150,
+            "unit": "ml"
+          },
+          {
+            "name": "Mocha Püresi",
+            "quantity": 45,
+            "unit": "ml"
+          },
+          {
+            "name": "Ice Bardak",
+            "quantity": 1,
+            "unit": "adet"
+          },
+          {
+            "name": "Ice Kapak",
+            "quantity": 1,
+            "unit": "adet"
+          },
+          {
+            "name": "Pipet",
+            "quantity": 1,
+            "unit": "adet"
+          }
+        ],
+        "is_active": true
+      },
+      {
+        "id": 98,
+        "name": "ICED FLAT WHİTE",
+        "description": "Ice Flat White Tarifi",
+        "category": "Kahve",
+        "difficulty": "kolay",
+        "prep_time": 5,
+        "product_type": "recipe_based",
+        "ingredients": [
+          {
+            "name": "Espresso Çekirdeği",
+            "quantity": 27,
+            "unit": "gr"
+          },
+          {
+            "name": "Torku Süt",
+            "quantity": 150,
+            "unit": "ml"
+          },
+          {
+            "name": "Ice Bardak",
+            "quantity": 1,
+            "unit": "adet"
+          },
+          {
+            "name": "Ice Kapak",
+            "quantity": 1,
+            "unit": "adet"
+          },
+          {
+            "name": "Pipet",
+            "quantity": 1,
+            "unit": "adet"
+          }
+        ],
+        "is_active": true
+      },
+      {
+        "id": 99,
+        "name": "SU",
+        "description": "Paketli su",
+        "category": "İçecek",
+        "difficulty": "kolay",
+        "prep_time": 0,
+        "product_type": "ready_made",
+        "ingredients": [],
+        "is_active": true
+      },
+      {
+        "id": 100,
+        "name": "SODA",
+        "description": "Soda",
+        "category": "İçecek",
+        "difficulty": "kolay",
+        "prep_time": 0,
+        "product_type": "ready_made",
+        "ingredients": [],
+        "is_active": true
+      },
+      {
+        "id": 101,
+        "name": "MEYVELİ SODA",
+        "description": "Meyveli soda",
+        "category": "İçecek",
+        "difficulty": "kolay",
+        "prep_time": 0,
+        "product_type": "ready_made",
+        "ingredients": [],
+        "is_active": true
+      },
+      {
+        "id": 102,
+        "name": "PROFİTEROL",
+        "description": "Çikolata soslu profiterol",
+        "category": "Tatlı",
+        "difficulty": "orta",
+        "prep_time": 0,
+        "product_type": "ready_made",
+        "ingredients": [],
+        "is_active": true
+      },
+      {
+        "id": 103,
+        "name": "ÇİLEK MAGNOLİA",
+        "description": "Çilek aromalı magnolia",
+        "category": "Tatlı",
+        "difficulty": "orta",
+        "prep_time": 0,
+        "product_type": "ready_made",
+        "ingredients": [],
+        "is_active": true
+      },
+      {
+        "id": 104,
+        "name": "NUTELLA",
+        "description": "Nutella aromalı ürün",
+        "category": "Tatlı",
+        "difficulty": "orta",
+        "prep_time": 0,
+        "product_type": "ready_made",
+        "ingredients": [],
+        "is_active": true
+      },
+      {
+        "id": 105,
+        "name": "SAN SEBASTİAN CHEESECAKE",
+        "description": "Klasik cheesecake",
+        "category": "Tatlı",
+        "difficulty": "orta",
+        "prep_time": 0,
+        "product_type": "ready_made",
+        "ingredients": [],
+        "is_active": true
+      },
+      {
+        "id": 107,
+        "name": "ZENCEFİLLİ IHLAMUR ÇAYI",
+        "description": "Zencefilli ıhlamur çayı",
+        "category": "Çay",
+        "difficulty": "kolay",
+        "prep_time": 3,
+        "product_type": "ready_made",
+        "ingredients": [],
+        "is_active": true
+      },
+      {
+        "id": 97,
+        "name": "ICE CARAMEL MACCHIATO",
+        "description": "Ice Caramel Macchiato Tarifi",
+        "category": "Kahve",
+        "difficulty": "kolay",
+        "prep_time": 5,
+        "product_type": "recipe_based",
+        "ingredients": [
+          {
+            "name": "Espresso Çekirdeği",
+            "quantity": 18,
+            "unit": "gr"
+          },
+          {
+            "name": "Torku Süt",
+            "quantity": 150,
+            "unit": "ml"
+          },
+          {
+            "name": "Caramel Püresi",
+            "quantity": 45,
+            "unit": "ml"
+          },
+          {
+            "name": "Ice Bardak",
+            "quantity": 1,
+            "unit": "adet"
+          },
+          {
+            "name": "Ice Kapak",
+            "quantity": 1,
+            "unit": "adet"
+          },
+          {
+            "name": "Pipet",
+            "quantity": 1,
+            "unit": "adet"
+          }
+        ],
+        "is_active": true
+      },
+      {
+        "id": 109,
+        "name": "ICED FLAT WHİTE",
+        "description": "Ice Flat White Tarifi",
+        "category": "Kahve",
+        "difficulty": "kolay",
+        "prep_time": 5,
+        "product_type": "recipe_based",
+        "ingredients": [
+          {
+            "name": "Espresso Çekirdeği",
+            "quantity": 27,
+            "unit": "gr"
+          },
+          {
+            "name": "Torku Süt",
+            "quantity": 150,
+            "unit": "ml"
+          },
+          {
+            "name": "Ice Bardak",
+            "quantity": 1,
+            "unit": "adet"
+          },
+          {
+            "name": "Ice Kapak",
+            "quantity": 1,
+            "unit": "adet"
+          },
+          {
+            "name": "Pipet",
+            "quantity": 1,
+            "unit": "adet"
+          }
+        ],
+        "is_active": true
+      }
+    ]
+  }
