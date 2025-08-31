@@ -38,7 +38,7 @@ export default function AIRecommendations() {
 
      const loadRecommendations = async () => {
      try {
-       const response = await fetch('http://localhost:8000/api/recommendations');
+       const response = await fetch('https://wodenstockai.onrender.com/api/recommendations');
        if (response.ok) {
          const data = await response.json();
          setRecommendations(data.recommendations || []);
@@ -52,7 +52,7 @@ export default function AIRecommendations() {
 
    const loadCampaigns = async () => {
      try {
-       const response = await fetch('http://localhost:8000/api/campaigns');
+       const response = await fetch('https://wodenstockai.onrender.com/api/campaigns');
        if (response.ok) {
          const data = await response.json();
          setCampaigns(data.campaigns || []);

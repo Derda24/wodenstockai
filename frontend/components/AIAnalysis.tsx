@@ -36,7 +36,7 @@ export default function AIAnalysis() {
   const loadAnalysisData = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch(`http://localhost:8000/api/analysis?period=${selectedPeriod}`);
+      const response = await fetch(`https://wodenstockai.onrender.com/api/analysis?period=${selectedPeriod}`);
       if (response.ok) {
         const data = await response.json();
         // Ensure all required fields exist with fallbacks

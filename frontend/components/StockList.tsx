@@ -40,7 +40,7 @@ export default function StockList() {
   const loadStockData = async () => {
     try {
       setLoading(true);
-      const response = await fetch('http://localhost:8000/api/stock');
+      const response = await fetch('https://wodenstockai.onrender.com/api/stock');
       if (response.ok) {
         const data: StockResponse = await response.json();
         setStockData(data.stock_data || []);
@@ -90,7 +90,7 @@ export default function StockList() {
       formData.append('new_stock', newStock.toString());
       formData.append('reason', change > 0 ? 'stock_added' : 'stock_used');
 
-      const response = await fetch('http://localhost:8000/api/stock/update', {
+      const response = await fetch('https://wodenstockai.onrender.com/api/stock/update', {
         method: 'POST',
         body: formData,
       });
@@ -124,7 +124,7 @@ export default function StockList() {
 
     try {
       console.log('Sending request to backend...');
-      const response = await fetch('http://localhost:8000/api/sales/upload', {
+      const response = await fetch('https://wodenstockai.onrender.com/api/sales/upload', {
         method: 'POST',
         body: formData,
       });
@@ -159,7 +159,7 @@ export default function StockList() {
     try {
       setUploadMessage('Applying daily consumption...');
       
-      const response = await fetch('http://localhost:8000/api/daily-consumption/apply', {
+      const response = await fetch('https://wodenstockai.onrender.com/api/daily-consumption/apply', {
         method: 'POST',
       });
 
