@@ -8,7 +8,7 @@ import shutil
 import hashlib
 import secrets
 from datetime import datetime, timedelta
-from app.stock_manager import StockManager
+from app.services.supabase_service import SupabaseService
 from pydantic import BaseModel
 
 app = FastAPI(
@@ -37,8 +37,8 @@ app.add_middleware(
     expose_headers=["*"],
 )
 
-# Initialize stock manager
-stock_manager = StockManager()
+# Initialize Supabase service
+supabase_service = SupabaseService()
 
 # Authentication models
 class LoginRequest(BaseModel):
@@ -151,7 +151,7 @@ async def login(login_request: LoginRequest):
 async def get_stock():
     """Get current stock list"""
     try:
-        stock_list = stock_manager.get_stock_list()
+        stock_list = supabase_service.get_stock_list()
         return {"stock_data": stock_list, "total_items": len(stock_list)}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error retrieving stock: {str(e)}")
@@ -165,7 +165,7 @@ async def update_stock(
 ):
     """Update stock for a specific material"""
     try:
-        result = stock_manager.update_stock_manually(material_id, new_stock, reason)
+        result = supabase_service.update_stock_manually(material_id, new_stock, reason)
         if result["success"]:
             return result
         else:
@@ -180,11 +180,11 @@ async def remove_stock_item(
 ):
     """Remove an item from the stock list"""
     try:
-        result = stock_manager.remove_item_from_stock(item_name)
-        if result["success"]:
-            return result
-        else:
-            raise HTTPException(status_code=400, detail=result["message"])
+        # TODO: Implement item removal with Supabase
+        return {
+            "success": False,
+            "message": "Item removal not yet implemented with Supabase. Please contact administrator."
+        }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error removing stock item: {str(e)}")
 
@@ -195,30 +195,11 @@ async def upload_sales_excel(
 ):
     """Upload and process daily sales Excel file"""
     try:
-        # Validate file type
-        if not file.filename.endswith(('.xlsx', '.xls')):
-            raise HTTPException(status_code=400, detail="Only Excel files (.xlsx, .xls) are allowed")
-        
-        # Save uploaded file temporarily
-        temp_file_path = f"temp_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{file.filename}"
-        
-        try:
-            with open(temp_file_path, "wb") as buffer:
-                shutil.copyfileobj(file.file, buffer)
-            
-            # Process the Excel file
-            result = stock_manager.process_sales_excel(temp_file_path)
-            
-            if result["success"]:
-                return result
-            else:
-                raise HTTPException(status_code=400, detail=result["message"])
-                
-        finally:
-            # Clean up temporary file
-            if os.path.exists(temp_file_path):
-                os.remove(temp_file_path)
-                
+        # TODO: Implement Excel processing with Supabase
+        return {
+            "success": False,
+            "message": "Excel processing not yet implemented with Supabase. Please use manual stock updates for now."
+        }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error processing sales file: {str(e)}")
 
@@ -226,7 +207,7 @@ async def upload_sales_excel(
 async def apply_daily_consumption(force: bool = False):
     """Apply daily consumption for raw materials based on daily_usage_config.json"""
     try:
-        result = stock_manager.apply_daily_consumption(force=force)
+        result = supabase_service.apply_daily_consumption(force=force)
         if result["success"]:
             return result
         else:
@@ -238,7 +219,7 @@ async def apply_daily_consumption(force: bool = False):
 async def force_daily_consumption():
     """Force apply daily consumption regardless of recent manual updates"""
     try:
-        result = stock_manager.apply_daily_consumption(force=True)
+        result = supabase_service.apply_daily_consumption(force=True)
         if result["success"]:
             return result
         else:
@@ -250,7 +231,7 @@ async def force_daily_consumption():
 async def clear_manual_update_flags(username: str = Depends(verify_token)):
     """Clear manual update flags to allow daily consumption"""
     try:
-        result = stock_manager.clear_manual_update_flags()
+        result = supabase_service.clear_manual_update_flags()
         return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error clearing manual flags: {str(e)}")
@@ -260,30 +241,26 @@ async def get_analysis(period: str = "7d"):
     """Get stock analysis data"""
     try:
         # Get current stock data for analysis
-        stock_list = stock_manager.get_stock_list()
-        alerts = stock_manager.get_stock_alerts()
-        
-        # Get real sales analytics from SalesTracker
-        sales_analytics = stock_manager.sales_tracker.get_sales_analytics(period)
+        stock_list = supabase_service.get_stock_list()
         
         # Get low stock alerts (real data from stock)
         low_stock_alerts = []
-        for alert in alerts:
-            if alert["alert_type"] in ["low_stock", "out_of_stock"]:
+        for item in stock_list:
+            if item["current_stock"] <= item["min_stock"]:
                 low_stock_alerts.append({
-                    "name": alert["material_name"],
-                    "current": alert["current_stock"],
-                    "min": alert["min_stock"],
-                    "unit": alert.get("unit", "")
+                    "name": item["name"],
+                    "current": item["current_stock"],
+                    "min": item["min_stock"],
+                    "unit": item.get("unit", "")
                 })
         
-        # Combine real sales analytics with real stock alerts
+        # For now, return basic analysis - we can enhance this later with Supabase analytics
         return {
-            "totalSales": sales_analytics["totalSales"],
-            "topProducts": sales_analytics["topProducts"],
+            "totalSales": 0,  # TODO: Implement sales analytics with Supabase
+            "topProducts": [],  # TODO: Implement with Supabase
             "lowStockAlerts": low_stock_alerts,
-            "dailyTrends": sales_analytics["dailyTrends"],
-            "categoryBreakdown": sales_analytics["categoryBreakdown"]
+            "dailyTrends": [],  # TODO: Implement with Supabase
+            "categoryBreakdown": {}  # TODO: Implement with Supabase
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error retrieving analysis: {str(e)}")
@@ -292,29 +269,29 @@ async def get_analysis(period: str = "7d"):
 async def get_recommendations():
     """Get stock recommendations based on current levels"""
     try:
-        alerts = stock_manager.get_stock_alerts()
+        stock_list = supabase_service.get_stock_list()
         recommendations = []
         
-        for alert in alerts:
-            if alert["alert_type"] == "out_of_stock":
+        for item in stock_list:
+            if item["current_stock"] == 0:
                 recommendations.append({
                     "id": f"rec_{len(recommendations) + 1}",
                     "type": "stock",
-                    "title": f"Urgent Restock: {alert['material_name']}",
-                    "description": f"Urgent: {alert['material_name']} is out of stock and needs immediate restocking",
+                    "title": f"Urgent Restock: {item['name']}",
+                    "description": f"Urgent: {item['name']} is out of stock and needs immediate restocking",
                     "impact": "high",
-                    "implementation": f"Order {alert['material_name']} immediately from suppliers",
+                    "implementation": f"Order {item['name']} immediately from suppliers",
                     "expectedResult": "Prevent business disruption and maintain customer satisfaction",
                     "priority": 1
                 })
-            elif alert["alert_type"] == "low_stock":
+            elif item["current_stock"] <= item["min_stock"]:
                 recommendations.append({
                     "id": f"rec_{len(recommendations) + 1}",
                     "type": "stock",
-                    "title": f"Low Stock Alert: {alert['material_name']}",
-                    "description": f"Low stock alert: {alert['material_name']} is below minimum level ({alert['current_stock']} {alert.get('unit', 'units')} remaining)",
+                    "title": f"Low Stock Alert: {item['name']}",
+                    "description": f"Low stock alert: {item['name']} is below minimum level ({item['current_stock']} {item.get('unit', 'units')} remaining)",
                     "impact": "medium",
-                    "implementation": f"Plan restocking for {alert['material_name']} within the next few days",
+                    "implementation": f"Plan restocking for {item['name']} within the next few days",
                     "expectedResult": "Maintain optimal stock levels and prevent future stockouts",
                     "priority": 2
                 })
@@ -368,7 +345,22 @@ async def get_recommendations():
 async def get_alerts():
     """Get current stock alerts"""
     try:
-        alerts = stock_manager.get_stock_alerts()
+        stock_list = supabase_service.get_stock_list()
+        alerts = []
+        
+        for item in stock_list:
+            if item["current_stock"] <= item["min_stock"]:
+                alert_type = "out_of_stock" if item["current_stock"] == 0 else "low_stock"
+                alerts.append({
+                    "material_id": item["id"],
+                    "material_name": item["name"],
+                    "current_stock": item["current_stock"],
+                    "min_stock": item["min_stock"],
+                    "alert_type": alert_type,
+                    "message": f"{item['name']} is {'out of stock' if item['current_stock'] == 0 else 'below minimum level'}",
+                    "category": item["category"]
+                })
+        
         return {
             "alerts": alerts,
             "total_alerts": len(alerts),
@@ -382,8 +374,30 @@ async def get_alerts():
 async def get_summary():
     """Get stock summary statistics"""
     try:
-        summary = stock_manager.get_stock_summary()
-        return summary
+        stock_list = supabase_service.get_stock_list()
+        
+        total_items = len(stock_list)
+        low_stock_items = 0
+        out_of_stock_items = 0
+        total_value = 0.0
+        
+        for item in stock_list:
+            if item["current_stock"] == 0:
+                out_of_stock_items += 1
+            elif item["current_stock"] <= item["min_stock"]:
+                low_stock_items += 1
+            
+            # Calculate value if cost_per_unit is available
+            cost_per_unit = item.get("cost_per_unit", 0.0)
+            total_value += item["current_stock"] * cost_per_unit
+        
+        return {
+            "total_items": total_items,
+            "low_stock_items": low_stock_items,
+            "out_of_stock_items": out_of_stock_items,
+            "total_value": total_value,
+            "last_updated": datetime.now().isoformat()
+        }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error retrieving summary: {str(e)}")
 
@@ -433,11 +447,11 @@ async def get_campaigns():
 async def get_sales_debug():
     """Debug endpoint to view current sales data"""
     try:
-        sales_tracker = stock_manager.sales_tracker
+        # TODO: Implement sales analytics with Supabase
         return {
-            "total_sales_records": sales_tracker.get_total_sales_count(),
-            "sales_data": sales_tracker.sales_data,
-            "sample_analytics": sales_tracker.get_sales_analytics("7d")
+            "total_sales_records": 0,
+            "sales_data": [],
+            "sample_analytics": {"message": "Sales analytics not yet implemented with Supabase"}
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error retrieving sales debug info: {str(e)}")
@@ -446,12 +460,13 @@ async def get_sales_debug():
 async def get_stock_debug():
     """Debug endpoint to view stock data structure"""
     try:
-        stock_list = stock_manager.get_stock_list()
+        stock_list = supabase_service.get_stock_list()
+        categories = list(set([item["category"] for item in stock_list]))
         return {
             "total_items": len(stock_list),
             "stock_items": stock_list,
             "sample_item_ids": [item["id"] for item in stock_list[:10]],
-            "categories": list(stock_manager.stock_data.get("stock_data", {}).keys())
+            "categories": categories
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error retrieving stock debug info: {str(e)}")
