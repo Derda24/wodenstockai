@@ -151,8 +151,36 @@ async def login(login_request: LoginRequest):
 async def get_stock():
     """Get current stock list"""
     try:
-        stock_list = supabase_service.get_stock_list()
-        return {"stock_data": stock_list, "total_items": len(stock_list)}
+        result = supabase_service.get_stock_list()
+        if result["success"]:
+            # Transform the data to match frontend expectations
+            stock_data = result["data"]
+            stock_list = []
+            
+            for category, items in stock_data.get("stock_data", {}).items():
+                for item_name, item_data in items.items():
+                    stock_list.append({
+                        "id": f"{category}_{item_name}",
+                        "name": item_name,
+                        "category": category,
+                        "current_stock": item_data.get("current_stock", 0),
+                        "min_stock": item_data.get("min_stock", 0),
+                        "unit": item_data.get("unit", ""),
+                        "package_size": item_data.get("package_size", 0),
+                        "package_unit": item_data.get("package_unit", ""),
+                        "cost_per_unit": item_data.get("cost_per_unit", 0.0),
+                        "is_ready_made": item_data.get("is_ready_made", False),
+                        "usage_per_order": item_data.get("usage_per_order", 0),
+                        "usage_per_day": item_data.get("usage_per_day", 0),
+                        "usage_type": item_data.get("usage_type", ""),
+                        "can_edit": item_data.get("can_edit", True),
+                        "edit_reason": item_data.get("edit_reason", ""),
+                        "edit_message": item_data.get("edit_message", "")
+                    })
+            
+            return {"stock_data": stock_list, "total_items": len(stock_list)}
+        else:
+            raise HTTPException(status_code=500, detail=result["message"])
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error retrieving stock: {str(e)}")
 
