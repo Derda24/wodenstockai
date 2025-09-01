@@ -231,6 +231,15 @@ async def force_daily_consumption():
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error applying daily consumption: {str(e)}")
 
+@app.post("/api/stock/clear-manual-flags")
+async def clear_manual_update_flags(username: str = Depends(verify_token)):
+    """Clear manual update flags to allow daily consumption"""
+    try:
+        result = stock_manager.clear_manual_update_flags()
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error clearing manual flags: {str(e)}")
+
 @app.get("/api/analysis")
 async def get_analysis(period: str = "7d"):
     """Get stock analysis data"""

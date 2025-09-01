@@ -278,48 +278,54 @@ class StockManager:
             item_found = False
             old_stock = 0
             item_name = ""
+            category_name = ""
             
             for category, items in self.stock_data.get("stock_data", {}).items():
                 for item_name, item_data in items.items():
                     # Check both formats: category_itemname and just itemname
                     if f"{category}_{item_name}" == material_id or item_name == material_id:
-                        
-                        
                         old_stock = item_data.get("current_stock", 0)
-                        item_data["current_stock"] = new_stock
+                        item_data["current_stock"] = float(new_stock)  # Ensure it's a float
                         item_data["last_updated"] = datetime.now().isoformat()
                         item_data["last_manual_update"] = {
                             "timestamp": datetime.now().isoformat(),
                             "reason": reason,
                             "old_stock": old_stock,
-                            "new_stock": new_stock
+                            "new_stock": float(new_stock),
+                            "manual_update_flag": True  # Flag to prevent daily consumption override
                         }
+                        category_name = category
                         item_found = True
                         break
                 if item_found:
                     break
             
             if not item_found:
-                # Debug: Let's see what material_id we're looking for
-                print(f"DEBUG: Looking for material_id: {material_id}")
+                # Enhanced debugging
+                print(f"DEBUG: Looking for material_id: '{material_id}'")
                 print(f"DEBUG: Available items:")
                 for category, items in self.stock_data.get("stock_data", {}).items():
                     for item_name, item_data in items.items():
-                        print(f"  - {category}_{item_name} or {item_name}")
-                return {"success": False, "message": f"Item with ID {material_id} not found"}
+                        print(f"  - Category: '{category}', Item: '{item_name}', ID: '{category}_{item_name}'")
+                return {"success": False, "message": f"Item with ID '{material_id}' not found"}
             
+            # Save the updated data
             if self.save_stock_data():
                 return {
                     "success": True,
-                    "message": f"Stock updated successfully",
+                    "message": f"Stock updated successfully for {item_name}",
+                    "item_name": item_name,
+                    "category": category_name,
                     "old_stock": old_stock,
-                    "new_stock": new_stock,
-                    "reason": reason
+                    "new_stock": float(new_stock),
+                    "reason": reason,
+                    "timestamp": datetime.now().isoformat()
                 }
             else:
                 return {"success": False, "message": "Failed to save stock data"}
                 
         except Exception as e:
+            print(f"ERROR in update_stock_manually: {str(e)}")
             return {"success": False, "message": f"Error updating stock: {str(e)}"}
     
     def process_sales_excel(self, excel_file_path: str) -> Dict:
@@ -467,6 +473,21 @@ class StockManager:
                         errors.append(f"Item {item_name} not found in stock")
                         continue
                     
+                    # Check if this specific item was manually updated recently (4 hour protection)
+                    last_manual_update = stock_item.get("last_manual_update", {})
+                    if last_manual_update:
+                        update_time_str = last_manual_update.get("timestamp", "")
+                        if update_time_str:
+                            try:
+                                from datetime import timedelta
+                                update_time = datetime.fromisoformat(update_time_str.replace('Z', '+00:00'))
+                                cutoff_time = datetime.now() - timedelta(hours=4)  # 4 hours protection
+                                if update_time > cutoff_time:
+                                    print(f"DEBUG: Skipping daily consumption for {item_name} due to recent manual update")
+                                    continue
+                            except ValueError:
+                                pass
+                    
                     # Check if we have enough stock
                     current_stock = stock_item.get("current_stock", 0)
                     if current_stock < daily_amount:
@@ -493,6 +514,10 @@ class StockManager:
                     # Update stock (normal consumption)
                     old_stock = current_stock
                     stock_item["current_stock"] -= daily_amount
+                    stock_item["last_daily_consumption"] = {
+                        "timestamp": datetime.now().isoformat(),
+                        "amount": daily_amount
+                    }
                     consumed_items.append({
                         "name": item_name,
                         "category": config_category,
@@ -551,3 +576,29 @@ class StockManager:
         except Exception as e:
             print(f"Error checking skip daily consumption: {e}")
             return False
+    
+    def clear_manual_update_flags(self) -> Dict:
+        """Clear manual update flags to allow daily consumption for all items"""
+        try:
+            cleared_count = 0
+            
+            for category, items in self.stock_data.get("stock_data", {}).items():
+                for item_name, item_data in items.items():
+                    if "last_manual_update" in item_data:
+                        # Remove the manual update flag while keeping the update record
+                        last_manual_update = item_data["last_manual_update"]
+                        if last_manual_update.get("manual_update_flag", False):
+                            last_manual_update["manual_update_flag"] = False
+                            cleared_count += 1
+            
+            if self.save_stock_data():
+                return {
+                    "success": True,
+                    "message": f"Manual update flags cleared for {cleared_count} items",
+                    "cleared_count": cleared_count
+                }
+            else:
+                return {"success": False, "message": "Failed to save stock data"}
+                
+        except Exception as e:
+            return {"success": False, "message": f"Error clearing manual flags: {str(e)}"}
