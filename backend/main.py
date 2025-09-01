@@ -152,7 +152,12 @@ async def get_stock():
     """Get current stock list"""
     try:
         result = supabase_service.get_stock_list()
-        if result["success"]:
+        
+        # Debug logging
+        print(f"DEBUG: Supabase result type: {type(result)}")
+        print(f"DEBUG: Supabase result: {result}")
+        
+        if isinstance(result, dict) and result.get("success"):
             # Transform the data to match frontend expectations
             stock_data = result["data"]
             stock_list = []
@@ -178,10 +183,14 @@ async def get_stock():
                         "edit_message": item_data.get("edit_message", "")
                     })
             
+            print(f"DEBUG: Returning {len(stock_list)} items")
             return {"stock_data": stock_list, "total_items": len(stock_list)}
         else:
-            raise HTTPException(status_code=500, detail=result["message"])
+            error_msg = result.get("message", "Unknown error") if isinstance(result, dict) else str(result)
+            print(f"DEBUG: Supabase error: {error_msg}")
+            raise HTTPException(status_code=500, detail=error_msg)
     except Exception as e:
+        print(f"DEBUG: Exception in get_stock: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error retrieving stock: {str(e)}")
 
 @app.post("/api/stock/update")
@@ -488,13 +497,12 @@ async def get_sales_debug():
 async def get_stock_debug():
     """Debug endpoint to view stock data structure"""
     try:
-        stock_list = supabase_service.get_stock_list()
-        categories = list(set([item["category"] for item in stock_list]))
+        result = supabase_service.get_stock_list()
         return {
-            "total_items": len(stock_list),
-            "stock_items": stock_list,
-            "sample_item_ids": [item["id"] for item in stock_list[:10]],
-            "categories": categories
+            "supabase_result": result,
+            "result_type": type(result).__name__,
+            "has_success": "success" in result if isinstance(result, dict) else False,
+            "has_data": "data" in result if isinstance(result, dict) else False
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error retrieving stock debug info: {str(e)}")
