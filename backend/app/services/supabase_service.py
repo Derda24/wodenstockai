@@ -19,6 +19,129 @@ class SupabaseService:
             raise ValueError("SUPABASE_URL and SUPABASE_ANON_KEY must be set in environment variables")
         
         self.client: Client = create_client(self.supabase_url, self.supabase_key)
+
+    # -------------------------
+    # Helpers for sales processing
+    # -------------------------
+    def get_recipe_by_name(self, product_name: str) -> Optional[Dict[str, Any]]:
+        """Fetch a recipe by name from Supabase."""
+        try:
+            resp = self.client.table("recipes").select("*").eq("recipe_name", product_name).limit(1).execute()
+            if resp.data:
+                recipe = resp.data[0]
+                ingredients = []
+                try:
+                    ingredients = json.loads(recipe.get("ingredients", "[]"))
+                except Exception:
+                    ingredients = []
+                return {"name": recipe.get("recipe_name", product_name), "ingredients": ingredients}
+            return None
+        except Exception:
+            return None
+
+    def decrement_stock_item(self, item_name: str, amount: float) -> Dict[str, Any]:
+        """Decrement a single stock item by name and record transaction."""
+        try:
+            # Find item by name
+            item_resp = self.client.table("stock_items").select("*").eq("item_name", item_name).limit(1).execute()
+            if not item_resp.data:
+                return {"success": False, "message": f"Stock item '{item_name}' not found"}
+
+            item = item_resp.data[0]
+            current_stock = float(item.get("current_stock", 0.0))
+            new_stock = max(0.0, current_stock - float(amount))
+
+            # Update stock
+            self.client.table("stock_items").update({
+                "current_stock": new_stock,
+                "updated_at": datetime.now().isoformat()
+            }).eq("id", item["id"]).execute()
+
+            # Record transaction
+            self.client.table("stock_transactions").insert({
+                "stock_item_id": item["id"],
+                "transaction_type": "sales_upload",
+                "old_stock": current_stock,
+                "new_stock": new_stock,
+                "change_amount": -float(amount),
+                "reason": "sales_upload",
+                "timestamp": datetime.now().isoformat()
+            }).execute()
+
+            return {"success": True, "name": item_name, "old_stock": current_stock, "new_stock": new_stock}
+        except Exception as e:
+            return {"success": False, "message": str(e)}
+
+    def update_stock_for_product(self, product_name: str, quantity: int) -> Dict[str, Any]:
+        """Update stock for a sold product using its recipe; fallback to direct decrement if no recipe."""
+        # Try recipe-based deduction
+        recipe = self.get_recipe_by_name(product_name)
+        if recipe and recipe.get("ingredients"):
+            consumed = []
+            errors = []
+            for ing in recipe["ingredients"]:
+                ing_name = ing.get("name") or ing.get("ingredient") or ""
+                ing_qty = float(ing.get("quantity", 0)) * int(quantity)
+                if not ing_name or ing_qty <= 0:
+                    continue
+                dec = self.decrement_stock_item(ing_name, ing_qty)
+                if dec.get("success"):
+                    consumed.append({
+                        "name": ing_name,
+                        "consumed": ing_qty,
+                        "old_stock": dec.get("old_stock", None),
+                        "new_stock": dec.get("new_stock", None)
+                    })
+                else:
+                    errors.append(dec.get("message", f"Failed to decrement {ing_name}"))
+
+            if errors:
+                return {"success": False, "message": "Some ingredients failed", "errors": errors, "consumed": consumed}
+            return {"success": True, "message": f"Stock updated for {quantity}x {product_name}", "consumed": consumed}
+
+        # Fallback: treat product itself as a stock item (ready-made)
+        dec = self.decrement_stock_item(product_name, float(quantity))
+        if dec.get("success"):
+            return {"success": True, "message": f"Direct stock decrement for {product_name}", "consumed": [{"name": product_name, "consumed": quantity}]}
+        return {"success": False, "message": dec.get("message", f"Product {product_name} not found")}
+
+    def process_sales_excel(self, excel_file_path: str) -> Dict[str, Any]:
+        """Read an Excel file of sales and update stock accordingly."""
+        try:
+            import pandas as pd
+
+            df = pd.read_excel(excel_file_path)
+            if df is None or df.empty:
+                return {"success": False, "message": "Excel file is empty"}
+
+            processed = []
+            errors = []
+
+            for idx, row in df.iterrows():
+                try:
+                    product_name = str(row.get('Product', row.get('Ürün', row.get('Ürün Adı', '')))).strip()
+                    qty_val = row.get('Quantity', row.get('Miktar', row.get('Adet', 1)))
+                    quantity = int(qty_val) if pd.notna(qty_val) else 0
+                    if not product_name or product_name.lower() == 'nan' or quantity <= 0:
+                        continue
+
+                    res = self.update_stock_for_product(product_name, quantity)
+                    if res.get("success"):
+                        processed.append({"product": product_name, "quantity": quantity, "status": "success"})
+                    else:
+                        errors.append(f"Row {idx + 1}: {res.get('message')}")
+                        processed.append({"product": product_name, "quantity": quantity, "status": "failed", "message": res.get('message')})
+                except Exception as e:
+                    errors.append(f"Row {idx + 1}: {str(e)}")
+
+            return {
+                "success": True,
+                "message": f"Excel processed. {len(processed)} rows handled, {len([p for p in processed if p['status']=='success'])} succeeded.",
+                "processed_sales": processed,
+                "errors": errors
+            }
+        except Exception as e:
+            return {"success": False, "message": f"Error processing Excel: {str(e)}"}
     
     def test_connection(self) -> Dict[str, Any]:
         """Test the Supabase connection"""

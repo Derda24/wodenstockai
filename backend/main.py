@@ -232,11 +232,23 @@ async def upload_sales_excel(
 ):
     """Upload and process daily sales Excel file"""
     try:
-        # TODO: Implement Excel processing with Supabase
-        return {
-            "success": False,
-            "message": "Excel processing not yet implemented with Supabase. Please use manual stock updates for now."
-        }
+        # Validate file type
+        if not file.filename.endswith((".xlsx", ".xls")):
+            raise HTTPException(status_code=400, detail="Only Excel files (.xlsx, .xls) are allowed")
+
+        temp_file_path = f"temp_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{file.filename}"
+        try:
+            with open(temp_file_path, "wb") as buffer:
+                shutil.copyfileobj(file.file, buffer)
+
+            result = supabase_service.process_sales_excel(temp_file_path)
+            if result.get("success"):
+                return result
+            else:
+                raise HTTPException(status_code=400, detail=result.get("message", "Processing failed"))
+        finally:
+            if os.path.exists(temp_file_path):
+                os.remove(temp_file_path)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error processing sales file: {str(e)}")
 
@@ -502,10 +514,14 @@ async def get_stock_debug():
             "supabase_result": result,
             "result_type": type(result).__name__,
             "has_success": "success" in result if isinstance(result, dict) else False,
-            "has_data": "data" in result if isinstance(result, dict) else False
+            "has_data": "data" in result if isinstance(result, dict) else False,
+            "result_keys": list(result.keys()) if isinstance(result, dict) else "Not a dict"
         }
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error retrieving stock debug info: {str(e)}")
+        return {
+            "error": str(e),
+            "error_type": type(e).__name__
+        }
 
 if __name__ == "__main__":
     import uvicorn
