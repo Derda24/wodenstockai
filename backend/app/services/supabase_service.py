@@ -134,8 +134,10 @@ class SupabaseService:
         except Exception as e:
             return {"success": False, "message": f"Error updating stock: {str(e)}"}
     
-    def apply_daily_consumption(self) -> Dict[str, Any]:
-        """Apply daily consumption to all stock items"""
+    def apply_daily_consumption(self, force: bool = False) -> Dict[str, Any]:
+        """Apply daily consumption to all stock items.
+        If force is True, bypass recent manual-update protection and consume anyway.
+        """
         try:
             # Get all stock items
             stock_response = self.client.table("stock_items").select("*").execute()
@@ -157,24 +159,24 @@ class SupabaseService:
                 if daily_amount <= 0:
                     continue
                 
-                # Check if this item was manually updated recently (4 hour protection)
-                manual_response = self.client.table("manual_updates").select("*").eq("stock_item_id", stock_item["id"]).execute()
-                
                 should_skip = False
-                if manual_response.data:
-                    manual_update = manual_response.data[0]
-                    if manual_update.get("manual_update_flag", False):
-                        update_time_str = manual_update.get("timestamp", "")
-                        if update_time_str:
-                            try:
-                                update_time = datetime.fromisoformat(update_time_str.replace('Z', '+00:00'))
-                                cutoff_time = datetime.now() - timedelta(hours=4)
-                                if update_time > cutoff_time:
-                                    print(f"DEBUG: Skipping daily consumption for {stock_item.get('item_name')} due to recent manual update")
-                                    skipped_count += 1
-                                    should_skip = True
-                            except ValueError:
-                                pass
+                if not force:
+                    # Check if this item was manually updated recently (4 hour protection)
+                    manual_response = self.client.table("manual_updates").select("*").eq("stock_item_id", stock_item["id"]).execute()
+                    if manual_response.data:
+                        manual_update = manual_response.data[0]
+                        if manual_update.get("manual_update_flag", False):
+                            update_time_str = manual_update.get("timestamp", "")
+                            if update_time_str:
+                                try:
+                                    update_time = datetime.fromisoformat(update_time_str.replace('Z', '+00:00'))
+                                    cutoff_time = datetime.now() - timedelta(hours=4)
+                                    if update_time > cutoff_time:
+                                        print(f"DEBUG: Skipping daily consumption for {stock_item.get('item_name')} due to recent manual update")
+                                        skipped_count += 1
+                                        should_skip = True
+                                except ValueError:
+                                    pass
                 
                 if should_skip:
                     continue
