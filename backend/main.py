@@ -303,27 +303,32 @@ async def clear_manual_update_flags(username: str = Depends(verify_token)):
 async def get_analysis(period: str = "7d"):
     """Get stock analysis data"""
     try:
-        # Get current stock data for analysis
-        stock_list = supabase_service.get_stock_list()
+        # Use flat list from Supabase
+        stock_list = supabase_service.get_flat_stock_list()
         
-        # Get low stock alerts (real data from stock)
+        # Low stock alerts
         low_stock_alerts = []
         for item in stock_list:
-            if item["current_stock"] <= item["min_stock"]:
+            if float(item.get("current_stock", 0)) <= float(item.get("min_stock", 0)):
                 low_stock_alerts.append({
-                    "name": item["name"],
-                    "current": item["current_stock"],
-                    "min": item["min_stock"],
+                    "name": item.get("name", ""),
+                    "current": item.get("current_stock", 0),
+                    "min": item.get("min_stock", 0),
                     "unit": item.get("unit", "")
                 })
         
-        # For now, return basic analysis - we can enhance this later with Supabase analytics
+        # Basic category breakdown by counts
+        category_breakdown: dict = {}
+        for item in stock_list:
+            cat = item.get("category", "unknown")
+            category_breakdown[cat] = category_breakdown.get(cat, 0) + 1
+        
         return {
-            "totalSales": 0,  # TODO: Implement sales analytics with Supabase
-            "topProducts": [],  # TODO: Implement with Supabase
+            "totalSales": 0,  # Placeholder
+            "topProducts": [],  # Placeholder
             "lowStockAlerts": low_stock_alerts,
-            "dailyTrends": [],  # TODO: Implement with Supabase
-            "categoryBreakdown": {}  # TODO: Implement with Supabase
+            "dailyTrends": [],  # Placeholder
+            "categoryBreakdown": category_breakdown
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error retrieving analysis: {str(e)}")
@@ -332,29 +337,29 @@ async def get_analysis(period: str = "7d"):
 async def get_recommendations():
     """Get stock recommendations based on current levels"""
     try:
-        stock_list = supabase_service.get_stock_list()
+        stock_list = supabase_service.get_flat_stock_list()
         recommendations = []
         
         for item in stock_list:
-            if item["current_stock"] == 0:
+            if float(item.get("current_stock", 0)) == 0:
                 recommendations.append({
                     "id": f"rec_{len(recommendations) + 1}",
                     "type": "stock",
-                    "title": f"Urgent Restock: {item['name']}",
-                    "description": f"Urgent: {item['name']} is out of stock and needs immediate restocking",
+                    "title": f"Urgent Restock: {item.get('name','')}",
+                    "description": f"Urgent: {item.get('name','')} is out of stock and needs immediate restocking",
                     "impact": "high",
-                    "implementation": f"Order {item['name']} immediately from suppliers",
+                    "implementation": f"Order {item.get('name','')} immediately from suppliers",
                     "expectedResult": "Prevent business disruption and maintain customer satisfaction",
                     "priority": 1
                 })
-            elif item["current_stock"] <= item["min_stock"]:
+            elif float(item.get("current_stock", 0)) <= float(item.get("min_stock", 0)):
                 recommendations.append({
                     "id": f"rec_{len(recommendations) + 1}",
                     "type": "stock",
-                    "title": f"Low Stock Alert: {item['name']}",
-                    "description": f"Low stock alert: {item['name']} is below minimum level ({item['current_stock']} {item.get('unit', 'units')} remaining)",
+                    "title": f"Low Stock Alert: {item.get('name','')}",
+                    "description": f"Low stock alert: {item.get('name','')} is below minimum level ({item.get('current_stock',0)} {item.get('unit', 'units')} remaining)",
                     "impact": "medium",
-                    "implementation": f"Plan restocking for {item['name']} within the next few days",
+                    "implementation": f"Plan restocking for {item.get('name','')} within the next few days",
                     "expectedResult": "Maintain optimal stock levels and prevent future stockouts",
                     "priority": 2
                 })

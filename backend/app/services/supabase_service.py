@@ -186,6 +186,24 @@ class SupabaseService:
                 
         except Exception as e:
             return {"success": False, "message": f"Error fetching stock list: {str(e)}"}
+
+    def get_flat_stock_list(self) -> List[Dict[str, Any]]:
+        """Return a flat list of stock items for analysis/recommendations."""
+        result = self.get_stock_list()
+        flat: List[Dict[str, Any]] = []
+        if isinstance(result, dict) and result.get("success"):
+            data = result.get("data", {})
+            for category, items in data.get("stock_data", {}).items():
+                for name, item in items.items():
+                    flat.append({
+                        "id": item.get("material_id") or f"{category}_{name}",
+                        "name": name,
+                        "category": category,
+                        "current_stock": item.get("current_stock", 0.0),
+                        "min_stock": item.get("min_stock", 0.0),
+                        "unit": item.get("unit", ""),
+                    })
+        return flat
     
     def update_stock_manually(self, material_id: str, new_stock: float, reason: str) -> Dict[str, Any]:
         """Update stock manually in Supabase"""
