@@ -5,7 +5,7 @@ import os
 from dotenv import load_dotenv
 from typing import Dict, List, Optional, Any
 import json
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 # Load environment variables
 load_dotenv()
@@ -54,7 +54,7 @@ class SupabaseService:
             # Update stock
             self.client.table("stock_items").update({
                 "current_stock": new_stock,
-                "updated_at": datetime.now().isoformat()
+                "updated_at": datetime.now(timezone.utc).isoformat()
             }).eq("id", item["id"]).execute()
 
             # Record transaction
@@ -65,7 +65,7 @@ class SupabaseService:
                 "new_stock": new_stock,
                 "change_amount": -float(amount),
                 "reason": "sales_upload",
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now(timezone.utc).isoformat()
             }).execute()
 
             return {"success": True, "name": item_name, "old_stock": current_stock, "new_stock": new_stock}
@@ -204,7 +204,7 @@ class SupabaseService:
             # Update the stock
             update_response = self.client.table("stock_items").update({
                 "current_stock": float(new_stock),
-                "updated_at": datetime.now().isoformat()
+                "updated_at": datetime.now(timezone.utc).isoformat()
             }).eq("material_id", material_id).execute()
             
             if update_response.data:
@@ -216,7 +216,7 @@ class SupabaseService:
                     "new_stock": float(new_stock),
                     "change_amount": float(new_stock) - old_stock,
                     "reason": reason,
-                    "timestamp": datetime.now().isoformat()
+                    "timestamp": datetime.now(timezone.utc).isoformat()
                 }
                 
                 self.client.table("stock_transactions").insert(transaction_data).execute()
@@ -228,7 +228,7 @@ class SupabaseService:
                     "new_stock": float(new_stock),
                     "reason": reason,
                     "manual_update_flag": True,
-                    "timestamp": datetime.now().isoformat()
+                    "timestamp": datetime.now(timezone.utc).isoformat()
                 }
                 
                 # Check if manual update record exists
@@ -293,7 +293,7 @@ class SupabaseService:
                             if update_time_str:
                                 try:
                                     update_time = datetime.fromisoformat(update_time_str.replace('Z', '+00:00'))
-                                    cutoff_time = datetime.now() - timedelta(hours=4)
+                                    cutoff_time = datetime.now(timezone.utc) - timedelta(hours=4)
                                     if update_time > cutoff_time:
                                         print(f"DEBUG: Skipping daily consumption for {stock_item.get('item_name')} due to recent manual update")
                                         skipped_count += 1
@@ -311,7 +311,7 @@ class SupabaseService:
                 # Update stock
                 self.client.table("stock_items").update({
                     "current_stock": new_stock,
-                    "updated_at": datetime.now().isoformat()
+                    "updated_at": datetime.now(timezone.utc).isoformat()
                 }).eq("id", stock_item["id"]).execute()
                 
                 # Create transaction record
@@ -322,7 +322,7 @@ class SupabaseService:
                     "new_stock": new_stock,
                     "change_amount": -daily_amount,
                     "reason": "daily_consumption",
-                    "timestamp": datetime.now().isoformat()
+                    "timestamp": datetime.now(timezone.utc).isoformat()
                 }
                 
                 self.client.table("stock_transactions").insert(transaction_data).execute()
