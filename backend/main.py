@@ -257,24 +257,38 @@ async def apply_daily_consumption(force: bool = False):
     """Apply daily consumption for raw materials based on daily_usage_config.json"""
     try:
         result = supabase_service.apply_daily_consumption(force=force)
-        if result["success"]:
+        # Debug log
+        print(f"DEBUG: Daily consumption apply(force={force}) result: {result}")
+        if isinstance(result, dict) and result.get("success"):
             return result
-        else:
-            raise HTTPException(status_code=400, detail=result["message"])
+        # If result is a dict but failed, surface its message
+        if isinstance(result, dict):
+            raise HTTPException(status_code=400, detail=result.get("message", "Unknown error"))
+        # Fallback
+        raise HTTPException(status_code=400, detail="Unknown error applying daily consumption")
+    except HTTPException:
+        # Preserve original HTTP errors
+        raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error applying daily consumption: {str(e)}")
+        # Include repr for better diagnostics
+        raise HTTPException(status_code=500, detail=f"Error applying daily consumption: {repr(e)}")
 
 @app.post("/api/daily-consumption/force")
 async def force_daily_consumption():
     """Force apply daily consumption regardless of recent manual updates"""
     try:
         result = supabase_service.apply_daily_consumption(force=True)
-        if result["success"]:
+        # Debug log
+        print(f"DEBUG: Daily consumption apply(force=True) result: {result}")
+        if isinstance(result, dict) and result.get("success"):
             return result
-        else:
-            raise HTTPException(status_code=400, detail=result["message"])
+        if isinstance(result, dict):
+            raise HTTPException(status_code=400, detail=result.get("message", "Unknown error"))
+        raise HTTPException(status_code=400, detail="Unknown error applying daily consumption")
+    except HTTPException:
+        raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error applying daily consumption: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error applying daily consumption: {repr(e)}")
 
 @app.post("/api/stock/clear-manual-flags")
 async def clear_manual_update_flags(username: str = Depends(verify_token)):
