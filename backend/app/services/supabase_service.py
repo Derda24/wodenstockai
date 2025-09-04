@@ -293,6 +293,9 @@ class SupabaseService:
                             if update_time_str:
                                 try:
                                     update_time = datetime.fromisoformat(update_time_str.replace('Z', '+00:00'))
+                                    # Normalize to timezone-aware UTC if missing tzinfo
+                                    if update_time.tzinfo is None:
+                                        update_time = update_time.replace(tzinfo=timezone.utc)
                                     cutoff_time = datetime.now(timezone.utc) - timedelta(hours=4)
                                     if update_time > cutoff_time:
                                         print(f"DEBUG: Skipping daily consumption for {stock_item.get('item_name')} due to recent manual update")
