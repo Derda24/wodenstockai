@@ -26,7 +26,21 @@ class SupabaseService:
     def get_recipe_by_name(self, product_name: str) -> Optional[Dict[str, Any]]:
         """Fetch a recipe by name from Supabase."""
         try:
+            # Try exact match first
             resp = self.client.table("recipes").select("*").eq("recipe_name", product_name).limit(1).execute()
+            
+            # If not found, try case-insensitive match
+            if not resp.data:
+                resp = self.client.table("recipes").select("*").ilike("recipe_name", product_name).limit(1).execute()
+            
+            # If still not found, try fuzzy matching
+            if not resp.data:
+                all_recipes_resp = self.client.table("recipes").select("recipe_name").execute()
+                if all_recipes_resp.data:
+                    best_match = self._find_best_match(product_name, [recipe["recipe_name"] for recipe in all_recipes_resp.data])
+                    if best_match:
+                        resp = self.client.table("recipes").select("*").eq("recipe_name", best_match).limit(1).execute()
+            
             if resp.data:
                 recipe = resp.data[0]
                 ingredients = []
@@ -42,10 +56,27 @@ class SupabaseService:
     def decrement_stock_item(self, item_name: str, amount: float) -> Dict[str, Any]:
         """Decrement a single stock item by name and record transaction."""
         try:
-            # Find item by name
+            # Try exact match first
             item_resp = self.client.table("stock_items").select("*").eq("item_name", item_name).limit(1).execute()
+            
+            # If not found, try case-insensitive match
             if not item_resp.data:
-                return {"success": False, "message": f"Stock item '{item_name}' not found"}
+                item_resp = self.client.table("stock_items").select("*").ilike("item_name", item_name).limit(1).execute()
+            
+            # If still not found, try fuzzy matching
+            if not item_resp.data:
+                # Get all items for fuzzy matching
+                all_items_resp = self.client.table("stock_items").select("id, item_name").execute()
+                if all_items_resp.data:
+                    best_match = self._find_best_match(item_name, [item["item_name"] for item in all_items_resp.data])
+                    if best_match:
+                        item_resp = self.client.table("stock_items").select("*").eq("item_name", best_match).limit(1).execute()
+            
+            if not item_resp.data:
+                # Get some example names for better error message
+                examples_resp = self.client.table("stock_items").select("item_name").limit(5).execute()
+                examples = [item["item_name"] for item in examples_resp.data] if examples_resp.data else []
+                return {"success": False, "message": f"Stock item '{item_name}' not found. Available items include: {', '.join(examples)}"}
 
             item = item_resp.data[0]
             current_stock = float(item.get("current_stock", 0.0))
@@ -71,6 +102,40 @@ class SupabaseService:
             return {"success": True, "name": item_name, "old_stock": current_stock, "new_stock": new_stock}
         except Exception as e:
             return {"success": False, "message": str(e)}
+    
+    def _find_best_match(self, target: str, candidates: List[str]) -> Optional[str]:
+        """Find the best fuzzy match for a target string among candidates."""
+        if not candidates:
+            return None
+        
+        target_lower = target.lower().strip()
+        
+        # Try exact case-insensitive match first
+        for candidate in candidates:
+            if candidate.lower().strip() == target_lower:
+                return candidate
+        
+        # Try partial matches
+        for candidate in candidates:
+            candidate_lower = candidate.lower().strip()
+            if target_lower in candidate_lower or candidate_lower in target_lower:
+                return candidate
+        
+        # Try word-based matching
+        target_words = set(target_lower.split())
+        best_match = None
+        best_score = 0
+        
+        for candidate in candidates:
+            candidate_words = set(candidate.lower().strip().split())
+            common_words = target_words.intersection(candidate_words)
+            if common_words:
+                score = len(common_words) / max(len(target_words), len(candidate_words))
+                if score > best_score:
+                    best_score = score
+                    best_match = candidate
+        
+        return best_match if best_score > 0.3 else None
 
     def update_stock_for_product(self, product_name: str, quantity: int) -> Dict[str, Any]:
         """Update stock for a sold product using its recipe; fallback to direct decrement if no recipe."""
