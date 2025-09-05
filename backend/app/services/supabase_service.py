@@ -181,6 +181,8 @@ class SupabaseService:
 
             processed = []
             errors = []
+            sales_data = {}  # Group by date for sales_history
+            total_sales = 0
 
             for idx, row in df.iterrows():
                 try:
@@ -193,17 +195,42 @@ class SupabaseService:
                     res = self.update_stock_for_product(product_name, quantity)
                     if res.get("success"):
                         processed.append({"product": product_name, "quantity": quantity, "status": "success"})
+                        
+                        # Track sales data for analysis
+                        today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+                        if today not in sales_data:
+                            sales_data[today] = {"items": [], "total_quantity": 0}
+                        
+                        sales_data[today]["items"].append({
+                            "product": product_name,
+                            "quantity": quantity
+                        })
+                        sales_data[today]["total_quantity"] += quantity
+                        total_sales += quantity
                     else:
                         errors.append(f"Row {idx + 1}: {res.get('message')}")
                         processed.append({"product": product_name, "quantity": quantity, "status": "failed", "message": res.get('message')})
                 except Exception as e:
                     errors.append(f"Row {idx + 1}: {str(e)}")
 
+            # Store sales data in sales_history table
+            for date, data in sales_data.items():
+                try:
+                    self.client.table("sales_history").upsert({
+                        "date": date,
+                        "total_sales": data["total_quantity"],
+                        "items_sold": json.dumps(data["items"]),
+                        "created_at": datetime.now(timezone.utc).isoformat()
+                    }).execute()
+                except Exception as e:
+                    print(f"Warning: Could not store sales data for {date}: {str(e)}")
+
             return {
                 "success": True,
                 "message": f"Excel processed. {len(processed)} rows handled, {len([p for p in processed if p['status']=='success'])} succeeded.",
                 "processed_sales": processed,
-                "errors": errors
+                "errors": errors,
+                "total_sales": total_sales
             }
         except Exception as e:
             return {"success": False, "message": f"Error processing Excel: {str(e)}"}
@@ -269,6 +296,71 @@ class SupabaseService:
                         "unit": item.get("unit", ""),
                     })
         return flat
+    
+    def get_sales_data(self, days: int = 7) -> Dict[str, Any]:
+        """Get sales data for analysis from sales_history table."""
+        try:
+            # Calculate date range
+            end_date = datetime.now(timezone.utc)
+            start_date = end_date - timedelta(days=days)
+            
+            # Query sales history
+            response = self.client.table("sales_history").select("*").gte("date", start_date.strftime("%Y-%m-%d")).lte("date", end_date.strftime("%Y-%m-%d")).order("date", desc=False).execute()
+            
+            if not response.data:
+                return {"total_sales": 0, "daily_trends": [], "top_products": [], "category_breakdown": {}}
+            
+            total_sales = 0
+            daily_trends = []
+            product_counts = {}
+            category_counts = {}
+            
+            for record in response.data:
+                date = record.get("date", "")
+                sales = float(record.get("total_sales", 0))
+                total_sales += sales
+                
+                daily_trends.append({
+                    "date": date,
+                    "total_sales": sales,
+                    "products_sold": sales,  # Using quantity as products sold
+                    "trend": "up" if sales > 0 else "stable"
+                })
+                
+                # Parse items_sold JSON
+                try:
+                    items = json.loads(record.get("items_sold", "[]"))
+                    for item in items:
+                        product = item.get("product", "")
+                        quantity = int(item.get("quantity", 0))
+                        
+                        if product:
+                            product_counts[product] = product_counts.get(product, 0) + quantity
+                            
+                            # Try to determine category from stock items
+                            stock_items = self.get_flat_stock_list()
+                            for stock_item in stock_items:
+                                if stock_item.get("name", "").lower() == product.lower():
+                                    category = stock_item.get("category", "unknown")
+                                    category_counts[category] = category_counts.get(category, 0) + quantity
+                                    break
+                except Exception as e:
+                    print(f"Warning: Could not parse items_sold for {date}: {str(e)}")
+            
+            # Get top products
+            top_products = sorted(product_counts.items(), key=lambda x: x[1], reverse=True)[:5]
+            top_products_list = [{"name": name, "quantity": qty} for name, qty in top_products]
+            
+            return {
+                "total_sales": total_sales,
+                "daily_trends": daily_trends,
+                "top_products": top_products_list,
+                "category_breakdown": category_counts
+            }
+            
+        except Exception as e:
+            print(f"Error getting sales data: {str(e)}")
+            return {"total_sales": 0, "daily_trends": [], "top_products": [], "category_breakdown": {}}
     
     def update_stock_manually(self, material_id: str, new_stock: float, reason: str) -> Dict[str, Any]:
         """Update stock manually in Supabase"""

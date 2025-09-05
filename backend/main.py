@@ -303,7 +303,18 @@ async def clear_manual_update_flags(username: str = Depends(verify_token)):
 async def get_analysis(period: str = "7d"):
     """Get stock analysis data"""
     try:
-        # Use flat list from Supabase
+        # Parse period (default to 7 days)
+        days = 7
+        if period.endswith('d'):
+            try:
+                days = int(period[:-1])
+            except:
+                days = 7
+        
+        # Get sales data from Supabase
+        sales_data = supabase_service.get_sales_data(days)
+        
+        # Get stock data for low stock alerts
         stock_list = supabase_service.get_flat_stock_list()
         
         # Low stock alerts
@@ -317,18 +328,12 @@ async def get_analysis(period: str = "7d"):
                     "unit": item.get("unit", "")
                 })
         
-        # Basic category breakdown by counts
-        category_breakdown: dict = {}
-        for item in stock_list:
-            cat = item.get("category", "unknown")
-            category_breakdown[cat] = category_breakdown.get(cat, 0) + 1
-        
         return {
-            "totalSales": 0,  # Placeholder
-            "topProducts": [],  # Placeholder
+            "totalSales": sales_data.get("total_sales", 0),
+            "topProducts": sales_data.get("top_products", []),
             "lowStockAlerts": low_stock_alerts,
-            "dailyTrends": [],  # Placeholder
-            "categoryBreakdown": category_breakdown
+            "dailyTrends": sales_data.get("daily_trends", []),
+            "categoryBreakdown": sales_data.get("category_breakdown", {})
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error retrieving analysis: {str(e)}")
