@@ -84,9 +84,27 @@ export default function StockList() {
   const updateStock = async (itemId: string, change: number) => {
     try {
       const item = stockData.find(i => i.id === itemId);
-      if (!item) return;
+      if (!item) {
+        console.error('Item not found:', itemId);
+        alert('Item not found in local data');
+        return;
+      }
+
+      // Check if item can be edited
+      if (!item.can_edit) {
+        alert(`Cannot edit ${item.name}: ${item.edit_reason || 'Editing is disabled'}`);
+        return;
+      }
 
       const newStock = Math.max(0, item.current_stock + change);
+      
+      console.log(`Updating stock for ${item.name}:`, {
+        itemId,
+        currentStock: item.current_stock,
+        change,
+        newStock,
+        canEdit: item.can_edit
+      });
       
       const formData = new FormData();
       formData.append('material_id', itemId);
@@ -99,26 +117,38 @@ export default function StockList() {
         headers['Authorization'] = `Bearer ${token}`;
       }
 
+      console.log('Sending request with headers:', headers);
+
       const response = await fetch('https://wodenstockai.onrender.com/api/stock/update', {
         method: 'POST',
         headers,
         body: formData,
       });
 
+      console.log('Response status:', response.status);
+      console.log('Response headers:', Object.fromEntries(response.headers.entries()));
+
       if (response.ok) {
+        const result = await response.json();
+        console.log('Update successful:', result);
+        
         // Update local state
         setStockData((prev: StockItem[]) => prev.map((item: StockItem) => 
           item.id === itemId 
             ? { ...item, current_stock: newStock }
             : item
         ));
+        
+        // Show success message
+        alert(`Stock updated successfully for ${item.name}! New stock: ${newStock} ${item.unit}`);
       } else {
         const errorData = await response.json();
-        alert(errorData.message || 'Failed to update stock');
+        console.error('Update failed:', errorData);
+        alert(`Failed to update stock: ${errorData.message || 'Unknown error'}`);
       }
     } catch (error) {
       console.error('Error updating stock:', error);
-      alert('Error updating stock. Please try again.');
+      alert(`Error updating stock: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   };
 

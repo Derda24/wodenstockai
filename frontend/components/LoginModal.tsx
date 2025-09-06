@@ -169,9 +169,16 @@ export default function LoginModal({ onLogin }: LoginModalProps) {
                 <Shield className="w-5 h-5 text-blue-400" />
                 <p className="text-sm text-gray-300 font-medium">Admin Access Required</p>
               </div>
-              <p className="text-xs text-gray-400">
-                Authorized users only. Contact system administrator for access.
-              </p>
+              <div className="space-y-2">
+                <p className="text-xs text-gray-400">
+                  Authorized users only. Contact system administrator for access.
+                </p>
+                <div className="text-xs text-gray-500">
+                  <p>Demo credentials:</p>
+                  <p>Username: <span className="font-mono text-gray-300">derda2412</span></p>
+                  <p>Password: <span className="font-mono text-gray-300">woden2025</span></p>
+                </div>
+              </div>
             </div>
           </div>
 
