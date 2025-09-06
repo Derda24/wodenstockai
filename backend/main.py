@@ -164,8 +164,10 @@ async def get_stock():
             
             for category, items in stock_data.get("stock_data", {}).items():
                 for item_name, item_data in items.items():
+                    # Use the material_id from the database instead of constructing it
+                    material_id = item_data.get("material_id", f"{category}_{item_name}")
                     stock_list.append({
-                        "id": f"{category}_{item_name}",
+                        "id": material_id,  # Use the actual material_id from database
                         "name": item_name,
                         "category": category,
                         "current_stock": item_data.get("current_stock", 0),
@@ -442,6 +444,154 @@ async def get_alerts():
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error retrieving alerts: {str(e)}")
+
+@app.get("/api/enhanced-alerts")
+async def get_enhanced_alerts():
+    """Get enhanced stock alerts with urgency scoring"""
+    try:
+        result = supabase_service.get_enhanced_stock_alerts()
+        if result["success"]:
+            return result
+        else:
+            raise HTTPException(status_code=400, detail=result["message"])
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error retrieving enhanced alerts: {str(e)}")
+
+@app.get("/api/profitability-analysis")
+async def get_profitability_analysis():
+    """Get profitability analysis for all products"""
+    try:
+        result = supabase_service.get_profitability_analysis()
+        if result["success"]:
+            return result
+        else:
+            raise HTTPException(status_code=400, detail=result["message"])
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error retrieving profitability analysis: {str(e)}")
+
+@app.get("/api/smart-reorder")
+async def get_smart_reorder_suggestions():
+    """Get AI-powered smart reorder suggestions"""
+    try:
+        result = supabase_service.get_smart_reorder_suggestions()
+        if result["success"]:
+            return result
+        else:
+            raise HTTPException(status_code=400, detail=result["message"])
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error retrieving smart reorder suggestions: {str(e)}")
+
+@app.get("/api/seasonal-analysis")
+async def get_seasonal_analysis():
+    """Get seasonal analysis and trend detection"""
+    try:
+        result = supabase_service.get_seasonal_analysis()
+        if result["success"]:
+            return result
+        else:
+            raise HTTPException(status_code=400, detail=result["message"])
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error retrieving seasonal analysis: {str(e)}")
+
+@app.get("/api/ai-insights")
+async def get_ai_insights():
+    """Get comprehensive AI insights combining all analysis features"""
+    try:
+        # Get all analysis data
+        enhanced_alerts = supabase_service.get_enhanced_stock_alerts()
+        profitability = supabase_service.get_profitability_analysis()
+        smart_reorder = supabase_service.get_smart_reorder_suggestions()
+        seasonal = supabase_service.get_seasonal_analysis()
+        
+        # Combine insights
+        insights = {
+            "success": True,
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "enhanced_alerts": enhanced_alerts if enhanced_alerts["success"] else None,
+            "profitability_analysis": profitability if profitability["success"] else None,
+            "smart_reorder_suggestions": smart_reorder if smart_reorder["success"] else None,
+            "seasonal_analysis": seasonal if seasonal["success"] else None,
+            "summary": {
+                "critical_alerts": enhanced_alerts.get("summary", {}).get("critical_alerts", 0) if enhanced_alerts["success"] else 0,
+                "total_revenue": profitability.get("summary", {}).get("total_revenue", 0) if profitability["success"] else 0,
+                "total_profit": profitability.get("summary", {}).get("total_profit", 0) if profitability["success"] else 0,
+                "critical_reorders": smart_reorder.get("summary", {}).get("critical_items", 0) if smart_reorder["success"] else 0,
+                "trend_direction": seasonal.get("trend_analysis", {}).get("overall_trend", "unknown") if seasonal["success"] else "unknown"
+            }
+        }
+        
+        return insights
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error retrieving AI insights: {str(e)}")
+
+@app.post("/api/pricing-data")
+async def save_pricing_data(request: dict):
+    """Save pricing data for products to improve profitability analysis"""
+    try:
+        product_name = request.get("product_name")
+        selling_price = request.get("selling_price")
+        ingredient_cost = request.get("ingredient_cost")
+        
+        if not all([product_name, selling_price, ingredient_cost]):
+            raise HTTPException(status_code=400, detail="Missing required fields: product_name, selling_price, ingredient_cost")
+        
+        success = supabase_service.save_pricing_data(product_name, float(selling_price), float(ingredient_cost))
+        
+        if success:
+            return {"success": True, "message": f"Pricing data saved for {product_name}"}
+        else:
+            raise HTTPException(status_code=500, detail="Failed to save pricing data")
+            
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error saving pricing data: {str(e)}")
+
+@app.get("/api/learning-insights")
+async def get_learning_insights():
+    """Get insights about how the system is learning from Excel uploads"""
+    try:
+        # Get recent sales history with learning data
+        response = supabase_service.client.table("sales_history").select("*").order("created_at", desc=True).limit(10).execute()
+        
+        learning_insights = {
+            "recent_uploads": len(response.data),
+            "total_learning_data": 0,
+            "system_improvements": [],
+            "new_products_detected": [],
+            "recommendations": []
+        }
+        
+        for record in response.data:
+            learning_data = record.get("learning_data")
+            if learning_data:
+                try:
+                    import json
+                    data = json.loads(learning_data)
+                    learning_insights["total_learning_data"] += 1
+                    
+                    if data.get("new_products"):
+                        learning_insights["new_products_detected"].extend(data["new_products"])
+                    
+                    if data.get("system_improvements"):
+                        learning_insights["system_improvements"].extend(data["system_improvements"])
+                        
+                except:
+                    pass
+        
+        # Remove duplicates
+        learning_insights["new_products_detected"] = list(set(learning_insights["new_products_detected"]))[:10]
+        learning_insights["system_improvements"] = list(set(learning_insights["system_improvements"]))[:5]
+        
+        # Generate recommendations
+        if learning_insights["new_products_detected"]:
+            learning_insights["recommendations"] = [
+                f"Consider adding '{product}' to your inventory" 
+                for product in learning_insights["new_products_detected"][:3]
+            ]
+        
+        return learning_insights
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error retrieving learning insights: {str(e)}")
 
 @app.get("/api/summary")
 async def get_summary():

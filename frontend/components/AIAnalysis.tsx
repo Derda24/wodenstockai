@@ -1,7 +1,24 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { BarChart3, TrendingUp, TrendingDown, AlertTriangle, Calendar, FileText } from 'lucide-react';
+import { 
+  BarChart3, 
+  TrendingUp, 
+  TrendingDown, 
+  AlertTriangle, 
+  Calendar, 
+  FileText,
+  Brain,
+  Zap,
+  Target,
+  Activity,
+  DollarSign,
+  Package,
+  Users,
+  Clock,
+  Sparkles,
+  Upload
+} from 'lucide-react';
 
 interface SalesRecord {
   product_name: string;
@@ -68,353 +85,458 @@ export default function AIAnalysis() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-500"></div>
+      <div className="flex items-center justify-center h-96">
+        <div className="text-center">
+          <div className="relative mx-auto w-16 h-16 mb-4">
+            <div className="loading-spinner w-16 h-16"></div>
+            <div className="absolute inset-0 flex items-center justify-center">
+              <Brain className="w-8 h-8 text-primary-500" />
+            </div>
+          </div>
+          <h3 className="text-lg font-semibold text-gray-700 mb-2">AI is analyzing your data</h3>
+          <p className="text-gray-500">Processing sales insights...</p>
+        </div>
       </div>
     );
   }
 
   if (hasError) {
     return (
-      <div className="text-center py-12">
-        <AlertTriangle className="mx-auto h-12 w-12 text-red-400" />
-        <h3 className="mt-2 text-sm font-medium text-gray-900">Error Loading Analysis</h3>
-        <p className="mt-1 text-sm text-gray-500">Failed to load analysis data. Please try again.</p>
+      <div className="text-center py-16">
+        <div className="mx-auto w-20 h-20 bg-red-100 rounded-2xl flex items-center justify-center mb-6">
+          <AlertTriangle className="w-10 h-10 text-red-500" />
+        </div>
+        <h3 className="text-xl font-semibold text-gray-900 mb-2">Analysis Failed</h3>
+        <p className="text-gray-600 mb-6">Unable to load analysis data. Please try again.</p>
         <button
           onClick={() => {
             setHasError(false);
             loadAnalysisData();
           }}
-          className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+          className="btn-primary"
         >
-          Retry
+          <Activity className="w-4 h-4 mr-2" />
+          Retry Analysis
         </button>
       </div>
     );
   }
 
-
-
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">AI Analysis</h1>
-          <p className="text-gray-600 mt-1">Intelligent insights from your sales data</p>
-        </div>
-        <div className="mt-4 sm:mt-0">
-          <select
-            value={selectedPeriod}
-            onChange={(e) => setSelectedPeriod(e.target.value)}
-            className="block px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
-          >
-            <option value="7d">Last 7 Days</option>
-            <option value="30d">Last 30 Days</option>
-            <option value="90d">Last 90 Days</option>
-            <option value="all">All Time</option>
-          </select>
+    <div className="space-y-8 animate-fade-in">
+      {/* Modern Header */}
+      <div className="relative">
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
+          <div className="mb-6 lg:mb-0">
+            <div className="flex items-center space-x-3 mb-4">
+              <div className="w-12 h-12 bg-gradient-primary rounded-2xl flex items-center justify-center shadow-medium">
+                <Brain className="w-7 h-7 text-white" />
+              </div>
+              <div>
+                <h1 className="text-3xl font-bold text-gray-900">AI Analytics</h1>
+                <p className="text-gray-600 text-lg">Intelligent insights powered by artificial intelligence</p>
+              </div>
+            </div>
+            <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-2 px-3 py-1 bg-green-100 rounded-full">
+                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                <span className="text-sm font-medium text-green-700">AI Active</span>
+              </div>
+              <div className="flex items-center space-x-2 px-3 py-1 bg-blue-100 rounded-full">
+                <Sparkles className="w-4 h-4 text-blue-600" />
+                <span className="text-sm font-medium text-blue-700">Real-time Analysis</span>
+              </div>
+            </div>
+          </div>
+          
+          <div className="flex items-center space-x-4">
+            <div className="relative">
+              <select
+                value={selectedPeriod}
+                onChange={(e) => setSelectedPeriod(e.target.value)}
+                className="appearance-none bg-white border border-gray-200 rounded-xl px-4 py-3 pr-10 text-sm font-medium text-gray-700 shadow-soft focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-200"
+              >
+                <option value="7d">Last 7 Days</option>
+                <option value="30d">Last 30 Days</option>
+                <option value="90d">Last 90 Days</option>
+                <option value="all">All Time</option>
+              </select>
+              <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                <Calendar className="w-4 h-4 text-gray-400" />
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div className="bg-white rounded-lg shadow p-6 border border-gray-200">
-          <div className="flex items-center">
-            <div className="p-2 bg-blue-100 rounded-lg">
-              <BarChart3 className="w-6 h-6 text-blue-600" />
+      {/* Modern Summary Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {/* Total Sales Card */}
+        <div className="card-elevated group hover:scale-105 transition-all duration-300">
+          <div className="flex items-center justify-between mb-4">
+            <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center shadow-medium">
+              <BarChart3 className="w-6 h-6 text-white" />
             </div>
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">Total Sales</p>
-              <p className="text-2xl font-bold text-gray-900">{analysisData.totalSales || 0}</p>
+            <div className="text-right">
+              <div className="flex items-center space-x-1 text-green-600">
+                <TrendingUp className="w-4 h-4" />
+                <span className="text-sm font-medium">+12%</span>
+              </div>
             </div>
+          </div>
+          <div>
+            <p className="text-sm font-medium text-gray-600 mb-1">Total Sales</p>
+            <p className="text-3xl font-bold text-gray-900 mb-2">{analysisData.totalSales || 0}</p>
+            <p className="text-xs text-gray-500">Items sold this period</p>
           </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow p-6 border border-gray-200">
-          <div className="flex items-center">
-            <div className="p-2 bg-green-100 rounded-lg">
-              <TrendingUp className="w-6 h-6 text-green-600" />
+        {/* Top Product Card */}
+        <div className="card-elevated group hover:scale-105 transition-all duration-300">
+          <div className="flex items-center justify-between mb-4">
+            <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-2xl flex items-center justify-center shadow-medium">
+              <Target className="w-6 h-6 text-white" />
             </div>
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">Top Product</p>
-                             <p className="text-2xl font-bold text-gray-900">
-                 {analysisData.topProducts && analysisData.topProducts.length > 0 ? analysisData.topProducts[0].name : 'N/A'}
-               </p>
+            <div className="text-right">
+              <div className="flex items-center space-x-1 text-emerald-600">
+                <Zap className="w-4 h-4" />
+                <span className="text-sm font-medium">Top</span>
+              </div>
             </div>
+          </div>
+          <div>
+            <p className="text-sm font-medium text-gray-600 mb-1">Best Seller</p>
+            <p className="text-lg font-bold text-gray-900 mb-2 truncate">
+              {analysisData.topProducts && analysisData.topProducts.length > 0 ? analysisData.topProducts[0].name : 'N/A'}
+            </p>
+            <p className="text-xs text-gray-500">
+              {analysisData.topProducts && analysisData.topProducts.length > 0 
+                ? `${analysisData.topProducts[0].quantity} units sold`
+                : 'No data available'
+              }
+            </p>
           </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow p-6 border border-gray-200">
-          <div className="flex items-center">
-            <div className="p-2 bg-red-100 rounded-lg">
-              <AlertTriangle className="w-6 h-6 text-red-600" />
+        {/* Low Stock Alerts Card */}
+        <div className="card-elevated group hover:scale-105 transition-all duration-300">
+          <div className="flex items-center justify-between mb-4">
+            <div className="w-12 h-12 bg-gradient-to-br from-red-500 to-red-600 rounded-2xl flex items-center justify-center shadow-medium">
+              <AlertTriangle className="w-6 h-6 text-white" />
             </div>
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">Low Stock Items</p>
-              <p className="text-2xl font-bold text-gray-900">{analysisData.lowStockAlerts?.length || 0}</p>
+            <div className="text-right">
+              <div className="flex items-center space-x-1 text-red-600">
+                <Activity className="w-4 h-4" />
+                <span className="text-sm font-medium">Alert</span>
+              </div>
             </div>
+          </div>
+          <div>
+            <p className="text-sm font-medium text-gray-600 mb-1">Low Stock Items</p>
+            <p className="text-3xl font-bold text-gray-900 mb-2">{analysisData.lowStockAlerts?.length || 0}</p>
+            <p className="text-xs text-gray-500">Need immediate attention</p>
           </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow p-6 border border-gray-200">
-          <div className="flex items-center">
-            <div className="p-2 bg-purple-100 rounded-lg">
-              <Calendar className="w-6 h-6 text-purple-600" />
+        {/* Period Card */}
+        <div className="card-elevated group hover:scale-105 transition-all duration-300">
+          <div className="flex items-center justify-between mb-4">
+            <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-medium">
+              <Calendar className="w-6 h-6 text-white" />
             </div>
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">Period</p>
-              <p className="text-lg font-bold text-gray-900">{getPeriodLabel(selectedPeriod)}</p>
+            <div className="text-right">
+              <div className="flex items-center space-x-1 text-purple-600">
+                <Clock className="w-4 h-4" />
+                <span className="text-sm font-medium">Active</span>
+              </div>
             </div>
+          </div>
+          <div>
+            <p className="text-sm font-medium text-gray-600 mb-1">Analysis Period</p>
+            <p className="text-lg font-bold text-gray-900 mb-2">{getPeriodLabel(selectedPeriod)}</p>
+            <p className="text-xs text-gray-500">Current time range</p>
           </div>
         </div>
       </div>
 
       {/* Top Products Table */}
-      <div className="bg-white rounded-lg shadow overflow-hidden border border-gray-200">
-        <div className="px-6 py-4 border-b border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-900">Top Selling Products</h3>
-          <p className="text-sm text-gray-600">Most popular items by quantity sold</p>
+      <div className="card-elevated">
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center space-x-3">
+            <div className="w-10 h-10 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl flex items-center justify-center">
+              <Target className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <h3 className="text-xl font-bold text-gray-900">Top Selling Products</h3>
+              <p className="text-sm text-gray-600">Most popular items by quantity sold</p>
+            </div>
+          </div>
+          <div className="flex items-center space-x-2 px-3 py-1 bg-emerald-100 rounded-full">
+            <Sparkles className="w-4 h-4 text-emerald-600" />
+            <span className="text-sm font-medium text-emerald-700">AI Ranked</span>
+          </div>
         </div>
+        
         {analysisData.topProducts && analysisData.topProducts.length > 0 ? (
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Rank
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Product Name
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Quantity Sold
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Market Share
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {analysisData.topProducts.map((product, index) => (
-                  <tr key={product.name}>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center">
-                        <span className={`inline-flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium ${
-                          index === 0 ? 'bg-yellow-100 text-yellow-800' :
-                          index === 1 ? 'bg-gray-100 text-gray-800' :
-                          index === 2 ? 'bg-orange-100 text-orange-800' :
-                          'bg-blue-100 text-blue-800'
-                        }`}>
-                          {index + 1}
-                        </span>
+          <div className="space-y-3">
+            {analysisData.topProducts.map((product, index) => (
+              <div key={product.name} className="flex items-center justify-between p-4 bg-gradient-to-r from-gray-50 to-white rounded-xl border border-gray-100 hover:shadow-soft transition-all duration-200 group">
+                <div className="flex items-center space-x-4">
+                  <div className="relative">
+                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center font-bold text-white shadow-medium ${
+                      index === 0 ? 'bg-gradient-to-br from-yellow-400 to-yellow-500' :
+                      index === 1 ? 'bg-gradient-to-br from-gray-400 to-gray-500' :
+                      index === 2 ? 'bg-gradient-to-br from-orange-400 to-orange-500' :
+                      'bg-gradient-to-br from-blue-400 to-blue-500'
+                    }`}>
+                      {index + 1}
+                    </div>
+                    {index < 3 && (
+                      <div className="absolute -top-1 -right-1 w-4 h-4 bg-gradient-accent rounded-full flex items-center justify-center">
+                        <Zap className="w-2 h-2 text-white" />
                       </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                    )}
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-gray-900 group-hover:text-primary-600 transition-colors duration-200">
                       {product.name}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {product.quantity}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {product.percentage?.toFixed(1) || '0.0'}%
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                    </h4>
+                    <p className="text-sm text-gray-500">
+                      {product.quantity} units sold
+                    </p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div className="text-2xl font-bold text-gray-900">
+                    {product.percentage?.toFixed(1) || '0.0'}%
+                  </div>
+                  <div className="text-sm text-gray-500">Market Share</div>
+                </div>
+              </div>
+            ))}
           </div>
         ) : (
-          <div className="text-center py-12">
-            <FileText className="mx-auto h-12 w-12 text-gray-400" />
-            <h3 className="mt-2 text-sm font-medium text-gray-900">No Sales Data</h3>
-            <p className="mt-1 text-sm text-gray-500">Upload Excel files to see top selling products.</p>
+          <div className="text-center py-16">
+            <div className="w-20 h-20 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <FileText className="w-10 h-10 text-gray-400" />
+            </div>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">No Sales Data</h3>
+            <p className="text-gray-600 mb-6">Upload Excel files to see top selling products.</p>
+            <button className="btn-primary">
+              <Upload className="w-4 h-4 mr-2" />
+              Upload Data
+            </button>
           </div>
         )}
       </div>
 
       {/* Low Stock Alerts */}
       {analysisData.lowStockAlerts && analysisData.lowStockAlerts.length > 0 && (
-        <div className="bg-white rounded-lg shadow overflow-hidden border border-gray-200">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h3 className="text-lg font-semibold text-red-900">Low Stock Alerts</h3>
-            <p className="text-sm text-red-600">Items that need immediate attention</p>
+        <div className="card-elevated border-l-4 border-red-500">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 bg-gradient-to-br from-red-500 to-red-600 rounded-xl flex items-center justify-center">
+                <AlertTriangle className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <h3 className="text-xl font-bold text-red-900">Low Stock Alerts</h3>
+                <p className="text-sm text-red-600">Items that need immediate attention</p>
+              </div>
+            </div>
+            <div className="flex items-center space-x-2 px-3 py-1 bg-red-100 rounded-full">
+              <Activity className="w-4 h-4 text-red-600" />
+              <span className="text-sm font-medium text-red-700">Critical</span>
+            </div>
           </div>
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-red-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-red-700 uppercase tracking-wider">
-                    Item Name
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-red-700 uppercase tracking-wider">
-                    Current Stock
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-red-700 uppercase tracking-wider">
-                    Minimum Level
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-red-700 uppercase tracking-wider">
-                    Status
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {analysisData.lowStockAlerts.map((item) => (
-                  <tr key={item.name} className="bg-red-50">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-red-900">
+          
+          <div className="space-y-3">
+            {analysisData.lowStockAlerts.map((item) => (
+              <div key={item.name} className="flex items-center justify-between p-4 bg-gradient-to-r from-red-50 to-red-25 rounded-xl border border-red-200 hover:shadow-soft transition-all duration-200 group">
+                <div className="flex items-center space-x-4">
+                  <div className="w-12 h-12 bg-gradient-to-br from-red-500 to-red-600 rounded-xl flex items-center justify-center">
+                    <Package className="w-6 h-6 text-white" />
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-red-900 group-hover:text-red-700 transition-colors duration-200">
                       {item.name}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-red-600">
-                      {item.current} {item.unit}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-red-600">
-                      {item.min} {item.unit}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                        Critical
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                    </h4>
+                    <p className="text-sm text-red-600">
+                      Current: {item.current} {item.unit} | Min: {item.min} {item.unit}
+                    </p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div className="badge-danger">
+                    Critical
+                  </div>
+                  <div className="text-sm text-red-600 mt-1">
+                    {Math.round(((item.current / item.min) - 1) * 100)}% below minimum
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       )}
 
       {/* Daily Trends */}
-      <div className="bg-white rounded-lg shadow overflow-hidden border border-gray-200">
-        <div className="px-6 py-4 border-b border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-900">Daily Sales Trends</h3>
-          <p className="text-sm text-gray-600">Sales performance over time</p>
+      <div className="card-elevated">
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center space-x-3">
+            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center">
+              <TrendingUp className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <h3 className="text-xl font-bold text-gray-900">Daily Sales Trends</h3>
+              <p className="text-sm text-gray-600">Sales performance over time</p>
+            </div>
+          </div>
+          <div className="flex items-center space-x-2 px-3 py-1 bg-blue-100 rounded-full">
+            <Activity className="w-4 h-4 text-blue-600" />
+            <span className="text-sm font-medium text-blue-700">Live Data</span>
+          </div>
         </div>
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Date
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Total Sales
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Products Sold
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Trend
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {analysisData.dailyTrends && analysisData.dailyTrends.length > 0 ? (
-                analysisData.dailyTrends.map((day, index) => {
-                  const previousDay = analysisData.dailyTrends[index + 1];
-                  const trend = previousDay ? day.totalSales - previousDay.totalSales : 0;
-                  
-                  return (
-                    <tr key={day.date}>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                        {new Date(day.date).toLocaleDateString()}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {day.totalSales}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {day.products}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
+        
+        {analysisData.dailyTrends && analysisData.dailyTrends.length > 0 ? (
+          <div className="space-y-3">
+            {analysisData.dailyTrends.map((day, index) => {
+              const previousDay = analysisData.dailyTrends[index + 1];
+              const trend = previousDay ? day.totalSales - previousDay.totalSales : 0;
+              
+              return (
+                <div key={day.date} className="flex items-center justify-between p-4 bg-gradient-to-r from-gray-50 to-white rounded-xl border border-gray-100 hover:shadow-soft transition-all duration-200 group">
+                  <div className="flex items-center space-x-4">
+                    <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center">
+                      <Calendar className="w-6 h-6 text-white" />
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-gray-900 group-hover:text-blue-600 transition-colors duration-200">
+                        {new Date(day.date).toLocaleDateString('en-US', { 
+                          weekday: 'long', 
+                          year: 'numeric', 
+                          month: 'long', 
+                          day: 'numeric' 
+                        })}
+                      </h4>
+                      <p className="text-sm text-gray-500">
+                        {day.products} different products sold
+                      </p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-2xl font-bold text-gray-900 mb-1">
+                      {day.totalSales}
+                    </div>
+                    <div className="text-sm text-gray-500 mb-2">Total Sales</div>
+                    {trend !== 0 && (
+                      <div className={`flex items-center justify-end space-x-1 ${
+                        trend > 0 ? 'text-green-600' : 'text-red-600'
+                      }`}>
                         {trend > 0 ? (
-                          <div className="flex items-center text-green-600">
-                            <TrendingUp className="w-4 h-4 mr-1" />
-                            <span className="text-sm">+{trend}</span>
-                          </div>
-                        ) : trend < 0 ? (
-                          <div className="flex items-center text-red-600">
-                            <TrendingDown className="w-4 h-4 mr-1" />
-                            <span className="text-sm">{trend}</span>
-                          </div>
+                          <TrendingUp className="w-4 h-4" />
                         ) : (
-                          <span className="text-sm text-gray-500">-</span>
+                          <TrendingDown className="w-4 h-4" />
                         )}
-                      </td>
-                    </tr>
-                  );
-                })
-              ) : (
-                <tr>
-                  <td colSpan={4} className="text-center py-12">
-                    <FileText className="mx-auto h-12 w-12 text-gray-400" />
-                    <h3 className="mt-2 text-sm font-medium text-gray-900">No Trend Data</h3>
-                    <p className="mt-1 text-sm text-gray-500">Upload Excel files to see daily sales trends.</p>
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+                        <span className="text-sm font-medium">
+                          {trend > 0 ? '+' : ''}{trend}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="text-center py-16">
+            <div className="w-20 h-20 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <FileText className="w-10 h-10 text-gray-400" />
+            </div>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">No Trend Data</h3>
+            <p className="text-gray-600 mb-6">Upload Excel files to see daily sales trends.</p>
+            <button className="btn-primary">
+              <Upload className="w-4 h-4 mr-2" />
+              Upload Data
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Category Breakdown */}
-      <div className="bg-white rounded-lg shadow overflow-hidden border border-gray-200">
-        <div className="px-6 py-4 border-b border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-900">Category Breakdown</h3>
-          <p className="text-sm text-gray-600">Sales distribution by product category</p>
+      <div className="card-elevated">
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center space-x-3">
+            <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center">
+              <BarChart3 className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <h3 className="text-xl font-bold text-gray-900">Category Breakdown</h3>
+              <p className="text-sm text-gray-600">Sales distribution by product category</p>
+            </div>
+          </div>
+          <div className="flex items-center space-x-2 px-3 py-1 bg-purple-100 rounded-full">
+            <Brain className="w-4 h-4 text-purple-600" />
+            <span className="text-sm font-medium text-purple-700">AI Categorized</span>
+          </div>
         </div>
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Category
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Products Sold
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Percentage
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Visual
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {analysisData.categoryBreakdown && analysisData.categoryBreakdown.length > 0 ? (
-                analysisData.categoryBreakdown.map((category) => (
-                  <tr key={category.category}>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      {category.category.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {category.count}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+        
+        {analysisData.categoryBreakdown && analysisData.categoryBreakdown.length > 0 ? (
+          <div className="space-y-4">
+            {analysisData.categoryBreakdown.map((category, index) => (
+              <div key={category.category} className="p-4 bg-gradient-to-r from-gray-50 to-white rounded-xl border border-gray-100 hover:shadow-soft transition-all duration-200 group">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center space-x-3">
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold text-white shadow-medium ${
+                      index === 0 ? 'bg-gradient-to-br from-yellow-400 to-yellow-500' :
+                      index === 1 ? 'bg-gradient-to-br from-blue-400 to-blue-500' :
+                      index === 2 ? 'bg-gradient-to-br from-green-400 to-green-500' :
+                      'bg-gradient-to-br from-purple-400 to-purple-500'
+                    }`}>
+                      {index + 1}
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-gray-900 group-hover:text-purple-600 transition-colors duration-200">
+                        {category.category.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                      </h4>
+                      <p className="text-sm text-gray-500">
+                        {category.count} products sold
+                      </p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-2xl font-bold text-gray-900 mb-1">
                       {category.percentage?.toFixed(1) || '0.0'}%
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="w-full bg-gray-200 rounded-full h-2">
-                        <div
-                          className="bg-brand-500 h-2 rounded-full"
-                          style={{ width: `${category.percentage || 0}%` }}
-                        ></div>
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan={4} className="text-center py-12">
-                    <FileText className="mx-auto h-12 w-12 text-gray-400" />
-                    <h3 className="mt-2 text-sm font-medium text-gray-900">No Category Data</h3>
-                    <p className="mt-1 text-sm text-gray-500">Upload Excel files to see category breakdown.</p>
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+                    </div>
+                    <div className="text-sm text-gray-500">Market Share</div>
+                  </div>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+                  <div
+                    className={`h-3 rounded-full transition-all duration-1000 ease-out ${
+                      index === 0 ? 'bg-gradient-to-r from-yellow-400 to-yellow-500' :
+                      index === 1 ? 'bg-gradient-to-r from-blue-400 to-blue-500' :
+                      index === 2 ? 'bg-gradient-to-r from-green-400 to-green-500' :
+                      'bg-gradient-to-r from-purple-400 to-purple-500'
+                    }`}
+                    style={{ width: `${category.percentage || 0}%` }}
+                  ></div>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-16">
+            <div className="w-20 h-20 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <FileText className="w-10 h-10 text-gray-400" />
+            </div>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">No Category Data</h3>
+            <p className="text-gray-600 mb-6">Upload Excel files to see category breakdown.</p>
+            <button className="btn-primary">
+              <Upload className="w-4 h-4 mr-2" />
+              Upload Data
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

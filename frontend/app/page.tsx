@@ -9,7 +9,11 @@ import {
   Upload,
   LogOut,
   Menu,
-  X
+  X,
+  Sparkles,
+  Zap,
+  Brain,
+  Shield
 } from 'lucide-react';
 import StockList from '@/components/StockList';
 import AIAnalysis from '@/components/AIAnalysis';
@@ -40,10 +44,34 @@ export default function Dashboard() {
   }
 
   const tabs = [
-    { id: 'stock', name: 'Stock List', icon: Box },
-    { id: 'analysis', name: 'AI Analysis', icon: BarChart3 },
-    { id: 'recommendations', name: 'AI Recommendations', icon: TrendingUp },
-    { id: 'settings', name: 'Settings', icon: SettingsIcon },
+    { 
+      id: 'stock', 
+      name: 'Stock Management', 
+      icon: Box, 
+      description: 'Manage inventory',
+      gradient: 'from-blue-500 to-purple-600'
+    },
+    { 
+      id: 'analysis', 
+      name: 'AI Analytics', 
+      icon: BarChart3, 
+      description: 'Smart insights',
+      gradient: 'from-emerald-500 to-teal-600'
+    },
+    { 
+      id: 'recommendations', 
+      name: 'AI Recommendations', 
+      icon: Brain, 
+      description: 'Smart suggestions',
+      gradient: 'from-orange-500 to-red-600'
+    },
+    { 
+      id: 'settings', 
+      name: 'Settings', 
+      icon: SettingsIcon, 
+      description: 'Configuration',
+      gradient: 'from-gray-500 to-gray-700'
+    },
   ];
 
   const renderContent = () => {
@@ -62,66 +90,139 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white shadow-sm border-b border-gray-200">
-        <div className="flex items-center justify-between px-4 py-3">
-          <div className="flex items-center space-x-3">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
+      {/* Modern Header */}
+      <header className="bg-white/80 backdrop-blur-md shadow-soft border-b border-white/20 sticky top-0 z-40">
+        <div className="flex items-center justify-between px-6 py-4">
+          <div className="flex items-center space-x-4">
             <button
               onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-              className="lg:hidden p-2 rounded-md text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+              className="lg:hidden p-2 rounded-xl text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-all duration-200"
             >
               {isSidebarOpen ? <X size={20} /> : <Menu size={20} />}
             </button>
-                         <div className="flex items-center space-x-3">
-               <img src="/logo.svg" alt="WODEN AI" className="h-10 w-10" />
-               <h1 className="text-xl font-bold text-brand-500">WODEN Stock AI</h1>
-             </div>
+            
+            <div className="flex items-center space-x-4">
+              <div className="relative">
+                <div className="w-12 h-12 bg-gradient-primary rounded-2xl flex items-center justify-center shadow-medium">
+                  <Sparkles className="w-7 h-7 text-white" />
+                </div>
+                <div className="absolute -top-1 -right-1 w-4 h-4 bg-gradient-accent rounded-full animate-pulse"></div>
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold bg-gradient-primary bg-clip-text text-transparent">
+                  WODEN Stock AI
+                </h1>
+                <p className="text-sm text-gray-500 font-medium">Intelligent Inventory Management</p>
+              </div>
+            </div>
           </div>
-          <button
-            onClick={handleLogout}
-            className="flex items-center space-x-2 px-3 py-2 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md"
-          >
-            <LogOut size={16} />
-            <span>Logout</span>
-          </button>
+          
+          <div className="flex items-center space-x-4">
+            <div className="hidden md:flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl border border-green-200">
+              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+              <span className="text-sm font-medium text-green-700">AI Active</span>
+            </div>
+            
+            <button
+              onClick={handleLogout}
+              className="flex items-center space-x-2 px-4 py-2 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-xl transition-all duration-200 group"
+            >
+              <LogOut size={16} className="group-hover:scale-110 transition-transform duration-200" />
+              <span className="font-medium">Logout</span>
+            </button>
+          </div>
         </div>
       </header>
 
       <div className="flex">
-        {/* Sidebar */}
-        <aside className={`${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 fixed lg:static inset-y-0 left-0 z-50 w-64 bg-white shadow-lg lg:shadow-none border-r border-gray-200 transform transition-transform duration-200 ease-in-out`}>
-          <nav className="mt-8 px-4">
-            <ul className="space-y-2">
-              {tabs.map((tab) => {
-                const Icon = tab.icon;
-                return (
-                  <li key={tab.id}>
-                    <button
-                      onClick={() => {
-                        setActiveTab(tab.id);
-                        setIsSidebarOpen(false);
-                      }}
-                      className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-left transition-colors duration-200 ${
-                        activeTab === tab.id
-                          ? 'bg-brand-500 text-white'
-                          : 'text-gray-700 hover:bg-gray-100'
-                      }`}
-                    >
-                      <Icon size={20} />
-                      <span className="font-medium">{tab.name}</span>
-                    </button>
-                  </li>
-                );
-              })}
-            </ul>
-          </nav>
+        {/* Modern Sidebar */}
+        <aside className={`${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 fixed lg:static inset-y-0 left-0 z-50 w-80 bg-white/90 backdrop-blur-lg shadow-large lg:shadow-none border-r border-white/20 transform transition-all duration-300 ease-in-out`}>
+          <div className="h-full flex flex-col">
+            {/* Sidebar Header */}
+            <div className="p-6 border-b border-gray-100">
+              <h2 className="text-lg font-semibold text-gray-800">Navigation</h2>
+              <p className="text-sm text-gray-500">Choose your workspace</p>
+            </div>
+            
+            {/* Navigation */}
+            <nav className="flex-1 p-6">
+              <ul className="space-y-3">
+                {tabs.map((tab) => {
+                  const Icon = tab.icon;
+                  const isActive = activeTab === tab.id;
+                  return (
+                    <li key={tab.id}>
+                      <button
+                        onClick={() => {
+                          setActiveTab(tab.id);
+                          setIsSidebarOpen(false);
+                        }}
+                        className={`w-full group relative overflow-hidden rounded-2xl p-4 text-left transition-all duration-300 ${
+                          isActive
+                            ? `bg-gradient-to-r ${tab.gradient} text-white shadow-medium transform scale-105`
+                            : 'text-gray-700 hover:bg-gray-50 hover:shadow-soft hover:scale-105'
+                        }`}
+                      >
+                        <div className="flex items-center space-x-4">
+                          <div className={`p-2 rounded-xl transition-all duration-200 ${
+                            isActive 
+                              ? 'bg-white/20' 
+                              : 'bg-gray-100 group-hover:bg-gray-200'
+                          }`}>
+                            <Icon size={20} className={isActive ? 'text-white' : 'text-gray-600'} />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className={`font-semibold transition-colors duration-200 ${
+                              isActive ? 'text-white' : 'text-gray-900 group-hover:text-gray-700'
+                            }`}>
+                              {tab.name}
+                            </p>
+                            <p className={`text-sm transition-colors duration-200 ${
+                              isActive ? 'text-white/80' : 'text-gray-500 group-hover:text-gray-600'
+                            }`}>
+                              {tab.description}
+                            </p>
+                          </div>
+                          {isActive && (
+                            <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
+                          )}
+                        </div>
+                        
+                        {/* Hover effect */}
+                        <div className={`absolute inset-0 bg-gradient-to-r ${tab.gradient} opacity-0 group-hover:opacity-10 transition-opacity duration-300 ${
+                          isActive ? 'opacity-0' : ''
+                        }`}></div>
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            </nav>
+            
+            {/* Sidebar Footer */}
+            <div className="p-6 border-t border-gray-100">
+              <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-2xl p-4 border border-blue-100">
+                <div className="flex items-center space-x-3">
+                  <div className="w-10 h-10 bg-gradient-primary rounded-xl flex items-center justify-center">
+                    <Zap className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-gray-800">AI Powered</p>
+                    <p className="text-xs text-gray-600">Smart inventory management</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </aside>
 
         {/* Main Content */}
-        <main className="flex-1 p-6">
+        <main className="flex-1 p-8">
           <div className="max-w-7xl mx-auto">
-            {renderContent()}
+            <div className="animate-fade-in">
+              {renderContent()}
+            </div>
           </div>
         </main>
       </div>
@@ -129,7 +230,7 @@ export default function Dashboard() {
       {/* Mobile overlay */}
       {isSidebarOpen && (
         <div
-          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 lg:hidden animate-fade-in"
           onClick={() => setIsSidebarOpen(false)}
         />
       )}
