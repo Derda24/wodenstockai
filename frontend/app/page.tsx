@@ -153,17 +153,18 @@ export default function Dashboard() {
                   const isActive = activeTab === tab.id;
                   return (
                     <li key={tab.id}>
-                      <button
-                        onClick={() => {
-                          setActiveTab(tab.id);
-                          setIsSidebarOpen(false);
-                        }}
-                        className={`w-full group relative overflow-hidden rounded-2xl p-4 text-left transition-all duration-300 ${
-                          isActive
-                            ? `bg-gradient-to-r ${tab.gradient} text-white shadow-medium transform scale-105`
-                            : 'text-gray-700 hover:bg-gray-50 hover:shadow-soft hover:scale-105'
-                        }`}
-                      >
+                    <button
+                      onClick={() => {
+                        setActiveTab(tab.id);
+                        setIsSidebarOpen(false);
+                      }}
+                      data-tab={tab.id}
+                      className={`w-full group relative overflow-hidden rounded-2xl p-4 text-left transition-all duration-300 ${
+                        isActive
+                          ? `bg-gradient-to-r ${tab.gradient} text-white shadow-medium transform scale-105`
+                          : 'text-gray-700 hover:bg-gray-50 hover:shadow-soft hover:scale-105'
+                      }`}
+                    >
                         <div className="flex items-center space-x-4">
                           <div className={`p-2 rounded-xl transition-all duration-200 ${
                             isActive 

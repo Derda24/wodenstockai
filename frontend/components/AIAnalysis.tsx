@@ -322,7 +322,23 @@ export default function AIAnalysis() {
             </div>
             <h3 className="text-lg font-semibold text-gray-900 mb-2">No Sales Data</h3>
             <p className="text-gray-600 mb-6">Upload Excel files to see top selling products.</p>
-            <button className="btn-primary">
+            <button 
+              className="btn-primary"
+              onClick={() => {
+                // Navigate to Stock List tab where upload functionality exists
+                const stockTab = document.querySelector('[data-tab="stock"]') as HTMLButtonElement;
+                if (stockTab) {
+                  stockTab.click();
+                  // Trigger upload modal after a short delay
+                  setTimeout(() => {
+                    const uploadButton = document.querySelector('[data-upload-button]') as HTMLButtonElement;
+                    if (uploadButton) {
+                      uploadButton.click();
+                    }
+                  }, 500);
+                }
+              }}
+            >
               <Upload className="w-4 h-4 mr-2" />
               Upload Data
             </button>
@@ -454,7 +470,23 @@ export default function AIAnalysis() {
             </div>
             <h3 className="text-lg font-semibold text-gray-900 mb-2">No Trend Data</h3>
             <p className="text-gray-600 mb-6">Upload Excel files to see daily sales trends.</p>
-            <button className="btn-primary">
+            <button 
+              className="btn-primary"
+              onClick={() => {
+                // Navigate to Stock List tab where upload functionality exists
+                const stockTab = document.querySelector('[data-tab="stock"]') as HTMLButtonElement;
+                if (stockTab) {
+                  stockTab.click();
+                  // Trigger upload modal after a short delay
+                  setTimeout(() => {
+                    const uploadButton = document.querySelector('[data-upload-button]') as HTMLButtonElement;
+                    if (uploadButton) {
+                      uploadButton.click();
+                    }
+                  }, 500);
+                }
+              }}
+            >
               <Upload className="w-4 h-4 mr-2" />
               Upload Data
             </button>
@@ -531,7 +563,23 @@ export default function AIAnalysis() {
             </div>
             <h3 className="text-lg font-semibold text-gray-900 mb-2">No Category Data</h3>
             <p className="text-gray-600 mb-6">Upload Excel files to see category breakdown.</p>
-            <button className="btn-primary">
+            <button 
+              className="btn-primary"
+              onClick={() => {
+                // Navigate to Stock List tab where upload functionality exists
+                const stockTab = document.querySelector('[data-tab="stock"]') as HTMLButtonElement;
+                if (stockTab) {
+                  stockTab.click();
+                  // Trigger upload modal after a short delay
+                  setTimeout(() => {
+                    const uploadButton = document.querySelector('[data-upload-button]') as HTMLButtonElement;
+                    if (uploadButton) {
+                      uploadButton.click();
+                    }
+                  }, 500);
+                }
+              }}
+            >
               <Upload className="w-4 h-4 mr-2" />
               Upload Data
             </button>
