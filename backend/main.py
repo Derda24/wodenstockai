@@ -50,16 +50,37 @@ class User(BaseModel):
     password_hash: str
 
 # Admin users with hashed passwords (use environment variables in production)
-ADMIN_USERS = [
-    User(
-        username="derda2412",
-        password_hash=hashlib.sha256("woden2025".encode()).hexdigest()
-    ),
-    User(
-        username="caner0119", 
-        password_hash=hashlib.sha256("stock2025".encode()).hexdigest()
-    )
-]
+def get_admin_users():
+    """Get admin users from environment variables or fallback to defaults"""
+    admin_users = []
+    
+    # Try to get from environment variables first
+    admin_username_1 = os.getenv("ADMIN_USERNAME_1")
+    admin_password_1 = os.getenv("ADMIN_PASSWORD_1")
+    admin_username_2 = os.getenv("ADMIN_USERNAME_2")
+    admin_password_2 = os.getenv("ADMIN_PASSWORD_2")
+    
+    if admin_username_1 and admin_password_1:
+        admin_users.append(User(
+            username=admin_username_1,
+            password_hash=hash_password(admin_password_1)
+        ))
+    else:
+        # Fallback to default (for development only)
+        admin_users.append(User(
+            username="admin",
+            password_hash=hash_password("admin123")
+        ))
+    
+    if admin_username_2 and admin_password_2:
+        admin_users.append(User(
+            username=admin_username_2,
+            password_hash=hash_password(admin_password_2)
+        ))
+    
+    return admin_users
+
+ADMIN_USERS = get_admin_users()
 
 # Simple token storage (use Redis or database in production)
 active_tokens = {}
@@ -74,7 +95,15 @@ def hash_password(password: str) -> str:
 def verify_user(username: str, password: str) -> bool:
     """Verify user credentials"""
     password_hash = hash_password(password)
-    return any(user.username == username and user.password_hash == password_hash for user in ADMIN_USERS)
+    is_valid = any(user.username == username and user.password_hash == password_hash for user in ADMIN_USERS)
+    
+    # Log authentication attempts (for security monitoring)
+    if is_valid:
+        print(f"✅ Successful login attempt for user: {username}")
+    else:
+        print(f"❌ Failed login attempt for user: {username}")
+    
+    return is_valid
 
 def create_token(username: str) -> str:
     """Create a new authentication token"""

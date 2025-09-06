@@ -163,24 +163,24 @@ export default function LoginModal({ onLogin }: LoginModalProps) {
           </form>
 
           {/* Admin Info */}
-          <div className="mt-8 p-4 bg-gradient-to-r from-blue-500/10 to-purple-500/10 rounded-2xl border border-white/10 backdrop-blur-sm">
-            <div className="text-center">
-              <div className="flex items-center justify-center space-x-2 mb-3">
-                <Shield className="w-5 h-5 text-blue-400" />
-                <p className="text-sm text-gray-300 font-medium">Admin Access Required</p>
-              </div>
-              <div className="space-y-2">
-                <p className="text-xs text-gray-400">
-                  Authorized users only. Contact system administrator for access.
-                </p>
-                <div className="text-xs text-gray-500">
-                  <p>Demo credentials:</p>
-                  <p>Username: <span className="font-mono text-gray-300">derda2412</span></p>
-                  <p>Password: <span className="font-mono text-gray-300">woden2025</span></p>
+            <div className="mt-8 p-4 bg-gradient-to-r from-red-500/10 to-orange-500/10 rounded-2xl border border-red-200/20 backdrop-blur-sm">
+              <div className="text-center">
+                <div className="flex items-center justify-center space-x-2 mb-3">
+                  <Shield className="w-5 h-5 text-red-400" />
+                  <p className="text-sm text-gray-300 font-medium">Secure Access Required</p>
+                </div>
+                <div className="space-y-2">
+                  <p className="text-xs text-gray-400">
+                    Authorized personnel only. Contact system administrator for access credentials.
+                  </p>
+                  <div className="text-xs text-gray-500">
+                    <p className="text-red-400">⚠️ Security Notice:</p>
+                    <p>Credentials are not displayed for security reasons.</p>
+                    <p>Please contact your administrator for login details.</p>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
 
           {/* Features */}
           <div className="mt-8 grid grid-cols-3 gap-4 text-center">
