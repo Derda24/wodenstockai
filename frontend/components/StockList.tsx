@@ -451,7 +451,7 @@ export default function StockList() {
                            type="number"
                            min="0"
                            step="0.01"
-                           placeholder={item.current_stock.toString()}
+                           placeholder={`Enter new value (current: ${item.current_stock})`}
                            className="w-full sm:w-20 px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                            onKeyPress={(e) => {
                              if (e.key === 'Enter') {
@@ -459,13 +459,19 @@ export default function StockList() {
                                console.log('Item:', item.name, 'ID:', item.id, 'can_edit:', item.can_edit);
                                const target = e.target as HTMLInputElement;
                                console.log('Input value:', target.value);
-                               const newValue = parseFloat(target.value);
-                               console.log('Parsed new value:', newValue);
-                               if (!isNaN(newValue) && newValue >= 0) {
-                                 const change = newValue - item.current_stock;
-                                 console.log('Calculated change:', change);
-                                 updateStock(item.id, change);
-                                 target.value = '';
+                               if (target.value && target.value.trim() !== '') {
+                                 const newValue = parseFloat(target.value);
+                                 console.log('Parsed new value:', newValue);
+                                 if (!isNaN(newValue) && newValue >= 0) {
+                                   const change = newValue - item.current_stock;
+                                   console.log('Calculated change:', change);
+                                   updateStock(item.id, change);
+                                   target.value = '';
+                                 } else {
+                                   alert('Please enter a valid number (0 or greater)');
+                                 }
+                               } else {
+                                 alert('Please enter a new stock value before pressing Enter');
                                }
                              }
                            }}
@@ -478,7 +484,7 @@ export default function StockList() {
                                const input = document.querySelector(`input[placeholder="${item.current_stock}"]`) as HTMLInputElement;
                                console.log('Input element found:', input);
                                console.log('Input value:', input?.value);
-                               if (input && input.value) {
+                               if (input && input.value && input.value.trim() !== '') {
                                  const newValue = parseFloat(input.value);
                                  console.log('Parsed new value:', newValue);
                                  if (!isNaN(newValue) && newValue >= 0) {
@@ -486,7 +492,11 @@ export default function StockList() {
                                    console.log('Calculated change:', change);
                                    updateStock(item.id, change);
                                    input.value = '';
+                                 } else {
+                                   alert('Please enter a valid number (0 or greater)');
                                  }
+                               } else {
+                                 alert('Please enter a new stock value before clicking Update');
                                }
                              }}
                              className="flex-1 sm:flex-none inline-flex items-center justify-center px-2 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 touch-manipulation"
