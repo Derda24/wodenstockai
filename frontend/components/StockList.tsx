@@ -478,12 +478,18 @@ export default function StockList() {
                          />
                          <div className="flex space-x-1 w-full sm:w-auto">
                            <button
-                             onClick={() => {
+                             onClick={(e) => {
                                console.log('=== Update button clicked ===');
                                console.log('Item:', item.name, 'ID:', item.id, 'can_edit:', item.can_edit);
-                               const input = document.querySelector(`input[placeholder="${item.current_stock}"]`) as HTMLInputElement;
+                               
+                               // Find the input field in the same row
+                               const row = e.currentTarget.closest('tr');
+                               const input = row?.querySelector('input[type="number"]') as HTMLInputElement;
+                               
+                               console.log('Row found:', row);
                                console.log('Input element found:', input);
                                console.log('Input value:', input?.value);
+                               
                                if (input && input.value && input.value.trim() !== '') {
                                  const newValue = parseFloat(input.value);
                                  console.log('Parsed new value:', newValue);
