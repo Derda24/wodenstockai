@@ -315,36 +315,36 @@ export default function StockList() {
   }
 
   return (
-    <div className="space-y-6 px-2 sm:px-0">
+    <div className="space-y-4 sm:space-y-6 px-2 sm:px-0 max-w-full overflow-hidden">
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Stock List</h1>
-          <p className="text-gray-600">Manage your inventory and upload daily sales</p>
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Stock List</h1>
+          <p className="text-sm sm:text-base text-gray-600">Manage your inventory and upload daily sales</p>
         </div>
         <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
           <button
             onClick={() => setShowUploadModal(true)}
             data-upload-button
-            className="inline-flex items-center justify-center px-3 sm:px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm sm:text-base touch-manipulation"
+            className="inline-flex items-center justify-center px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm sm:text-base touch-manipulation min-h-[44px]"
           >
-            <Upload className="w-4 h-4 mr-1 sm:mr-2" />
+            <Upload className="w-4 h-4 mr-2" />
             <span className="hidden sm:inline">Upload Daily Sales Excel</span>
             <span className="sm:hidden">Upload Excel</span>
           </button>
           <button
             onClick={handleDailyConsumption}
-            className="inline-flex items-center justify-center px-3 sm:px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm sm:text-base touch-manipulation"
+            className="inline-flex items-center justify-center px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm sm:text-base touch-manipulation min-h-[44px]"
           >
-            <Calendar className="w-4 h-4 mr-1 sm:mr-2" />
+            <Calendar className="w-4 h-4 mr-2" />
             <span className="hidden sm:inline">Apply Daily Consumption</span>
             <span className="sm:hidden">Daily Consumption</span>
           </button>
           <button
             onClick={loadStockData}
-            className="inline-flex items-center justify-center px-3 sm:px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors text-sm sm:text-base touch-manipulation"
+            className="inline-flex items-center justify-center px-4 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors text-sm sm:text-base touch-manipulation min-h-[44px]"
           >
-            <RefreshCw className="w-4 h-4 mr-1 sm:mr-2" />
+            <RefreshCw className="w-4 h-4 mr-2" />
             <span className="hidden sm:inline">Refresh</span>
             <span className="sm:hidden">↻</span>
           </button>
@@ -368,7 +368,7 @@ export default function StockList() {
               placeholder="Search by name or category..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-base"
+              className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-base touch-manipulation min-h-[44px]"
             />
           </div>
         </div>
@@ -376,7 +376,7 @@ export default function StockList() {
           <select
             value={selectedCategory}
             onChange={(e) => setSelectedCategory(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-base"
+            className="w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-base touch-manipulation min-h-[44px]"
           >
             {categories.map(category => (
               <option key={category} value={category}>{category}</option>
@@ -388,32 +388,37 @@ export default function StockList() {
       {/* Stock Table */}
       <div className="bg-white rounded-lg shadow overflow-hidden">
         {/* Mobile scroll indicator */}
-        <div className="sm:hidden bg-blue-50 border-b border-blue-200 px-4 py-2">
-          <p className="text-xs text-blue-600 text-center">
+        <div className="sm:hidden bg-blue-50 border-b border-blue-200 px-4 py-3">
+          <p className="text-sm text-blue-600 text-center font-medium">
             ← Swipe horizontally to see all columns →
           </p>
         </div>
-        <div className="overflow-x-auto overflow-y-auto max-h-[70vh]">
+        <div className="overflow-x-auto overflow-y-auto max-h-[75vh] sm:max-h-[70vh]">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50 sticky top-0 z-10">
               <tr>
-                <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[150px]">
-                  Item Name
+                <th className="px-2 sm:px-6 py-3 text-left text-xs sm:text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[140px] sm:min-w-[150px]">
+                  <span className="hidden sm:inline">Item Name</span>
+                  <span className="sm:hidden">Item</span>
                 </th>
-                <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[100px]">
-                  Category
+                <th className="px-2 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[80px] sm:min-w-[100px]">
+                  <span className="hidden sm:inline">Category</span>
+                  <span className="sm:hidden">Cat.</span>
                 </th>
-                <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[120px]">
-                  Current Stock
+                <th className="px-2 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[100px] sm:min-w-[120px]">
+                  <span className="hidden sm:inline">Current Stock</span>
+                  <span className="sm:hidden">Stock</span>
                 </th>
-                <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[100px]">
-                  Min Level
+                <th className="px-2 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[80px] sm:min-w-[100px]">
+                  <span className="hidden sm:inline">Min Level</span>
+                  <span className="sm:hidden">Min</span>
                 </th>
-                <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[80px]">
+                <th className="px-2 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[60px] sm:min-w-[80px]">
                   Unit
                 </th>
-                <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[200px]">
-                  Stock Update
+                <th className="px-2 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[180px] sm:min-w-[200px]">
+                  <span className="hidden sm:inline">Stock Update</span>
+                  <span className="sm:hidden">Update</span>
                 </th>
               </tr>
             </thead>
@@ -422,37 +427,40 @@ export default function StockList() {
                 const status = getStockStatus(item);
                 return (
                   <tr key={item.id} className="hover:bg-gray-50">
-                    <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
+                    <td className="px-2 sm:px-6 py-3 sm:py-4 whitespace-nowrap">
                       <div className="flex items-center">
                         {getStatusIcon(status)}
-                        <span className="ml-2 font-medium text-gray-900 text-sm sm:text-base">
+                        <span className="ml-1 sm:ml-2 font-medium text-gray-900 text-xs sm:text-sm md:text-base truncate max-w-[120px] sm:max-w-none">
                           {item.name}
                         </span>
                       </div>
                     </td>
-                    <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <td className="px-2 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">
                       <span className="hidden sm:inline">{item.category}</span>
-                      <span className="sm:hidden text-xs">{item.category.substring(0, 8)}...</span>
+                      <span className="sm:hidden text-xs truncate max-w-[60px] block">{item.category.substring(0, 6)}...</span>
                     </td>
-                    <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(status)}`}>
-                        {item.current_stock} {item.unit}
+                    <td className="px-2 sm:px-6 py-3 sm:py-4 whitespace-nowrap">
+                      <span className={`inline-flex items-center px-2 py-1 sm:px-2.5 sm:py-0.5 rounded-full text-xs font-medium ${getStatusColor(status)}`}>
+                        <span className="hidden sm:inline">{item.current_stock} {item.unit}</span>
+                        <span className="sm:hidden">{item.current_stock}</span>
                       </span>
                     </td>
-                    <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {item.min_stock} {item.unit}
+                    <td className="px-2 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">
+                      <span className="hidden sm:inline">{item.min_stock} {item.unit}</span>
+                      <span className="sm:hidden">{item.min_stock}</span>
                     </td>
-                    <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {item.unit}
+                    <td className="px-2 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">
+                      <span className="hidden sm:inline">{item.unit}</span>
+                      <span className="sm:hidden text-xs">{item.unit.substring(0, 3)}</span>
                     </td>
-                    <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <td className="px-2 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-sm font-medium">
                        <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-2">
                          <input
                            type="number"
                            min="0"
                            step="0.01"
-                           placeholder={`Enter new value (current: ${item.current_stock})`}
-                           className="w-full sm:w-20 px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                           placeholder={`New value (${item.current_stock})`}
+                           className="w-full sm:w-20 px-3 py-2 text-sm sm:text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent touch-manipulation"
                            onKeyPress={(e) => {
                              if (e.key === 'Enter') {
                                console.log('=== Enter key pressed ===');
@@ -505,17 +513,17 @@ export default function StockList() {
                                  alert('Please enter a new stock value before clicking Update');
                                }
                              }}
-                             className="flex-1 sm:flex-none inline-flex items-center justify-center px-2 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 touch-manipulation"
+                             className="flex-1 sm:flex-none inline-flex items-center justify-center px-3 py-2 text-xs sm:text-xs bg-blue-600 text-white rounded hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 touch-manipulation min-h-[36px]"
                            >
                              <span className="hidden sm:inline">Update</span>
-                             <span className="sm:hidden">✓</span>
+                             <span className="sm:hidden text-sm font-medium">✓</span>
                            </button>
                            <button
                              onClick={() => removeStockItem(item.name)}
-                             className="flex-1 sm:flex-none inline-flex items-center justify-center px-2 py-1 text-xs bg-red-600 text-white rounded hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 touch-manipulation"
+                             className="flex-1 sm:flex-none inline-flex items-center justify-center px-3 py-2 text-xs sm:text-xs bg-red-600 text-white rounded hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 touch-manipulation min-h-[36px]"
                            >
                              <span className="hidden sm:inline">Remove</span>
-                             <span className="sm:hidden">×</span>
+                             <span className="sm:hidden text-sm font-medium">×</span>
                            </button>
                          </div>
                        </div>
