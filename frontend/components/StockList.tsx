@@ -46,6 +46,15 @@ export default function StockList() {
       const response = await fetch('https://wodenstockai.onrender.com/api/stock');
       if (response.ok) {
         const data: StockResponse = await response.json();
+        console.log('=== Stock data loaded ===');
+        console.log('Raw data:', data);
+        console.log('Stock items:', data.stock_data?.map(item => ({ 
+          id: item.id, 
+          name: item.name, 
+          category: item.category, 
+          can_edit: item.can_edit,
+          current_stock: item.current_stock 
+        })));
         setStockData(data.stock_data || []);
         setFilteredData(data.stock_data || []);
       } else {
@@ -82,8 +91,15 @@ export default function StockList() {
   }, [searchTerm, selectedCategory, stockData]);
 
   const updateStock = async (itemId: string, change: number) => {
+    console.log('=== updateStock called ===');
+    console.log('itemId:', itemId);
+    console.log('change:', change);
+    console.log('Available items:', stockData.map(i => ({ id: i.id, name: i.name, can_edit: i.can_edit })));
+    
     try {
       const item = stockData.find(i => i.id === itemId);
+      console.log('Found item:', item);
+      
       if (!item) {
         console.error('Item not found:', itemId);
         alert('Item not found in local data');
@@ -91,7 +107,9 @@ export default function StockList() {
       }
 
       // Check if item can be edited
+      console.log('Item can_edit:', item.can_edit);
       if (!item.can_edit) {
+        console.log('Item cannot be edited, showing alert');
         alert(`Cannot edit ${item.name}: ${item.edit_reason || 'Editing is disabled'}`);
         return;
       }
@@ -297,35 +315,38 @@ export default function StockList() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 px-2 sm:px-0">
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Stock List</h1>
           <p className="text-gray-600">Manage your inventory and upload daily sales</p>
         </div>
-        <div className="flex flex-col sm:flex-row gap-2">
+        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
           <button
             onClick={() => setShowUploadModal(true)}
             data-upload-button
-            className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            className="inline-flex items-center justify-center px-3 sm:px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm sm:text-base touch-manipulation"
           >
-            <Upload className="w-4 h-4 mr-2" />
-            Upload Daily Sales Excel
+            <Upload className="w-4 h-4 mr-1 sm:mr-2" />
+            <span className="hidden sm:inline">Upload Daily Sales Excel</span>
+            <span className="sm:hidden">Upload Excel</span>
           </button>
           <button
             onClick={handleDailyConsumption}
-            className="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+            className="inline-flex items-center justify-center px-3 sm:px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm sm:text-base touch-manipulation"
           >
-            <Calendar className="w-4 h-4 mr-2" />
-            Apply Daily Consumption
+            <Calendar className="w-4 h-4 mr-1 sm:mr-2" />
+            <span className="hidden sm:inline">Apply Daily Consumption</span>
+            <span className="sm:hidden">Daily Consumption</span>
           </button>
           <button
             onClick={loadStockData}
-            className="inline-flex items-center px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+            className="inline-flex items-center justify-center px-3 sm:px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors text-sm sm:text-base touch-manipulation"
           >
-            <RefreshCw className="w-4 h-4 mr-2" />
-            Refresh
+            <RefreshCw className="w-4 h-4 mr-1 sm:mr-2" />
+            <span className="hidden sm:inline">Refresh</span>
+            <span className="sm:hidden">↻</span>
           </button>
         </div>
       </div>
@@ -347,15 +368,15 @@ export default function StockList() {
               placeholder="Search by name or category..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-base"
             />
           </div>
         </div>
-        <div className="sm:w-48">
+        <div className="w-full sm:w-48">
           <select
             value={selectedCategory}
             onChange={(e) => setSelectedCategory(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-base"
           >
             {categories.map(category => (
               <option key={category} value={category}>{category}</option>
@@ -366,28 +387,34 @@ export default function StockList() {
 
       {/* Stock Table */}
       <div className="bg-white rounded-lg shadow overflow-hidden">
-        <div className="overflow-x-auto">
+        {/* Mobile scroll indicator */}
+        <div className="sm:hidden bg-blue-50 border-b border-blue-200 px-4 py-2">
+          <p className="text-xs text-blue-600 text-center">
+            ← Swipe horizontally to see all columns →
+          </p>
+        </div>
+        <div className="overflow-x-auto overflow-y-auto max-h-[70vh]">
           <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+            <thead className="bg-gray-50 sticky top-0 z-10">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[150px]">
                   Item Name
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[100px]">
                   Category
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[120px]">
                   Current Stock
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[100px]">
                   Min Level
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[80px]">
                   Unit
                 </th>
-                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                   Stock Update
-                 </th>
+                <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[200px]">
+                  Stock Update
+                </th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
@@ -395,68 +422,86 @@ export default function StockList() {
                 const status = getStockStatus(item);
                 return (
                   <tr key={item.id} className="hover:bg-gray-50">
-                                         <td className="px-6 py-4 whitespace-nowrap">
-                       <div className="flex items-center">
-                         {getStatusIcon(status)}
-                         <span className="ml-2 font-medium text-gray-900">
-                           {item.name}
-                         </span>
-                       </div>
-                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {item.category}
+                    <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center">
+                        {getStatusIcon(status)}
+                        <span className="ml-2 font-medium text-gray-900 text-sm sm:text-base">
+                          {item.name}
+                        </span>
+                      </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <span className="hidden sm:inline">{item.category}</span>
+                      <span className="sm:hidden text-xs">{item.category.substring(0, 8)}...</span>
+                    </td>
+                    <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(status)}`}>
                         {item.current_stock} {item.unit}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {item.min_stock} {item.unit}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {item.unit}
                     </td>
-                                                              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                       <div className="flex items-center space-x-2">
+                    <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm font-medium">
+                       <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-2">
                          <input
                            type="number"
                            min="0"
                            step="0.01"
                            placeholder={item.current_stock.toString()}
-                           className="w-20 px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                           className="w-full sm:w-20 px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                            onKeyPress={(e) => {
                              if (e.key === 'Enter') {
+                               console.log('=== Enter key pressed ===');
+                               console.log('Item:', item.name, 'ID:', item.id, 'can_edit:', item.can_edit);
                                const target = e.target as HTMLInputElement;
+                               console.log('Input value:', target.value);
                                const newValue = parseFloat(target.value);
+                               console.log('Parsed new value:', newValue);
                                if (!isNaN(newValue) && newValue >= 0) {
-                                 updateStock(item.id, newValue - item.current_stock);
+                                 const change = newValue - item.current_stock;
+                                 console.log('Calculated change:', change);
+                                 updateStock(item.id, change);
                                  target.value = '';
                                }
                              }
                            }}
                          />
-                         <button
-                           onClick={() => {
-                             const input = document.querySelector(`input[placeholder="${item.current_stock}"]`) as HTMLInputElement;
-                             if (input && input.value) {
-                               const newValue = parseFloat(input.value);
-                               if (!isNaN(newValue) && newValue >= 0) {
-                                 updateStock(item.id, newValue - item.current_stock);
-                                 input.value = '';
+                         <div className="flex space-x-1 w-full sm:w-auto">
+                           <button
+                             onClick={() => {
+                               console.log('=== Update button clicked ===');
+                               console.log('Item:', item.name, 'ID:', item.id, 'can_edit:', item.can_edit);
+                               const input = document.querySelector(`input[placeholder="${item.current_stock}"]`) as HTMLInputElement;
+                               console.log('Input element found:', input);
+                               console.log('Input value:', input?.value);
+                               if (input && input.value) {
+                                 const newValue = parseFloat(input.value);
+                                 console.log('Parsed new value:', newValue);
+                                 if (!isNaN(newValue) && newValue >= 0) {
+                                   const change = newValue - item.current_stock;
+                                   console.log('Calculated change:', change);
+                                   updateStock(item.id, change);
+                                   input.value = '';
+                                 }
                                }
-                             }
-                           }}
-                           className="inline-flex items-center px-2 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                         >
-                           Update
-                         </button>
-                         <button
-                           onClick={() => removeStockItem(item.name)}
-                           className="inline-flex items-center px-2 py-1 text-xs bg-red-600 text-white rounded hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
-                         >
-                           Remove
-                         </button>
+                             }}
+                             className="flex-1 sm:flex-none inline-flex items-center justify-center px-2 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 touch-manipulation"
+                           >
+                             <span className="hidden sm:inline">Update</span>
+                             <span className="sm:hidden">✓</span>
+                           </button>
+                           <button
+                             onClick={() => removeStockItem(item.name)}
+                             className="flex-1 sm:flex-none inline-flex items-center justify-center px-2 py-1 text-xs bg-red-600 text-white rounded hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 touch-manipulation"
+                           >
+                             <span className="hidden sm:inline">Remove</span>
+                             <span className="sm:hidden">×</span>
+                           </button>
+                         </div>
                        </div>
                      </td>
                   </tr>
