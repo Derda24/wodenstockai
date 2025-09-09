@@ -219,7 +219,7 @@ export default function Dashboard() {
         </aside>
 
         {/* Main Content */}
-        <main className="flex-1 p-8">
+        <main className="flex-1 p-4 sm:p-8 overflow-x-auto">
           <div className="max-w-7xl mx-auto">
             <div className="animate-fade-in">
               {renderContent()}

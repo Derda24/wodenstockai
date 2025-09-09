@@ -315,7 +315,7 @@ export default function StockList() {
   }
 
   return (
-    <div className="space-y-4 sm:space-y-6 px-2 sm:px-0 max-w-full overflow-hidden">
+    <div className="space-y-4 sm:space-y-6 px-2 sm:px-0 w-full overflow-visible">
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
@@ -386,14 +386,14 @@ export default function StockList() {
       </div>
 
       {/* Stock Table */}
-      <div className="bg-white rounded-lg shadow overflow-hidden">
+      <div className="bg-white rounded-lg shadow overflow-hidden w-full">
         {/* Mobile scroll indicator */}
         <div className="sm:hidden bg-blue-100 border-b-2 border-blue-300 px-4 py-3">
           <p className="text-sm text-blue-700 text-center font-semibold">
             ← Swipe horizontally to see Update/Remove buttons →
           </p>
         </div>
-        <div className="overflow-x-auto overflow-y-auto max-h-[75vh] sm:max-h-[70vh] scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-100" style={{WebkitOverflowScrolling: 'touch', scrollbarWidth: 'thin'}}>
+        <div className="overflow-x-auto overflow-y-auto max-h-[75vh] sm:max-h-[70vh] w-full" style={{WebkitOverflowScrolling: 'touch', scrollbarWidth: 'thin'}}>
           <table className="min-w-full divide-y divide-gray-200" style={{minWidth: '800px'}}>
             <thead className="bg-gray-50 sticky top-0 z-10">
               <tr>
