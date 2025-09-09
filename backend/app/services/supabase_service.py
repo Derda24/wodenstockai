@@ -1553,6 +1553,67 @@ class SupabaseService:
         except Exception as e:
             return {"success": False, "message": f"Error updating stock: {str(e)}"}
     
+    def add_new_stock_item(self, name: str, category: str, current_stock: float = 0, 
+                          min_stock: float = 0, unit: str = "ml", is_ready_made: bool = False,
+                          cost_per_unit: float = 0, package_size: float = 0, 
+                          package_unit: str = "ml") -> Dict[str, Any]:
+        """Add a new stock item to the database"""
+        try:
+            # Check if item already exists
+            existing_response = self.client.table("stock_items").select("*").ilike("item_name", name).execute()
+            
+            if existing_response.data:
+                return {"success": False, "message": f"Item '{name}' already exists in the database"}
+            
+            # Generate material_id
+            material_id = f"{category}_{name.replace(' ', '_')}"
+            
+            # Create new stock item
+            new_item_data = {
+                "material_id": material_id,
+                "item_name": name,
+                "category_name": category,
+                "current_stock": float(current_stock),
+                "min_stock_level": float(min_stock),
+                "unit": unit,
+                "is_ready_made": is_ready_made,
+                "cost_per_unit": float(cost_per_unit),
+                "package_size": float(package_size),
+                "package_unit": package_unit,
+                "created_at": datetime.now(timezone.utc).isoformat(),
+                "updated_at": datetime.now(timezone.utc).isoformat()
+            }
+            
+            insert_response = self.client.table("stock_items").insert(new_item_data).execute()
+            
+            if insert_response.data:
+                # Create initial transaction record
+                transaction_data = {
+                    "stock_item_id": insert_response.data[0]["id"],
+                    "transaction_type": "initial_stock",
+                    "old_stock": 0.0,
+                    "new_stock": float(current_stock),
+                    "change_amount": float(current_stock),
+                    "reason": "New product added",
+                    "timestamp": datetime.now(timezone.utc).isoformat()
+                }
+                
+                self.client.table("stock_transactions").insert(transaction_data).execute()
+                
+                return {
+                    "success": True,
+                    "message": f"Product '{name}' added successfully",
+                    "item_name": name,
+                    "category": category,
+                    "material_id": material_id,
+                    "current_stock": float(current_stock)
+                }
+            else:
+                return {"success": False, "message": "Failed to add product to database"}
+                
+        except Exception as e:
+            return {"success": False, "message": f"Error adding product: {str(e)}"}
+    
     def apply_daily_consumption(self, force: bool = False) -> Dict[str, Any]:
         """Apply daily consumption to all stock items.
         If force is True, bypass recent manual-update protection and consume anyway.

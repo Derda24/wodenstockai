@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Plus, Minus, Search, Upload, RefreshCw, AlertTriangle, Calendar } from 'lucide-react';
+import { Plus, Minus, Search, Upload, RefreshCw, AlertTriangle, Calendar, X } from 'lucide-react';
 
 interface StockItem {
   id: string;
@@ -36,6 +36,18 @@ export default function StockList() {
   const [uploadMessage, setUploadMessage] = useState('');
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [showAddProductModal, setShowAddProductModal] = useState(false);
+  const [newProduct, setNewProduct] = useState({
+    name: '',
+    category: '',
+    current_stock: 0,
+    min_stock: 0,
+    unit: 'ml',
+    is_ready_made: false,
+    cost_per_unit: 0,
+    package_size: 0,
+    package_unit: 'ml'
+  });
 
   // Get unique categories for filter
   const categories = ['All Categories', ...Array.from(new Set(stockData.map((item: StockItem) => item.category)))];
@@ -286,6 +298,57 @@ export default function StockList() {
     }
   };
 
+  const handleAddProduct = async () => {
+    try {
+      // Validate required fields
+      if (!newProduct.name || !newProduct.category) {
+        alert('Please fill in all required fields (Name and Category)');
+        return;
+      }
+
+      const response = await fetch('https://wodenstockai.onrender.com/api/stock/add-product', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify(newProduct)
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        setUploadMessage(`Product "${newProduct.name}" added successfully!`);
+        
+        // Reset form
+        setNewProduct({
+          name: '',
+          category: '',
+          current_stock: 0,
+          min_stock: 0,
+          unit: 'ml',
+          is_ready_made: false,
+          cost_per_unit: 0,
+          package_size: 0,
+          package_unit: 'ml'
+        });
+        setShowAddProductModal(false);
+        
+        // Reload stock data
+        setTimeout(() => {
+          loadStockData();
+          setUploadMessage('');
+        }, 2000);
+      } else {
+        const error = await response.json();
+        console.error('Add product failed:', error);
+        setUploadMessage(`Error: ${error.detail || 'Failed to add product'}`);
+      }
+    } catch (error) {
+      console.error('Add product error:', error);
+      setUploadMessage('Error adding product');
+    }
+  };
+
   const getStockStatus = (item: StockItem) => {
     if (item.current_stock === 0) return 'out-of-stock';
     if (item.current_stock <= item.min_stock) return 'low-stock';
@@ -323,6 +386,14 @@ export default function StockList() {
           <p className="text-sm sm:text-base text-gray-600">Manage your inventory and upload daily sales</p>
         </div>
         <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+          <button
+            onClick={() => setShowAddProductModal(true)}
+            className="inline-flex items-center justify-center px-4 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm sm:text-base touch-manipulation min-h-[44px]"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            <span className="hidden sm:inline">Add New Product</span>
+            <span className="sm:hidden">Add Product</span>
+          </button>
           <button
             onClick={() => setShowUploadModal(true)}
             data-upload-button
@@ -578,6 +649,150 @@ export default function StockList() {
               >
                 Upload
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add New Product Modal */}
+      {showAddProductModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-bold text-gray-900">Add New Product</h2>
+                <button
+                  onClick={() => setShowAddProductModal(false)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+              
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Product Name *
+                  </label>
+                  <input
+                    type="text"
+                    value={newProduct.name}
+                    onChange={(e) => setNewProduct({...newProduct, name: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    placeholder="Enter product name"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Category *
+                  </label>
+                  <select
+                    value={newProduct.category}
+                    onChange={(e) => setNewProduct({...newProduct, category: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  >
+                    <option value="">Select category</option>
+                    <option value="surup_pureler">Syrups & Purees</option>
+                    <option value="ham_maddeler">Raw Materials</option>
+                    <option value="sut_urunleri">Dairy Products</option>
+                    <option value="unlu_mamuller">Bakery Products</option>
+                    <option value="icecekler">Beverages</option>
+                    <option value="diger">Other</option>
+                  </select>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Current Stock
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={newProduct.current_stock}
+                      onChange={(e) => setNewProduct({...newProduct, current_stock: parseFloat(e.target.value) || 0})}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Min Stock Level
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={newProduct.min_stock}
+                      onChange={(e) => setNewProduct({...newProduct, min_stock: parseFloat(e.target.value) || 0})}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    />
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Unit
+                    </label>
+                    <select
+                      value={newProduct.unit}
+                      onChange={(e) => setNewProduct({...newProduct, unit: e.target.value})}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    >
+                      <option value="ml">ml</option>
+                      <option value="kg">kg</option>
+                      <option value="g">g</option>
+                      <option value="adet">adet</option>
+                      <option value="lt">lt</option>
+                      <option value="paket">paket</option>
+                    </select>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Cost per Unit
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={newProduct.cost_per_unit}
+                      onChange={(e) => setNewProduct({...newProduct, cost_per_unit: parseFloat(e.target.value) || 0})}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    />
+                  </div>
+                </div>
+                
+                <div>
+                  <label className="flex items-center">
+                    <input
+                      type="checkbox"
+                      checked={newProduct.is_ready_made}
+                      onChange={(e) => setNewProduct({...newProduct, is_ready_made: e.target.checked})}
+                      className="mr-2"
+                    />
+                    <span className="text-sm font-medium text-gray-700">Ready-made product (not a raw material)</span>
+                  </label>
+                </div>
+              </div>
+              
+              <div className="flex justify-end space-x-3 mt-6">
+                <button
+                  onClick={() => setShowAddProductModal(false)}
+                  className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleAddProduct}
+                  className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                >
+                  Add Product
+                </button>
+              </div>
             </div>
           </div>
         </div>

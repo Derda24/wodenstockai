@@ -241,6 +241,31 @@ async def update_stock(
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error updating stock: {str(e)}")
 
+@app.post("/api/stock/add-product")
+async def add_new_product(
+    product_data: dict,
+    username: str = Depends(verify_token)
+):
+    """Add a new product to the stock list"""
+    try:
+        result = supabase_service.add_new_stock_item(
+            name=product_data.get("name"),
+            category=product_data.get("category"),
+            current_stock=product_data.get("current_stock", 0),
+            min_stock=product_data.get("min_stock", 0),
+            unit=product_data.get("unit", "ml"),
+            is_ready_made=product_data.get("is_ready_made", False),
+            cost_per_unit=product_data.get("cost_per_unit", 0),
+            package_size=product_data.get("package_size", 0),
+            package_unit=product_data.get("package_unit", "ml")
+        )
+        if result["success"]:
+            return result
+        else:
+            raise HTTPException(status_code=400, detail=result["message"])
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error adding product: {str(e)}")
+
 @app.post("/api/stock/remove")
 async def remove_stock_item(
     item_name: str = Form(...),
