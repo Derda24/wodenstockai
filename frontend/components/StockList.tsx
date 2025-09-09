@@ -388,35 +388,35 @@ export default function StockList() {
       {/* Stock Table */}
       <div className="bg-white rounded-lg shadow overflow-hidden">
         {/* Mobile scroll indicator */}
-        <div className="sm:hidden bg-blue-50 border-b border-blue-200 px-4 py-3">
-          <p className="text-sm text-blue-600 text-center font-medium">
-            ← Swipe horizontally to see all columns →
+        <div className="sm:hidden bg-blue-100 border-b-2 border-blue-300 px-4 py-3">
+          <p className="text-sm text-blue-700 text-center font-semibold">
+            ← Swipe horizontally to see Update/Remove buttons →
           </p>
         </div>
-        <div className="overflow-x-auto overflow-y-auto max-h-[75vh] sm:max-h-[70vh]">
-          <table className="min-w-full divide-y divide-gray-200">
+        <div className="overflow-x-auto overflow-y-auto max-h-[75vh] sm:max-h-[70vh] scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-100" style={{WebkitOverflowScrolling: 'touch', scrollbarWidth: 'thin'}}>
+          <table className="min-w-full divide-y divide-gray-200" style={{minWidth: '800px'}}>
             <thead className="bg-gray-50 sticky top-0 z-10">
               <tr>
-                <th className="px-2 sm:px-6 py-3 text-left text-xs sm:text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[140px] sm:min-w-[150px]">
+                <th className="px-2 sm:px-6 py-3 text-left text-xs sm:text-xs font-medium text-gray-500 uppercase tracking-wider w-[120px] sm:w-[150px]">
                   <span className="hidden sm:inline">Item Name</span>
                   <span className="sm:hidden">Item</span>
                 </th>
-                <th className="px-2 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[80px] sm:min-w-[100px]">
+                <th className="px-2 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[80px] sm:w-[100px]">
                   <span className="hidden sm:inline">Category</span>
                   <span className="sm:hidden">Cat.</span>
                 </th>
-                <th className="px-2 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[100px] sm:min-w-[120px]">
+                <th className="px-2 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[80px] sm:w-[120px]">
                   <span className="hidden sm:inline">Current Stock</span>
                   <span className="sm:hidden">Stock</span>
                 </th>
-                <th className="px-2 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[80px] sm:min-w-[100px]">
+                <th className="px-2 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[70px] sm:w-[100px]">
                   <span className="hidden sm:inline">Min Level</span>
                   <span className="sm:hidden">Min</span>
                 </th>
-                <th className="px-2 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[60px] sm:min-w-[80px]">
+                <th className="px-2 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[50px] sm:w-[80px]">
                   Unit
                 </th>
-                <th className="px-2 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[180px] sm:min-w-[200px]">
+                <th className="px-2 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[200px] sm:w-[200px]">
                   <span className="hidden sm:inline">Stock Update</span>
                   <span className="sm:hidden">Update</span>
                 </th>
@@ -427,33 +427,33 @@ export default function StockList() {
                 const status = getStockStatus(item);
                 return (
                   <tr key={item.id} className="hover:bg-gray-50">
-                    <td className="px-2 sm:px-6 py-3 sm:py-4 whitespace-nowrap">
+                    <td className="px-2 sm:px-6 py-3 sm:py-4 whitespace-nowrap w-[120px] sm:w-[150px]">
                       <div className="flex items-center">
                         {getStatusIcon(status)}
-                        <span className="ml-1 sm:ml-2 font-medium text-gray-900 text-xs sm:text-sm md:text-base truncate max-w-[120px] sm:max-w-none">
+                        <span className="ml-1 sm:ml-2 font-medium text-gray-900 text-xs sm:text-sm md:text-base truncate">
                           {item.name}
                         </span>
                       </div>
                     </td>
-                    <td className="px-2 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">
+                    <td className="px-2 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500 w-[80px] sm:w-[100px]">
                       <span className="hidden sm:inline">{item.category}</span>
-                      <span className="sm:hidden text-xs truncate max-w-[60px] block">{item.category.substring(0, 6)}...</span>
+                      <span className="sm:hidden text-xs truncate block">{item.category.substring(0, 6)}...</span>
                     </td>
-                    <td className="px-2 sm:px-6 py-3 sm:py-4 whitespace-nowrap">
+                    <td className="px-2 sm:px-6 py-3 sm:py-4 whitespace-nowrap w-[80px] sm:w-[120px]">
                       <span className={`inline-flex items-center px-2 py-1 sm:px-2.5 sm:py-0.5 rounded-full text-xs font-medium ${getStatusColor(status)}`}>
                         <span className="hidden sm:inline">{item.current_stock} {item.unit}</span>
                         <span className="sm:hidden">{item.current_stock}</span>
                       </span>
                     </td>
-                    <td className="px-2 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">
+                    <td className="px-2 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500 w-[70px] sm:w-[100px]">
                       <span className="hidden sm:inline">{item.min_stock} {item.unit}</span>
                       <span className="sm:hidden">{item.min_stock}</span>
                     </td>
-                    <td className="px-2 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500">
+                    <td className="px-2 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500 w-[50px] sm:w-[80px]">
                       <span className="hidden sm:inline">{item.unit}</span>
                       <span className="sm:hidden text-xs">{item.unit.substring(0, 3)}</span>
                     </td>
-                    <td className="px-2 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-sm font-medium">
+                    <td className="px-2 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-sm font-medium w-[200px] sm:w-[200px]">
                        <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-2">
                          <input
                            type="number"
