@@ -10,6 +10,7 @@ import secrets
 from datetime import datetime, timedelta
 from app.services.supabase_service import SupabaseService
 from pydantic import BaseModel
+from typing import Optional
 
 app = FastAPI(
     title="Woden AI Stock Management System",
@@ -48,6 +49,17 @@ class LoginRequest(BaseModel):
 class User(BaseModel):
     username: str
     password_hash: str
+
+class AddProductRequest(BaseModel):
+    name: str
+    category: str
+    current_stock: float = 0
+    min_stock: float = 0
+    unit: str = "ml"
+    is_ready_made: bool = False
+    cost_per_unit: float = 0
+    package_size: float = 0
+    package_unit: str = "ml"
 
 # Admin users with hashed passwords (use environment variables in production)
 def get_admin_users():
@@ -243,21 +255,21 @@ async def update_stock(
 
 @app.post("/api/stock/add-product")
 async def add_new_product(
-    product_data: dict,
+    product_data: AddProductRequest,
     username: str = Depends(verify_token)
 ):
     """Add a new product to the stock list"""
     try:
         result = supabase_service.add_new_stock_item(
-            name=product_data.get("name"),
-            category=product_data.get("category"),
-            current_stock=product_data.get("current_stock", 0),
-            min_stock=product_data.get("min_stock", 0),
-            unit=product_data.get("unit", "ml"),
-            is_ready_made=product_data.get("is_ready_made", False),
-            cost_per_unit=product_data.get("cost_per_unit", 0),
-            package_size=product_data.get("package_size", 0),
-            package_unit=product_data.get("package_unit", "ml")
+            name=product_data.name,
+            category=product_data.category,
+            current_stock=product_data.current_stock,
+            min_stock=product_data.min_stock,
+            unit=product_data.unit,
+            is_ready_made=product_data.is_ready_made,
+            cost_per_unit=product_data.cost_per_unit,
+            package_size=product_data.package_size,
+            package_unit=product_data.package_unit
         )
         if result["success"]:
             return result
