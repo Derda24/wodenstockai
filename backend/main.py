@@ -379,31 +379,60 @@ async def get_analysis(period: str = "7d"):
             except:
                 days = 7
         
+        print(f"DEBUG: Getting analysis data for {days} days")
+        
         # Get sales data from Supabase
         sales_data = supabase_service.get_sales_data(days)
+        print(f"DEBUG: Sales data: {sales_data}")
         
         # Get stock data for low stock alerts
         stock_list = supabase_service.get_flat_stock_list()
+        print(f"DEBUG: Stock list count: {len(stock_list)}")
         
         # Low stock alerts
         low_stock_alerts = []
         for item in stock_list:
-            if float(item.get("current_stock", 0)) <= float(item.get("min_stock", 0)):
+            current_stock = float(item.get("current_stock", 0))
+            min_stock = float(item.get("min_stock", 0))
+            
+            # Handle case where min_stock is 0 (avoid division by zero)
+            if min_stock == 0:
+                if current_stock == 0:
+                    # Both are 0, consider it critical
+                    low_stock_alerts.append({
+                        "name": item.get("name", ""),
+                        "current": current_stock,
+                        "min": min_stock,
+                        "unit": item.get("unit", ""),
+                        "percentage": "NaN% below minimum"
+                    })
+                else:
+                    # Current > 0 but min = 0, this is actually fine
+                    continue
+            elif current_stock <= min_stock:
+                percentage = ((current_stock - min_stock) / min_stock) * 100
                 low_stock_alerts.append({
                     "name": item.get("name", ""),
-                    "current": item.get("current_stock", 0),
-                    "min": item.get("min_stock", 0),
-                    "unit": item.get("unit", "")
+                    "current": current_stock,
+                    "min": min_stock,
+                    "unit": item.get("unit", ""),
+                    "percentage": f"{percentage:.0f}% below minimum"
                 })
         
-        return {
+        # Ensure we have proper data structure
+        result = {
             "totalSales": sales_data.get("total_sales", 0),
             "topProducts": sales_data.get("top_products", []),
             "lowStockAlerts": low_stock_alerts,
             "dailyTrends": sales_data.get("daily_trends", []),
-            "categoryBreakdown": sales_data.get("category_breakdown", {})
+            "categoryBreakdown": sales_data.get("category_breakdown", [])
         }
+        
+        print(f"DEBUG: Analysis result: {result}")
+        return result
+        
     except Exception as e:
+        print(f"ERROR: Analysis failed: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error retrieving analysis: {str(e)}")
 
 @app.get("/api/recommendations")

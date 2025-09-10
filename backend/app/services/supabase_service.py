@@ -456,24 +456,25 @@ class SupabaseService:
             response = self.client.table("sales_history").select("*").gte("date", start_date.strftime("%Y-%m-%d")).lte("date", end_date.strftime("%Y-%m-%d")).order("date", desc=False).execute()
             
             if not response.data:
-                return {"total_sales": 0, "daily_trends": [], "top_products": [], "category_breakdown": {}}
+                return {"total_sales": 0, "daily_trends": [], "top_products": [], "category_breakdown": []}
             
             total_sales = 0
             daily_trends = []
             product_counts = {}
             category_counts = {}
             
+            # Get stock items for category mapping
+            stock_items = self.get_flat_stock_list()
+            stock_item_map = {item.get("name", "").lower(): item.get("category", "unknown") for item in stock_items}
+            
             for record in response.data:
                 date = record.get("date", "")
-                sales = float(record.get("total_sales", 0))
+                # Use total_quantity instead of total_sales
+                sales = float(record.get("total_quantity", record.get("total_sales", 0)))
                 total_sales += sales
                 
-                daily_trends.append({
-                    "date": date,
-                    "total_sales": sales,
-                    "products_sold": sales,  # Using quantity as products sold
-                    "trend": "up" if sales > 0 else "stable"
-                })
+                # Count unique products sold on this date
+                unique_products = set()
                 
                 # Parse items_sold JSON
                 try:
@@ -483,32 +484,52 @@ class SupabaseService:
                         quantity = int(item.get("quantity", 0))
                         
                         if product:
+                            unique_products.add(product)
                             product_counts[product] = product_counts.get(product, 0) + quantity
                             
-                            # Try to determine category from stock items
-                            stock_items = self.get_flat_stock_list()
-                            for stock_item in stock_items:
-                                if stock_item.get("name", "").lower() == product.lower():
-                                    category = stock_item.get("category", "unknown")
-                                    category_counts[category] = category_counts.get(category, 0) + quantity
-                                    break
+                            # Map product to category
+                            category = stock_item_map.get(product.lower(), "unknown")
+                            category_counts[category] = category_counts.get(category, 0) + quantity
                 except Exception as e:
                     print(f"Warning: Could not parse items_sold for {date}: {str(e)}")
+                
+                daily_trends.append({
+                    "date": date,
+                    "totalSales": sales,
+                    "products": len(unique_products)
+                })
             
-            # Get top products
+            # Get top products with percentages
             top_products = sorted(product_counts.items(), key=lambda x: x[1], reverse=True)[:5]
-            top_products_list = [{"name": name, "quantity": qty} for name, qty in top_products]
+            top_products_list = []
+            for name, qty in top_products:
+                percentage = (qty / total_sales * 100) if total_sales > 0 else 0
+                top_products_list.append({
+                    "name": name, 
+                    "quantity": qty,
+                    "percentage": round(percentage, 1)
+                })
+            
+            # Convert category breakdown to list format
+            category_breakdown_list = []
+            for category, count in category_counts.items():
+                percentage = (count / total_sales * 100) if total_sales > 0 else 0
+                category_breakdown_list.append({
+                    "category": category,
+                    "count": count,
+                    "percentage": round(percentage, 1)
+                })
             
             return {
                 "total_sales": total_sales,
                 "daily_trends": daily_trends,
                 "top_products": top_products_list,
-                "category_breakdown": category_counts
+                "category_breakdown": category_breakdown_list
             }
             
         except Exception as e:
             print(f"Error getting sales data: {str(e)}")
-            return {"total_sales": 0, "daily_trends": [], "top_products": [], "category_breakdown": {}}
+            return {"total_sales": 0, "daily_trends": [], "top_products": [], "category_breakdown": []}
     
     def get_enhanced_stock_alerts(self) -> Dict[str, Any]:
         """Get enhanced stock alerts with urgency scoring and intelligent analysis."""
