@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   Box, 
   BarChart3, 
@@ -20,12 +20,23 @@ import AIAnalysis from '@/components/AIAnalysis';
 import AIRecommendations from '@/components/AIRecommendations';
 import Settings from '@/components/Settings';
 import LoginModal from '@/components/LoginModal';
+import { LoadingScreen } from '@/components/loginscreen';
 
 export default function Dashboard() {
   const [activeTab, setActiveTab] = useState('stock');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [showLogin, setShowLogin] = useState(true);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Show loading screen for 2 seconds on app start
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 2000);
+
+    return () => clearTimeout(timer);
+  }, []);
 
   const handleLogin = (success: boolean) => {
     if (success) {
@@ -38,6 +49,11 @@ export default function Dashboard() {
     setIsAuthenticated(false);
     setShowLogin(true);
   };
+
+  // Show loading screen first
+  if (isLoading) {
+    return <LoadingScreen isLoading={true} />;
+  }
 
   if (!isAuthenticated) {
     return <LoginModal onLogin={handleLogin} />;
