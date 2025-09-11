@@ -277,7 +277,8 @@ class SupabaseService:
                 try:
                     self.client.table("sales_history").upsert({
                         "date": date,
-                        "total_sales": data["total_quantity"],
+                        "total_quantity": data["total_quantity"],
+                        "total_sales": data["total_quantity"],  # Keep both for compatibility
                         "items_sold": json.dumps(data["items"]),
                         "learning_data": json.dumps(learning_insights),
                         "created_at": datetime.now(timezone.utc).isoformat()
