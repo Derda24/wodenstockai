@@ -19,6 +19,7 @@ import {
   Sparkles,
   Upload
 } from 'lucide-react';
+import { API_ENDPOINTS } from '../config/api';
 
 interface SalesRecord {
   product_name: string;
@@ -52,10 +53,18 @@ export default function AIAnalysis() {
 
   const loadAnalysisData = async () => {
     setIsLoading(true);
+    setHasError(false);
     try {
-      const response = await fetch(`https://wodenstockai.onrender.com/api/analysis?period=${selectedPeriod}`);
+      console.log(`Loading analysis data for period: ${selectedPeriod}`);
+      const response = await fetch(`${API_ENDPOINTS.ANALYSIS.GET}?period=${selectedPeriod}`);
+      console.log('Analysis API response status:', response.status);
+      
       if (response.ok) {
         const data = await response.json();
+        console.log('Analysis API response data:', data);
+        console.log('Top products data:', data.topProducts);
+        console.log('Category breakdown data:', data.categoryBreakdown);
+        
         // Ensure all required fields exist with fallbacks
         setAnalysisData({
           totalSales: data.totalSales || 0,
@@ -64,6 +73,11 @@ export default function AIAnalysis() {
           dailyTrends: data.dailyTrends || [],
           categoryBreakdown: data.categoryBreakdown || []
         });
+      } else {
+        console.error('Analysis API error:', response.status, response.statusText);
+        const errorText = await response.text();
+        console.error('Error response:', errorText);
+        setHasError(true);
       }
     } catch (error) {
       console.error('Error loading analysis data:', error);
@@ -126,35 +140,35 @@ export default function AIAnalysis() {
     <div className="space-y-8 animate-fade-in">
       {/* Modern Header */}
       <div className="relative">
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
+        <div className="flex flex-col space-y-4 lg:flex-row lg:items-center lg:justify-between lg:space-y-0">
           <div className="mb-6 lg:mb-0">
             <div className="flex items-center space-x-3 mb-4">
-              <div className="w-12 h-12 bg-gradient-primary rounded-2xl flex items-center justify-center shadow-medium">
-                <Brain className="w-7 h-7 text-white" />
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-primary rounded-2xl flex items-center justify-center shadow-medium">
+                <Brain className="w-6 h-6 sm:w-7 sm:h-7 text-white" />
               </div>
               <div>
-                <h1 className="text-3xl font-bold text-gray-900">AI Analytics</h1>
-                <p className="text-gray-600 text-lg">Intelligent insights powered by artificial intelligence</p>
+                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">AI Analytics</h1>
+                <p className="text-gray-600 text-sm sm:text-lg">Intelligent insights powered by AI</p>
               </div>
             </div>
-            <div className="flex items-center space-x-4">
+            <div className="flex flex-wrap items-center gap-2 sm:gap-4">
               <div className="flex items-center space-x-2 px-3 py-1 bg-green-100 rounded-full">
                 <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                <span className="text-sm font-medium text-green-700">AI Active</span>
+                <span className="text-xs sm:text-sm font-medium text-green-700">AI Active</span>
               </div>
               <div className="flex items-center space-x-2 px-3 py-1 bg-blue-100 rounded-full">
-                <Sparkles className="w-4 h-4 text-blue-600" />
-                <span className="text-sm font-medium text-blue-700">Real-time Analysis</span>
+                <Sparkles className="w-3 h-3 sm:w-4 sm:h-4 text-blue-600" />
+                <span className="text-xs sm:text-sm font-medium text-blue-700">Real-time Analysis</span>
               </div>
             </div>
           </div>
           
-          <div className="flex items-center space-x-4">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center space-y-2 sm:space-y-0 sm:space-x-3">
             <div className="relative">
               <select
                 value={selectedPeriod}
                 onChange={(e) => setSelectedPeriod(e.target.value)}
-                className="appearance-none bg-white border border-gray-200 rounded-xl px-4 py-3 pr-10 text-sm font-medium text-gray-700 shadow-soft focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-200"
+                className="w-full sm:w-auto appearance-none bg-white border border-gray-200 rounded-xl px-4 py-3 pr-10 text-sm font-medium text-gray-700 shadow-soft focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-200 touch-manipulation"
               >
                 <option value="7d">Last 7 Days</option>
                 <option value="30d">Last 30 Days</option>
@@ -164,6 +178,38 @@ export default function AIAnalysis() {
               <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
                 <Calendar className="w-4 h-4 text-gray-400" />
               </div>
+            </div>
+            
+            <div className="flex space-x-2">
+              <button
+                onClick={loadAnalysisData}
+                disabled={isLoading}
+                className="flex-1 sm:flex-none flex items-center justify-center space-x-2 px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm font-medium text-gray-700 shadow-soft hover:shadow-medium focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation min-h-[44px]"
+              >
+                <Activity className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
+                <span className="hidden sm:inline">{isLoading ? 'Refreshing...' : 'Refresh'}</span>
+                <span className="sm:hidden">{isLoading ? '...' : '↻'}</span>
+              </button>
+              
+              <button
+                onClick={async () => {
+                  try {
+                    const response = await fetch(API_ENDPOINTS.ANALYSIS.TEST_DATA, { method: 'POST' });
+                    const result = await response.json();
+                    console.log('Test data created:', result);
+                    alert('Test sales data created! Refresh the analysis to see it.');
+                    loadAnalysisData();
+                  } catch (error) {
+                    console.error('Error creating test data:', error);
+                    alert('Error creating test data. Check console for details.');
+                  }
+                }}
+                className="flex-1 sm:flex-none flex items-center justify-center space-x-2 px-4 py-3 bg-blue-500 text-white rounded-xl text-sm font-medium shadow-soft hover:bg-blue-600 focus:ring-2 focus:ring-blue-500 transition-all duration-200 touch-manipulation min-h-[44px]"
+              >
+                <Sparkles className="w-4 h-4" />
+                <span className="hidden sm:inline">Create Test Data</span>
+                <span className="sm:hidden">Test</span>
+              </button>
             </div>
           </div>
         </div>
@@ -280,10 +326,10 @@ export default function AIAnalysis() {
         {analysisData.topProducts && analysisData.topProducts.length > 0 ? (
           <div className="space-y-3">
             {analysisData.topProducts.map((product, index) => (
-              <div key={product.name} className="flex items-center justify-between p-4 bg-gradient-to-r from-gray-50 to-white rounded-xl border border-gray-100 hover:shadow-soft transition-all duration-200 group">
-                <div className="flex items-center space-x-4">
+              <div key={product.name} className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 bg-gradient-to-r from-gray-50 to-white rounded-xl border border-gray-100 hover:shadow-soft transition-all duration-200 group">
+                <div className="flex items-center space-x-4 mb-3 sm:mb-0">
                   <div className="relative">
-                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center font-bold text-white shadow-medium ${
+                    <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center font-bold text-white shadow-medium ${
                       index === 0 ? 'bg-gradient-to-br from-yellow-400 to-yellow-500' :
                       index === 1 ? 'bg-gradient-to-br from-gray-400 to-gray-500' :
                       index === 2 ? 'bg-gradient-to-br from-orange-400 to-orange-500' :
@@ -292,13 +338,13 @@ export default function AIAnalysis() {
                       {index + 1}
                     </div>
                     {index < 3 && (
-                      <div className="absolute -top-1 -right-1 w-4 h-4 bg-gradient-accent rounded-full flex items-center justify-center">
-                        <Zap className="w-2 h-2 text-white" />
+                      <div className="absolute -top-1 -right-1 w-3 h-3 sm:w-4 sm:h-4 bg-gradient-accent rounded-full flex items-center justify-center">
+                        <Zap className="w-1.5 h-1.5 sm:w-2 sm:h-2 text-white" />
                       </div>
                     )}
                   </div>
-                  <div>
-                    <h4 className="font-semibold text-gray-900 group-hover:text-primary-600 transition-colors duration-200">
+                  <div className="flex-1 min-w-0">
+                    <h4 className="font-semibold text-gray-900 group-hover:text-primary-600 transition-colors duration-200 truncate">
                       {product.name}
                     </h4>
                     <p className="text-sm text-gray-500">
@@ -306,8 +352,8 @@ export default function AIAnalysis() {
                     </p>
                   </div>
                 </div>
-                <div className="text-right">
-                  <div className="text-2xl font-bold text-gray-900">
+                <div className="text-left sm:text-right">
+                  <div className="text-xl sm:text-2xl font-bold text-gray-900">
                     {product.percentage?.toFixed(1) || '0.0'}%
                   </div>
                   <div className="text-sm text-gray-500">Market Share</div>
@@ -367,25 +413,27 @@ export default function AIAnalysis() {
           
           <div className="space-y-3">
             {analysisData.lowStockAlerts.map((item) => (
-              <div key={item.name} className="flex items-center justify-between p-4 bg-gradient-to-r from-red-50 to-red-25 rounded-xl border border-red-200 hover:shadow-soft transition-all duration-200 group">
-                <div className="flex items-center space-x-4">
-                  <div className="w-12 h-12 bg-gradient-to-br from-red-500 to-red-600 rounded-xl flex items-center justify-center">
-                    <Package className="w-6 h-6 text-white" />
+              <div key={item.name} className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 bg-gradient-to-r from-red-50 to-red-25 rounded-xl border border-red-200 hover:shadow-soft transition-all duration-200 group">
+                <div className="flex items-center space-x-4 mb-3 sm:mb-0">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-red-500 to-red-600 rounded-xl flex items-center justify-center">
+                    <Package className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                   </div>
-                  <div>
-                    <h4 className="font-semibold text-red-900 group-hover:text-red-700 transition-colors duration-200">
+                  <div className="flex-1 min-w-0">
+                    <h4 className="font-semibold text-red-900 group-hover:text-red-700 transition-colors duration-200 truncate">
                       {item.name}
                     </h4>
                     <p className="text-sm text-red-600">
-                      Current: {item.current} {item.unit} | Min: {item.min} {item.unit}
+                      <span className="block sm:inline">Current: {item.current} {item.unit}</span>
+                      <span className="hidden sm:inline"> | </span>
+                      <span className="block sm:inline">Min: {item.min} {item.unit}</span>
                     </p>
                   </div>
                 </div>
-                <div className="text-right">
-                  <div className="badge-danger">
+                <div className="text-left sm:text-right">
+                  <div className="badge-danger mb-1">
                     Critical
                   </div>
-                  <div className="text-sm text-red-600 mt-1">
+                  <div className="text-sm text-red-600">
                     {Math.round(((item.current / item.min) - 1) * 100)}% below minimum
                   </div>
                 </div>

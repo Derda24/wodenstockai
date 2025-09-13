@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Plus, Minus, Search, Upload, RefreshCw, AlertTriangle, Calendar, X } from 'lucide-react';
+import { API_ENDPOINTS } from '../config/api';
 
 interface StockItem {
   id: string;
@@ -55,7 +56,7 @@ export default function StockList() {
   const loadStockData = async () => {
     try {
       setLoading(true);
-      const response = await fetch('https://wodenstockai.onrender.com/api/stock');
+      const response = await fetch(API_ENDPOINTS.STOCK.GET);
       if (response.ok) {
         const data: StockResponse = await response.json();
         console.log('=== Stock data loaded ===');
@@ -149,7 +150,7 @@ export default function StockList() {
 
       console.log('Sending request with headers:', headers);
 
-      const response = await fetch('https://wodenstockai.onrender.com/api/stock/update', {
+      const response = await fetch(API_ENDPOINTS.STOCK.UPDATE, {
         method: 'POST',
         headers,
         body: formData,
@@ -197,7 +198,7 @@ export default function StockList() {
         headers['Authorization'] = `Bearer ${token}`;
       }
 
-      const response = await fetch('https://wodenstockai.onrender.com/api/stock/remove', {
+      const response = await fetch(API_ENDPOINTS.STOCK.REMOVE, {
         method: 'POST',
         headers,
         body: formData,
@@ -238,7 +239,7 @@ export default function StockList() {
 
     try {
       console.log('Sending request to backend...');
-      const response = await fetch('https://wodenstockai.onrender.com/api/sales/upload', {
+      const response = await fetch(API_ENDPOINTS.SALES.UPLOAD, {
         method: 'POST',
         headers,
         body: formData,
@@ -258,6 +259,23 @@ export default function StockList() {
         setTimeout(() => {
           loadStockData();
           setUploadMessage('');
+          
+          // Show notification that AI Analytics should be refreshed
+          const notification = document.createElement('div');
+          notification.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 flex items-center space-x-2';
+          notification.innerHTML = `
+            <div class="w-2 h-2 bg-white rounded-full animate-pulse"></div>
+            <span>Excel uploaded successfully! Refresh AI Analytics to see new data.</span>
+            <button onclick="this.parentElement.remove()" class="ml-2 text-white hover:text-gray-200">×</button>
+          `;
+          document.body.appendChild(notification);
+          
+          // Auto-remove notification after 5 seconds
+          setTimeout(() => {
+            if (notification.parentElement) {
+              notification.remove();
+            }
+          }, 5000);
         }, 3000);
       } else {
         const error = await response.json();
@@ -274,7 +292,7 @@ export default function StockList() {
     try {
       setUploadMessage('Applying daily consumption...');
       
-      const response = await fetch('https://wodenstockai.onrender.com/api/daily-consumption/apply', {
+      const response = await fetch(API_ENDPOINTS.DAILY_CONSUMPTION.APPLY, {
         method: 'POST',
       });
 
@@ -306,7 +324,7 @@ export default function StockList() {
         return;
       }
 
-      const response = await fetch('https://wodenstockai.onrender.com/api/stock/add-product', {
+      const response = await fetch(API_ENDPOINTS.STOCK.ADD_PRODUCT, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -456,199 +474,294 @@ export default function StockList() {
         </div>
       </div>
 
-      {/* Stock Table */}
+      {/* Stock Display - Mobile Cards / Desktop Table */}
       <div className="bg-white rounded-lg shadow overflow-hidden w-full">
-        {/* Mobile scroll indicator */}
-        <div className="sm:hidden bg-blue-100 border-b-2 border-blue-300 px-4 py-3">
-          <p className="text-sm text-blue-700 text-center font-semibold">
-            ← Swipe horizontally to see Update/Remove buttons →
-          </p>
-        </div>
-        <div className="overflow-x-auto overflow-y-auto max-h-[75vh] sm:max-h-[70vh] w-full" style={{WebkitOverflowScrolling: 'touch', scrollbarWidth: 'thin'}}>
-          <table className="min-w-full divide-y divide-gray-200" style={{minWidth: '800px'}}>
-            <thead className="bg-gray-50 sticky top-0 z-10">
-              <tr>
-                <th className="px-2 sm:px-6 py-3 text-left text-xs sm:text-xs font-medium text-gray-500 uppercase tracking-wider w-[120px] sm:w-[150px]">
-                  <span className="hidden sm:inline">Item Name</span>
-                  <span className="sm:hidden">Item</span>
-                </th>
-                <th className="px-2 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[80px] sm:w-[100px]">
-                  <span className="hidden sm:inline">Category</span>
-                  <span className="sm:hidden">Cat.</span>
-                </th>
-                <th className="px-2 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[80px] sm:w-[120px]">
-                  <span className="hidden sm:inline">Current Stock</span>
-                  <span className="sm:hidden">Stock</span>
-                </th>
-                <th className="px-2 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[70px] sm:w-[100px]">
-                  <span className="hidden sm:inline">Min Level</span>
-                  <span className="sm:hidden">Min</span>
-                </th>
-                <th className="px-2 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[50px] sm:w-[80px]">
-                  Unit
-                </th>
-                <th className="px-2 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-[200px] sm:w-[200px]">
-                  <span className="hidden sm:inline">Stock Update</span>
-                  <span className="sm:hidden">Update</span>
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {filteredData.map((item) => {
-                const status = getStockStatus(item);
-                return (
-                  <tr key={item.id} className="hover:bg-gray-50">
-                    <td className="px-2 sm:px-6 py-3 sm:py-4 whitespace-nowrap w-[120px] sm:w-[150px]">
-                      <div className="flex items-center">
-                        {getStatusIcon(status)}
-                        <span className="ml-1 sm:ml-2 font-medium text-gray-900 text-xs sm:text-sm md:text-base truncate">
-                          {item.name}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="px-2 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500 w-[80px] sm:w-[100px]">
-                      <span className="hidden sm:inline">{item.category}</span>
-                      <span className="sm:hidden text-xs truncate block">{item.category.substring(0, 6)}...</span>
-                    </td>
-                    <td className="px-2 sm:px-6 py-3 sm:py-4 whitespace-nowrap w-[80px] sm:w-[120px]">
-                      <span className={`inline-flex items-center px-2 py-1 sm:px-2.5 sm:py-0.5 rounded-full text-xs font-medium ${getStatusColor(status)}`}>
-                        <span className="hidden sm:inline">{item.current_stock} {item.unit}</span>
-                        <span className="sm:hidden">{item.current_stock}</span>
-                      </span>
-                    </td>
-                    <td className="px-2 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500 w-[70px] sm:w-[100px]">
-                      <span className="hidden sm:inline">{item.min_stock} {item.unit}</span>
-                      <span className="sm:hidden">{item.min_stock}</span>
-                    </td>
-                    <td className="px-2 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500 w-[50px] sm:w-[80px]">
-                      <span className="hidden sm:inline">{item.unit}</span>
-                      <span className="sm:hidden text-xs">{item.unit.substring(0, 3)}</span>
-                    </td>
-                    <td className="px-2 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-sm font-medium w-[200px] sm:w-[200px]">
-                       <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-2">
-                         <input
-                           type="number"
-                           min="0"
-                           step="0.01"
-                           placeholder={`New value (${item.current_stock})`}
-                           className="w-full sm:w-20 px-3 py-2 text-sm sm:text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent touch-manipulation"
-                           onKeyPress={(e) => {
-                             if (e.key === 'Enter') {
-                               console.log('=== Enter key pressed ===');
-                               console.log('Item:', item.name, 'ID:', item.id, 'can_edit:', item.can_edit);
-                               const target = e.target as HTMLInputElement;
-                               console.log('Input value:', target.value);
-                               if (target.value && target.value.trim() !== '') {
-                                 const newValue = parseFloat(target.value);
-                                 console.log('Parsed new value:', newValue);
-                                 if (!isNaN(newValue) && newValue >= 0) {
-                                   const change = newValue - item.current_stock;
-                                   console.log('Calculated change:', change);
-                                   updateStock(item.id, change);
-                                   target.value = '';
-                                 } else {
-                                   alert('Please enter a valid number (0 or greater)');
-                                 }
-                               } else {
-                                 alert('Please enter a new stock value before pressing Enter');
-                               }
-                             }
-                           }}
-                         />
-                         <div className="flex space-x-1 w-full sm:w-auto">
-                           <button
-                             onClick={(e) => {
-                               console.log('=== Update button clicked ===');
-                               console.log('Item:', item.name, 'ID:', item.id, 'can_edit:', item.can_edit);
-                               
-                               // Find the input field in the same row
-                               const row = e.currentTarget.closest('tr');
-                               const input = row?.querySelector('input[type="number"]') as HTMLInputElement;
-                               
-                               console.log('Row found:', row);
-                               console.log('Input element found:', input);
-                               console.log('Input value:', input?.value);
-                               
-                               if (input && input.value && input.value.trim() !== '') {
-                                 const newValue = parseFloat(input.value);
-                                 console.log('Parsed new value:', newValue);
-                                 if (!isNaN(newValue) && newValue >= 0) {
-                                   const change = newValue - item.current_stock;
-                                   console.log('Calculated change:', change);
-                                   updateStock(item.id, change);
-                                   input.value = '';
-                                 } else {
-                                   alert('Please enter a valid number (0 or greater)');
-                                 }
-                               } else {
-                                 alert('Please enter a new stock value before clicking Update');
-                               }
-                             }}
-                             className="flex-1 sm:flex-none inline-flex items-center justify-center px-3 py-2 text-xs sm:text-xs bg-blue-600 text-white rounded hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 touch-manipulation min-h-[36px]"
-                           >
-                             <span className="hidden sm:inline">Update</span>
-                             <span className="sm:hidden text-sm font-medium">✓</span>
-                           </button>
-                           <button
-                             onClick={() => removeStockItem(item.name)}
-                             className="flex-1 sm:flex-none inline-flex items-center justify-center px-3 py-2 text-xs sm:text-xs bg-red-600 text-white rounded hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 touch-manipulation min-h-[36px]"
-                           >
-                             <span className="hidden sm:inline">Remove</span>
-                             <span className="sm:hidden text-sm font-medium">×</span>
-                           </button>
-                         </div>
-                       </div>
-                     </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-        
-        {filteredData.length === 0 && (
-          <div className="text-center py-12">
-            <p className="text-gray-500">No items found matching your criteria.</p>
+        {/* Mobile Card Layout */}
+        <div className="block sm:hidden">
+          <div className="overflow-y-auto max-h-[75vh] p-4 space-y-4">
+            {filteredData.map((item) => {
+              const status = getStockStatus(item);
+              return (
+                <div key={item.id} className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                  {/* Header with status */}
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center">
+                      {getStatusIcon(status)}
+                      <h3 className="ml-2 font-semibold text-gray-900 text-sm truncate flex-1">
+                        {item.name}
+                      </h3>
+                    </div>
+                    <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(status)}`}>
+                      {item.current_stock} {item.unit}
+                    </span>
+                  </div>
+                  
+                  {/* Details */}
+                  <div className="grid grid-cols-2 gap-3 mb-4 text-sm">
+                    <div>
+                      <span className="text-gray-500">Category:</span>
+                      <p className="font-medium text-gray-900">{item.category}</p>
+                    </div>
+                    <div>
+                      <span className="text-gray-500">Min Level:</span>
+                      <p className="font-medium text-gray-900">{item.min_stock} {item.unit}</p>
+                    </div>
+                  </div>
+                  
+                  {/* Stock Update Section */}
+                  <div className="space-y-3">
+                    <div>
+                      <label className="block text-xs font-medium text-gray-700 mb-1">
+                        Update Stock
+                      </label>
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        placeholder={`New value (${item.current_stock})`}
+                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent touch-manipulation"
+                        onKeyPress={(e) => {
+                          if (e.key === 'Enter') {
+                            const target = e.target as HTMLInputElement;
+                            if (target.value && target.value.trim() !== '') {
+                              const newValue = parseFloat(target.value);
+                              if (!isNaN(newValue) && newValue >= 0) {
+                                const change = newValue - item.current_stock;
+                                updateStock(item.id, change);
+                                target.value = '';
+                              } else {
+                                alert('Please enter a valid number (0 or greater)');
+                              }
+                            } else {
+                              alert('Please enter a new stock value before pressing Enter');
+                            }
+                          }
+                        }}
+                      />
+                    </div>
+                    
+                    {/* Action Buttons */}
+                    <div className="flex space-x-2">
+                      <button
+                        onClick={(e) => {
+                          const input = e.currentTarget.parentElement?.previousElementSibling?.querySelector('input[type="number"]') as HTMLInputElement;
+                          if (input && input.value && input.value.trim() !== '') {
+                            const newValue = parseFloat(input.value);
+                            if (!isNaN(newValue) && newValue >= 0) {
+                              const change = newValue - item.current_stock;
+                              updateStock(item.id, change);
+                              input.value = '';
+                            } else {
+                              alert('Please enter a valid number (0 or greater)');
+                            }
+                          } else {
+                            alert('Please enter a new stock value before clicking Update');
+                          }
+                        }}
+                        className="flex-1 inline-flex items-center justify-center px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 touch-manipulation min-h-[44px]"
+                      >
+                        ✓ Update
+                      </button>
+                      <button
+                        onClick={() => removeStockItem(item.name)}
+                        className="flex-1 inline-flex items-center justify-center px-4 py-2 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 touch-manipulation min-h-[44px]"
+                      >
+                        × Remove
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+            
+            {filteredData.length === 0 && (
+              <div className="text-center py-12">
+                <p className="text-gray-500">No items found matching your criteria.</p>
+              </div>
+            )}
           </div>
-        )}
+        </div>
+
+        {/* Desktop Table Layout */}
+        <div className="hidden sm:block">
+          <div className="overflow-x-auto overflow-y-auto max-h-[70vh] w-full" style={{WebkitOverflowScrolling: 'touch', scrollbarWidth: 'thin'}}>
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50 sticky top-0 z-10">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Item Name
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Category
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Current Stock
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Min Level
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Unit
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Stock Update
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {filteredData.map((item) => {
+                  const status = getStockStatus(item);
+                  return (
+                    <tr key={item.id} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center">
+                          {getStatusIcon(status)}
+                          <span className="ml-2 font-medium text-gray-900">
+                            {item.name}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {item.category}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(status)}`}>
+                          {item.current_stock} {item.unit}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {item.min_stock} {item.unit}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {item.unit}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <div className="flex items-center space-x-2">
+                          <input
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            placeholder={`New value (${item.current_stock})`}
+                            className="w-20 px-3 py-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            onKeyPress={(e) => {
+                              if (e.key === 'Enter') {
+                                const target = e.target as HTMLInputElement;
+                                if (target.value && target.value.trim() !== '') {
+                                  const newValue = parseFloat(target.value);
+                                  if (!isNaN(newValue) && newValue >= 0) {
+                                    const change = newValue - item.current_stock;
+                                    updateStock(item.id, change);
+                                    target.value = '';
+                                  } else {
+                                    alert('Please enter a valid number (0 or greater)');
+                                  }
+                                } else {
+                                  alert('Please enter a new stock value before pressing Enter');
+                                }
+                              }
+                            }}
+                          />
+                          <button
+                            onClick={(e) => {
+                              const row = e.currentTarget.closest('tr');
+                              const input = row?.querySelector('input[type="number"]') as HTMLInputElement;
+                              if (input && input.value && input.value.trim() !== '') {
+                                const newValue = parseFloat(input.value);
+                                if (!isNaN(newValue) && newValue >= 0) {
+                                  const change = newValue - item.current_stock;
+                                  updateStock(item.id, change);
+                                  input.value = '';
+                                } else {
+                                  alert('Please enter a valid number (0 or greater)');
+                                }
+                              } else {
+                                alert('Please enter a new stock value before clicking Update');
+                              }
+                            }}
+                            className="inline-flex items-center justify-center px-3 py-2 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                          >
+                            Update
+                          </button>
+                          <button
+                            onClick={() => removeStockItem(item.name)}
+                            className="inline-flex items-center justify-center px-3 py-2 text-xs bg-red-600 text-white rounded hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+          
+          {filteredData.length === 0 && (
+            <div className="text-center py-12">
+              <p className="text-gray-500">No items found matching your criteria.</p>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Upload Modal */}
       {showUploadModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
-            <h3 className="text-lg font-medium text-gray-900 mb-4">Upload Daily Sales Excel</h3>
-            
-                         <div className="mb-4">
-               <input
-                 type="file"
-                 accept=".xlsx,.xls"
-                 onChange={(e) => {
-                   const file = e.target.files?.[0] || null;
-                   console.log('File selected:', file?.name, 'Size:', file?.size);
-                   setSelectedFile(file);
-                 }}
-                 className="w-full p-2 border border-gray-300 rounded-lg"
-               />
-             </div>
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-semibold text-gray-900">Upload Daily Sales Excel</h3>
+                <button
+                  onClick={() => {
+                    setShowUploadModal(false);
+                    setSelectedFile(null);
+                  }}
+                  className="text-gray-400 hover:text-gray-600 touch-manipulation"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+              
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Select Excel File
+                </label>
+                <input
+                  type="file"
+                  accept=".xlsx,.xls"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0] || null;
+                    console.log('File selected:', file?.name, 'Size:', file?.size);
+                    setSelectedFile(file);
+                  }}
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent touch-manipulation"
+                />
+                {selectedFile && (
+                  <p className="mt-2 text-sm text-gray-600">
+                    Selected: {selectedFile.name}
+                  </p>
+                )}
+              </div>
 
-            <div className="flex justify-end space-x-3">
-              <button
-                onClick={() => {
-                  setShowUploadModal(false);
-                  setSelectedFile(null);
-                }}
-                className="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleFileUpload}
-                disabled={!selectedFile}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Upload
-              </button>
+              <div className="flex flex-col sm:flex-row gap-3">
+                <button
+                  onClick={() => {
+                    setShowUploadModal(false);
+                    setSelectedFile(null);
+                  }}
+                  className="flex-1 px-4 py-3 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 touch-manipulation min-h-[44px]"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleFileUpload}
+                  disabled={!selectedFile}
+                  className="flex-1 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation min-h-[44px]"
+                >
+                  Upload
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -671,26 +784,26 @@ export default function StockList() {
               
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
                     Product Name *
                   </label>
                   <input
                     type="text"
                     value={newProduct.name}
                     onChange={(e) => setNewProduct({...newProduct, name: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    className="w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent touch-manipulation text-base"
                     placeholder="Enter product name"
                   />
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
                     Category *
                   </label>
                   <select
                     value={newProduct.category}
                     onChange={(e) => setNewProduct({...newProduct, category: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    className="w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent touch-manipulation text-base"
                   >
                     <option value="">Select category</option>
                     <option value="surup_pureler">Syrups & Purees</option>
@@ -702,9 +815,9 @@ export default function StockList() {
                   </select>
                 </div>
                 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
                       Current Stock
                     </label>
                     <input
@@ -713,12 +826,12 @@ export default function StockList() {
                       step="0.01"
                       value={newProduct.current_stock}
                       onChange={(e) => setNewProduct({...newProduct, current_stock: parseFloat(e.target.value) || 0})}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      className="w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent touch-manipulation text-base"
                     />
                   </div>
                   
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
                       Min Stock Level
                     </label>
                     <input
@@ -727,20 +840,20 @@ export default function StockList() {
                       step="0.01"
                       value={newProduct.min_stock}
                       onChange={(e) => setNewProduct({...newProduct, min_stock: parseFloat(e.target.value) || 0})}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      className="w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent touch-manipulation text-base"
                     />
                   </div>
                 </div>
                 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
                       Unit
                     </label>
                     <select
                       value={newProduct.unit}
                       onChange={(e) => setNewProduct({...newProduct, unit: e.target.value})}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      className="w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent touch-manipulation text-base"
                     >
                       <option value="ml">ml</option>
                       <option value="kg">kg</option>
@@ -752,7 +865,7 @@ export default function StockList() {
                   </div>
                   
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
                       Cost per Unit
                     </label>
                     <input
@@ -761,34 +874,34 @@ export default function StockList() {
                       step="0.01"
                       value={newProduct.cost_per_unit}
                       onChange={(e) => setNewProduct({...newProduct, cost_per_unit: parseFloat(e.target.value) || 0})}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      className="w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent touch-manipulation text-base"
                     />
                   </div>
                 </div>
                 
                 <div>
-                  <label className="flex items-center">
+                  <label className="flex items-center p-3 bg-gray-50 rounded-lg">
                     <input
                       type="checkbox"
                       checked={newProduct.is_ready_made}
                       onChange={(e) => setNewProduct({...newProduct, is_ready_made: e.target.checked})}
-                      className="mr-2"
+                      className="mr-3 w-4 h-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
                     />
                     <span className="text-sm font-medium text-gray-700">Ready-made product (not a raw material)</span>
                   </label>
                 </div>
               </div>
               
-              <div className="flex justify-end space-x-3 mt-6">
+              <div className="flex flex-col sm:flex-row gap-3 mt-6">
                 <button
                   onClick={() => setShowAddProductModal(false)}
-                  className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors"
+                  className="flex-1 px-4 py-3 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 touch-manipulation min-h-[44px]"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleAddProduct}
-                  className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                  className="flex-1 px-4 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 touch-manipulation min-h-[44px]"
                 >
                   Add Product
                 </button>

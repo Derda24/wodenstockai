@@ -7,7 +7,7 @@ import os
 import shutil
 import hashlib
 import secrets
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from app.services.supabase_service import SupabaseService
 from pydantic import BaseModel
 from typing import Optional
@@ -61,6 +61,11 @@ class AddProductRequest(BaseModel):
     package_size: float = 0
     package_unit: str = "ml"
 
+# Security functions
+def hash_password(password: str) -> str:
+    """Hash a password using SHA-256"""
+    return hashlib.sha256(password.encode()).hexdigest()
+
 # Admin users with hashed passwords (use environment variables in production)
 def get_admin_users():
     """Get admin users from environment variables or fallback to defaults"""
@@ -80,8 +85,13 @@ def get_admin_users():
     else:
         # Fallback to default (for development only)
         admin_users.append(User(
-            username="admin",
-            password_hash=hash_password("admin123")
+            username="caner0119",
+            password_hash=hash_password("stock2025")
+        ))
+        # Add additional admin user for development
+        admin_users.append(User(
+            username="derda2412",
+            password_hash=hash_password("woden2025")
         ))
     
     if admin_username_2 and admin_password_2:
@@ -99,10 +109,6 @@ active_tokens = {}
 
 # Security
 security = HTTPBearer()
-
-def hash_password(password: str) -> str:
-    """Hash a password using SHA-256"""
-    return hashlib.sha256(password.encode()).hexdigest()
 
 def verify_user(username: str, password: str) -> bool:
     """Verify user credentials"""
@@ -385,6 +391,16 @@ async def get_analysis(period: str = "7d"):
         sales_data = supabase_service.get_sales_data(days)
         print(f"DEBUG: Sales data: {sales_data}")
         
+        # Check if we have any sales data at all
+        if not sales_data or sales_data.get("total_sales", 0) == 0:
+            print("DEBUG: No sales data found, checking sales_history table directly...")
+            # Direct query to see what's in the table
+            try:
+                response = supabase_service.client.table("sales_history").select("*").order("created_at", desc=True).limit(5).execute()
+                print(f"DEBUG: Recent sales_history records: {response.data}")
+            except Exception as e:
+                print(f"DEBUG: Error querying sales_history: {str(e)}")
+        
         # Get stock data for low stock alerts
         stock_list = supabase_service.get_flat_stock_list()
         print(f"DEBUG: Stock list count: {len(stock_list)}")
@@ -435,81 +451,421 @@ async def get_analysis(period: str = "7d"):
         print(f"ERROR: Analysis failed: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error retrieving analysis: {str(e)}")
 
-@app.get("/api/recommendations")
-async def get_recommendations():
-    """Get stock recommendations based on current levels"""
+@app.post("/api/test/sales-data")
+async def create_test_sales_data():
+    """Create test sales data for debugging AI Analytics integration"""
     try:
-        stock_list = supabase_service.get_flat_stock_list()
-        recommendations = []
+        import json
+        from datetime import datetime, timezone, timedelta
         
-        for item in stock_list:
-            if float(item.get("current_stock", 0)) == 0:
-                recommendations.append({
-                    "id": f"rec_{len(recommendations) + 1}",
-                    "type": "stock",
-                    "title": f"Urgent Restock: {item.get('name','')}",
-                    "description": f"Urgent: {item.get('name','')} is out of stock and needs immediate restocking",
-                    "impact": "high",
-                    "implementation": f"Order {item.get('name','')} immediately from suppliers",
-                    "expectedResult": "Prevent business disruption and maintain customer satisfaction",
-                    "priority": 1
-                })
-            elif float(item.get("current_stock", 0)) <= float(item.get("min_stock", 0)):
-                recommendations.append({
-                    "id": f"rec_{len(recommendations) + 1}",
-                    "type": "stock",
-                    "title": f"Low Stock Alert: {item.get('name','')}",
-                    "description": f"Low stock alert: {item.get('name','')} is below minimum level ({item.get('current_stock',0)} {item.get('unit', 'units')} remaining)",
-                    "impact": "medium",
-                    "implementation": f"Plan restocking for {item.get('name','')} within the next few days",
-                    "expectedResult": "Maintain optimal stock levels and prevent future stockouts",
-                    "priority": 2
-                })
+        # Create test sales data for the last 7 days
+        test_data = []
+        for i in range(7):
+            date = (datetime.now(timezone.utc) - timedelta(days=i)).strftime("%Y-%m-%d")
+            test_data.append({
+                "date": date,
+                "total_quantity": 50 + (i * 10),  # Increasing sales
+                "total_sales": 50 + (i * 10),
+                "items_sold": json.dumps([
+                    {"product": "ESPRESSO", "quantity": 20 + (i * 2)},
+                    {"product": "AMERICANO", "quantity": 15 + (i * 3)},
+                    {"product": "LATTE", "quantity": 10 + (i * 2)},
+                    {"product": "CAPPUCCINO", "quantity": 5 + i}
+                ]),
+                "learning_data": json.dumps({"test": True}),
+                "created_at": datetime.now(timezone.utc).isoformat()
+            })
         
-        # Add some additional business recommendations
-        additional_recommendations = [
-            {
-                "id": f"rec_{len(recommendations) + 1}",
-                "type": "campaign",
-                "title": "Yaz Kahve Promosyonu",
-                "description": "Sıcak aylarda satışları artırmak için dondurulmuş kahve ürünlerine odaklanan yaz temalı bir kampanya başlatın",
-                "impact": "high",
-                "implementation": "Sosyal medya içeriği oluşturun, dondurulmuş içeceklerde indirim sunun, yeni yaz tatları tanıtın",
-                "expectedResult": "Yaz aylarında dondurulmuş kahve satışlarında %25-30 artış bekleniyor",
-                "priority": 2
-            },
-            {
-                "id": f"rec_{len(recommendations) + 2}",
-                "type": "product",
-                "title": "Yeni Çay Çeşitleri Tanıtın",
-                "description": "Mevcut çay popülaritesine dayanarak, premium çay seçenekleri ve bitkisel çeşitler eklemeyi düşünün",
-                "impact": "medium",
-                "implementation": "Tedarikçileri araştırın, yeni tatları test edin, çay kategorisi için pazarlama materyalleri oluşturun",
-                "expectedResult": "Müşteri tabanını genişletin ve ortalama sipariş değerini artırın",
-                "priority": 3
-            },
-            {
-                "id": f"rec_{len(recommendations) + 3}",
-                "type": "pricing",
-                "title": "Paket Fiyatlandırma Stratejisi",
-                "description": "Kahve + hamur işi kombinasyonları gibi sık sipariş edilen ürünler için combo teklifler oluşturun",
-                "impact": "medium",
-                "implementation": "Sipariş kalıplarını analiz edin, çekici paketler tasarlayın, promosyon materyalleri oluşturun",
-                "expectedResult": "Ortalama sipariş değerini %15-20 artırın",
-                "priority": 3
-            }
-        ]
-        
-        all_recommendations = recommendations + additional_recommendations
+        # Insert test data
+        for data in test_data:
+            try:
+                result = supabase_service.client.table("sales_history").upsert(data).execute()
+                print(f"DEBUG: Test data inserted for {data['date']}: {result.data}")
+            except Exception as e:
+                print(f"ERROR: Failed to insert test data for {data['date']}: {str(e)}")
         
         return {
-            "recommendations": all_recommendations,
-            "total_recommendations": len(all_recommendations),
-            "high_priority": len([r for r in all_recommendations if r["priority"] == 1]),
-            "medium_priority": len([r for r in all_recommendations if r["priority"] == 2])
+            "success": True,
+            "message": f"Created {len(test_data)} test sales records",
+            "data": test_data
         }
+        
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error retrieving recommendations: {str(e)}")
+        print(f"ERROR: Failed to create test sales data: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error creating test data: {str(e)}")
+
+@app.get("/api/recommendations")
+async def get_recommendations():
+    """Get AI-powered recommendations based on sales data and stock levels"""
+    try:
+        # Get current data
+        stock_list = supabase_service.get_flat_stock_list()
+        sales_data = supabase_service.get_sales_data(30)  # Last 30 days
+        
+        recommendations = []
+        
+        # 1. Stock-based recommendations
+        stock_recommendations = generate_stock_recommendations(stock_list)
+        recommendations.extend(stock_recommendations)
+        
+        # 2. Sales-based recommendations
+        sales_recommendations = generate_sales_recommendations(sales_data)
+        recommendations.extend(sales_recommendations)
+        
+        # 3. Business optimization recommendations
+        business_recommendations = generate_business_recommendations(stock_list, sales_data)
+        recommendations.extend(business_recommendations)
+        
+        # 4. Seasonal recommendations
+        seasonal_recommendations = generate_seasonal_recommendations()
+        recommendations.extend(seasonal_recommendations)
+        
+        return {"recommendations": recommendations}
+        
+    except Exception as e:
+        print(f"Error generating recommendations: {str(e)}")
+        # Return fallback recommendations
+        return {"recommendations": get_fallback_recommendations()}
+
+def generate_stock_recommendations(stock_list):
+    """Generate stock-based recommendations"""
+    recommendations = []
+    
+    for item in stock_list:
+        current_stock = float(item.get("current_stock", 0))
+        min_stock = float(item.get("min_stock", 0))
+        name = item.get("name", "")
+        unit = item.get("unit", "units")
+        
+        if current_stock == 0:
+            recommendations.append({
+                "id": f"stock_urgent_{len(recommendations) + 1}",
+                "type": "stock",
+                "title": f"🚨 Acil Stok: {name}",
+                "description": f"{name} tamamen tükendi ve acil yeniden stoklanması gerekiyor",
+                "impact": "high",
+                "implementation": f"{name} için hemen tedarikçilerden sipariş verin",
+                "expectedResult": "İş kesintisini önleyin ve müşteri memnuniyetini koruyun",
+                "priority": 1,
+                "category": "stok",
+                "urgency": "critical"
+            })
+        elif current_stock <= min_stock * 0.5:
+            recommendations.append({
+                "id": f"stock_critical_{len(recommendations) + 1}",
+                "type": "stock",
+                "title": f"⚠️ Kritik Stok: {name}",
+                "description": f"{name} minimum seviyenin %50'sinin altında ({current_stock} {unit} kaldı)",
+                "impact": "high",
+                "implementation": f"{name} için acil sipariş planlayın",
+                "expectedResult": "Stok tükenmesini önleyin",
+                "priority": 1,
+                "category": "stok",
+                "urgency": "high"
+            })
+        elif current_stock <= min_stock:
+            recommendations.append({
+                "id": f"stock_low_{len(recommendations) + 1}",
+                "type": "stock",
+                "title": f"📉 Düşük Stok: {name}",
+                "description": f"{name} minimum seviyenin altında ({current_stock} {unit} kaldı)",
+                "impact": "medium",
+                "implementation": f"{name} için yakın zamanda yeniden stoklama planlayın",
+                "expectedResult": "Optimal stok seviyelerini koruyun",
+                "priority": 2,
+                "category": "stok",
+                "urgency": "medium"
+            })
+    
+    return recommendations
+
+def generate_sales_recommendations(sales_data):
+    """Generate sales-based recommendations"""
+    recommendations = []
+    
+    if not sales_data or not sales_data.get("top_products"):
+        return recommendations
+    
+    top_products = sales_data["top_products"][:5]
+    total_sales = sales_data.get("total_sales", 0)
+    
+    # High-performing product recommendations
+    for i, product in enumerate(top_products):
+        if product["percentage"] > 15:  # High market share
+            recommendations.append({
+                "id": f"sales_high_{len(recommendations) + 1}",
+                "type": "campaign",
+                "title": f"🎯 {product['name']} - Yıldız Ürün",
+                "description": f"{product['name']} toplam satışların %{product['percentage']:.1f}'ini oluşturuyor. Bu ürünü daha da büyütmek için özel kampanyalar düşünün",
+                "impact": "high",
+                "implementation": f"{product['name']} için özel promosyonlar, sosyal medya kampanyaları ve müşteri sadakat programları oluşturun",
+                "expectedResult": f"Bu ürünün satışlarında %20-30 daha artış bekleniyor",
+                "priority": 1,
+                "category": "pazarlama",
+                "urgency": "medium"
+            })
+    
+    # Low-performing product recommendations
+    if len(top_products) > 3:
+        low_performers = top_products[-2:]  # Last 2 products
+        for product in low_performers:
+            if product["percentage"] < 5:  # Low market share
+                recommendations.append({
+                    "id": f"sales_low_{len(recommendations) + 1}",
+                    "type": "product",
+                    "title": f"📈 {product['name']} - Geliştirme Fırsatı",
+                    "description": f"{product['name']} düşük performans gösteriyor (%{product['percentage']:.1f}). Bu ürünü iyileştirmek veya değiştirmek için stratejiler geliştirin",
+                    "impact": "medium",
+                    "implementation": f"{product['name']} için fiyat optimizasyonu, ürün iyileştirmesi veya alternatif ürün değerlendirmesi yapın",
+                    "expectedResult": "Ürün performansını artırın veya daha karlı alternatifler bulun",
+                    "priority": 3,
+                    "category": "ürün",
+                    "urgency": "low"
+                })
+    
+    return recommendations
+
+def generate_business_recommendations(stock_list, sales_data):
+    """Generate business optimization recommendations"""
+    recommendations = []
+    
+    # Inventory optimization
+    total_items = len(stock_list)
+    zero_stock_items = len([item for item in stock_list if float(item.get("current_stock", 0)) == 0])
+    low_stock_items = len([item for item in stock_list if float(item.get("current_stock", 0)) <= float(item.get("min_stock", 0))])
+    
+    if zero_stock_items > total_items * 0.1:  # More than 10% out of stock
+        recommendations.append({
+            "id": f"business_inventory_{len(recommendations) + 1}",
+            "type": "stock",
+            "title": "📊 Stok Yönetimi Optimizasyonu",
+            "description": f"Toplam ürünlerin %{(zero_stock_items/total_items)*100:.1f}'i stokta yok. Stok yönetimi stratejinizi gözden geçirin",
+            "impact": "high",
+            "implementation": "Otomatik yeniden sipariş sistemleri kurun, minimum stok seviyelerini gözden geçirin ve tedarikçi ilişkilerini güçlendirin",
+            "expectedResult": "Stok tükenmelerini %50 azaltın ve operasyonel verimliliği artırın",
+            "priority": 1,
+            "category": "operasyon",
+            "urgency": "high"
+        })
+    
+    # Sales trend analysis
+    if sales_data and sales_data.get("daily_trends"):
+        daily_trends = sales_data["daily_trends"]
+        if len(daily_trends) > 1:
+            recent_sales = daily_trends[-1]["totalSales"]
+            avg_sales = sum(day["totalSales"] for day in daily_trends) / len(daily_trends)
+            
+            if recent_sales > avg_sales * 1.2:  # 20% above average
+                recommendations.append({
+                    "id": f"business_trend_up_{len(recommendations) + 1}",
+                    "type": "campaign",
+                    "title": "📈 Büyüme Momentumu",
+                    "description": f"Son satışlar ortalamadan %{((recent_sales/avg_sales)-1)*100:.1f} daha yüksek. Bu momentumu sürdürmek için stratejiler geliştirin",
+                    "impact": "high",
+                    "implementation": "Mevcut başarılı stratejileri analiz edin, müşteri geri bildirimlerini toplayın ve büyüme planları oluşturun",
+                    "expectedResult": "Büyüme trendini sürdürün ve yeni müşteri segmentlerine ulaşın",
+                    "priority": 1,
+                    "category": "strateji",
+                    "urgency": "medium"
+                })
+    
+    return recommendations
+
+def generate_seasonal_recommendations():
+    """Generate seasonal recommendations based on current date"""
+    from datetime import datetime
+    current_month = datetime.now().month
+    
+    recommendations = []
+    
+    # Summer recommendations (June-August)
+    if current_month in [6, 7, 8]:
+        recommendations.append({
+            "id": f"seasonal_summer_{len(recommendations) + 1}",
+            "type": "campaign",
+            "title": "☀️ Yaz Kampanyası",
+            "description": "Sıcak aylarda soğuk içecek satışlarını artırmak için özel kampanyalar başlatın",
+            "impact": "high",
+            "implementation": "Soğuk kahve, smoothie ve buzlu çay çeşitlerini öne çıkarın, teras ve dış mekan servisi geliştirin",
+            "expectedResult": "Yaz aylarında soğuk içecek satışlarında %40 artış",
+            "priority": 1,
+            "category": "sezon",
+            "urgency": "high"
+        })
+    
+    # Winter recommendations (December-February)
+    elif current_month in [12, 1, 2]:
+        recommendations.append({
+            "id": f"seasonal_winter_{len(recommendations) + 1}",
+            "type": "campaign",
+            "title": "❄️ Kış Kampanyası",
+            "description": "Soğuk aylarda sıcak içecek ve atıştırmalık satışlarını artırmak için kampanyalar düzenleyin",
+            "impact": "high",
+            "implementation": "Sıcak çikolata, sıcak kahve çeşitleri ve sıcak atıştırmalıkları öne çıkarın",
+            "expectedResult": "Kış aylarında sıcak içecek satışlarında %35 artış",
+            "priority": 1,
+            "category": "sezon",
+            "urgency": "high"
+        })
+    
+    # Holiday recommendations
+    if current_month in [11, 12]:
+        recommendations.append({
+            "id": f"seasonal_holiday_{len(recommendations) + 1}",
+            "type": "campaign",
+            "title": "🎄 Tatil Kampanyası",
+            "description": "Yıl sonu tatillerinde özel paketler ve hediyelik ürünler sunun",
+            "impact": "medium",
+            "implementation": "Hediye paketleri, özel tatil menüleri ve müşteri sadakat programları oluşturun",
+            "expectedResult": "Tatil sezonunda ortalama sipariş değerinde %25 artış",
+            "priority": 2,
+            "category": "sezon",
+            "urgency": "medium"
+        })
+    
+    return recommendations
+
+def get_fallback_recommendations():
+    """Fallback recommendations when data is not available"""
+    return [
+        {
+            "id": "fallback_1",
+            "type": "stock",
+            "title": "📊 Stok Analizi Yapın",
+            "description": "Mevcut stok seviyelerinizi analiz edin ve minimum stok seviyelerini belirleyin",
+            "impact": "medium",
+            "implementation": "Excel dosyalarınızı yükleyerek stok analizi yapın",
+            "expectedResult": "Daha iyi stok yönetimi ve maliyet optimizasyonu",
+            "priority": 2,
+            "category": "genel",
+            "urgency": "medium"
+        },
+        {
+            "id": "fallback_2",
+            "type": "campaign",
+            "title": "📈 Satış Verilerini İnceleyin",
+            "description": "Satış verilerinizi analiz ederek en popüler ürünleri belirleyin",
+            "impact": "high",
+            "implementation": "Satış raporlarınızı inceleyin ve trend analizi yapın",
+            "expectedResult": "Daha iyi ürün stratejileri ve pazarlama kampanyaları",
+            "priority": 1,
+            "category": "genel",
+            "urgency": "high"
+        }
+    ]
+
+@app.get("/api/campaigns")
+async def get_campaigns():
+    """Get AI-generated campaign suggestions"""
+    try:
+        # Get current sales data for campaign insights
+        sales_data = supabase_service.get_sales_data(30)
+        stock_list = supabase_service.get_flat_stock_list()
+        
+        campaigns = []
+        
+        # Generate campaigns based on top products
+        if sales_data and sales_data.get("top_products"):
+            top_products = sales_data["top_products"][:3]
+            
+            for i, product in enumerate(top_products):
+                if product["percentage"] > 10:  # High-performing products
+                    campaigns.append({
+                        "id": f"campaign_{i+1}",
+                        "name": f"{product['name']} Yıldız Kampanyası",
+                        "description": f"{product['name']} ürününün başarısını sürdürmek için özel promosyonlar ve pazarlama kampanyaları",
+                        "targetProducts": [product['name']],
+                        "duration": "4 hafta",
+                        "expectedIncrease": f"{product['name']} satışlarında %25-40 artış",
+                        "cost": "Orta - Sosyal medya ve in-store promosyonlar",
+                        "status": "suggested",
+                        "priority": "high",
+                        "category": "pazarlama"
+                    })
+        
+        # Generate seasonal campaigns
+        from datetime import datetime
+        current_month = datetime.now().month
+        
+        if current_month in [6, 7, 8]:  # Summer
+            campaigns.append({
+                "id": "campaign_summer",
+                "name": "☀️ Yaz Serinleme Kampanyası",
+                "description": "Sıcak aylarda soğuk içecek satışlarını artırmak için özel yaz kampanyası",
+                "targetProducts": ["ICED AMERICANO", "ICED FILTER COFFEE", "COLD BREW", "ICED LATTE"],
+                "duration": "3 ay (Haziran-Ağustos)",
+                "expectedIncrease": "Soğuk içecek satışlarında %40 artış",
+                "cost": "Düşük - Sosyal medya ve in-store promosyonlar",
+                "status": "suggested",
+                "priority": "high",
+                "category": "sezon"
+            })
+        elif current_month in [12, 1, 2]:  # Winter
+            campaigns.append({
+                "id": "campaign_winter",
+                "name": "❄️ Kış Sıcaklık Kampanyası",
+                "description": "Soğuk aylarda sıcak içecek ve atıştırmalık satışlarını artırmak için kış kampanyası",
+                "targetProducts": ["TÜRK KAHVESİ", "FİLTRE KAHVE", "LATTE", "CAPPUCCINO"],
+                "duration": "3 ay (Aralık-Şubat)",
+                "expectedIncrease": "Sıcak içecek satışlarında %35 artış",
+                "cost": "Düşük - Menü güncellemeleri ve promosyonlar",
+                "status": "suggested",
+                "priority": "high",
+                "category": "sezon"
+            })
+        
+        # Generate low-stock product campaigns
+        low_stock_products = [item for item in stock_list if float(item.get("current_stock", 0)) <= float(item.get("min_stock", 0))]
+        if low_stock_products:
+            campaigns.append({
+                "id": "campaign_inventory",
+                "name": "📦 Stok Optimizasyon Kampanyası",
+                "description": "Düşük stoklu ürünlerin satışını artırmak ve stok döngüsünü hızlandırmak için kampanya",
+                "targetProducts": [item["name"] for item in low_stock_products[:5]],
+                "duration": "2 hafta",
+                "expectedIncrease": "Düşük stoklu ürünlerde %30 satış artışı",
+                "cost": "Düşük - Fiyat indirimleri ve promosyonlar",
+                "status": "suggested",
+                "priority": "medium",
+                "category": "stok"
+            })
+        
+        # Generate bundle campaigns
+        if sales_data and sales_data.get("top_products"):
+            top_3 = sales_data["top_products"][:3]
+            if len(top_3) >= 2:
+                campaigns.append({
+                    "id": "campaign_bundle",
+                    "name": "🎁 Kombo Paket Kampanyası",
+                    "description": "En popüler ürünleri birleştirerek kombo paketler oluşturma kampanyası",
+                    "targetProducts": [product["name"] for product in top_3],
+                    "duration": "Sürekli",
+                    "expectedIncrease": "Ortalama sipariş değerinde %20 artış",
+                    "cost": "Düşük - Menü düzenlemesi ve fiyatlandırma",
+                    "status": "suggested",
+                    "priority": "medium",
+                    "category": "pazarlama"
+                })
+        
+        return {"campaigns": campaigns}
+        
+    except Exception as e:
+        print(f"Error generating campaigns: {str(e)}")
+        # Return fallback campaigns
+        return {"campaigns": [
+            {
+                "id": "campaign_fallback",
+                "name": "📊 Veri Analizi Kampanyası",
+                "description": "Mevcut satış verilerinizi analiz ederek kampanya stratejileri geliştirin",
+                "targetProducts": ["Tüm Ürünler"],
+                "duration": "1 hafta",
+                "expectedIncrease": "Daha iyi kampanya stratejileri",
+                "cost": "Düşük - Veri analizi ve planlama",
+                "status": "suggested",
+                "priority": "high",
+                "category": "genel"
+            }
+        ]}
 
 @app.get("/api/alerts")
 async def get_alerts():
@@ -642,17 +998,30 @@ async def save_pricing_data(request: dict):
 
 @app.get("/api/learning-insights")
 async def get_learning_insights():
-    """Get insights about how the system is learning from Excel uploads"""
+    """Get comprehensive AI learning insights from Excel uploads"""
     try:
+        from ai_learning_system import AILearningSystem
+        
+        # Initialize AI Learning System
+        ai_learning = AILearningSystem(supabase_service)
+        
+        # Get AI learning summary
+        ai_summary = ai_learning.get_learning_summary()
+        ai_recommendations = ai_learning.get_ai_recommendations()
+        
         # Get recent sales history with learning data
         response = supabase_service.client.table("sales_history").select("*").order("created_at", desc=True).limit(10).execute()
         
         learning_insights = {
             "recent_uploads": len(response.data),
             "total_learning_data": 0,
+            "ai_learning_summary": ai_summary,
+            "ai_recommendations": ai_recommendations,
             "system_improvements": [],
             "new_products_detected": [],
-            "recommendations": []
+            "recommendations": [],
+            "learning_accuracy": ai_summary.get("learning_accuracy", 0.0),
+            "last_updated": ai_summary.get("last_updated")
         }
         
         for record in response.data:
@@ -679,14 +1048,26 @@ async def get_learning_insights():
         # Generate recommendations
         if learning_insights["new_products_detected"]:
             learning_insights["recommendations"] = [
-                f"Consider adding '{product}' to your inventory" 
+                f"🤖 AI suggests adding '{product}' to your inventory" 
                 for product in learning_insights["new_products_detected"][:3]
             ]
         
         return learning_insights
         
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error retrieving learning insights: {str(e)}")
+        print(f"Error retrieving learning insights: {str(e)}")
+        # Return fallback data
+        return {
+            "recent_uploads": 0,
+            "total_learning_data": 0,
+            "ai_learning_summary": {"learning_accuracy": 0.0},
+            "ai_recommendations": [],
+            "system_improvements": ["AI learning system initializing..."],
+            "new_products_detected": [],
+            "recommendations": [],
+            "learning_accuracy": 0.0,
+            "last_updated": None
+        }
 
 @app.get("/api/summary")
 async def get_summary():

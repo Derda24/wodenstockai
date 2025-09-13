@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { Lock, User, Eye, EyeOff, Sparkles, Shield, Zap, ArrowRight, Brain } from 'lucide-react';
+import { API_ENDPOINTS } from '../config/api';
 
 interface LoginModalProps {
   onLogin: (success: boolean) => void;
@@ -20,7 +21,7 @@ export default function LoginModal({ onLogin }: LoginModalProps) {
     setIsLoading(true);
 
     try {
-      const response = await fetch('https://wodenstockai.onrender.com/api/auth/login', {
+      const response = await fetch(API_ENDPOINTS.AUTH.LOGIN, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -120,9 +120,11 @@ export default function Dashboard() {
             
             <div className="flex items-center space-x-4">
               <div className="relative">
-                <div className="w-12 h-12 bg-gradient-primary rounded-2xl flex items-center justify-center shadow-medium">
-                  <Sparkles className="w-7 h-7 text-white" />
-                </div>
+                <img
+                  src="/AI-LOGO.png"
+                  alt="Woden AI Logo"
+                  className="w-12 h-12 rounded-2xl shadow-medium"
+                />
                 <div className="absolute -top-1 -right-1 w-4 h-4 bg-gradient-accent rounded-full animate-pulse"></div>
               </div>
               <div>
@@ -235,7 +237,7 @@ export default function Dashboard() {
         </aside>
 
         {/* Main Content */}
-        <main className="flex-1 p-4 sm:p-8 overflow-x-auto">
+        <main className="flex-1 p-2 sm:p-4 lg:p-8 overflow-x-hidden">
           <div className="max-w-7xl mx-auto">
             <div className="animate-fade-in">
               {renderContent()}

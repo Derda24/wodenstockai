@@ -50,6 +50,18 @@ export function LoadingScreen({ isLoading }: LoadingScreenProps) {
       
       {/* Content with enhanced visibility */}
       <div className="relative z-10 text-center text-white px-4 backdrop-blur-sm bg-black/10 rounded-xl p-8">
+        {/* AI Logo in foreground */}
+        <div className="mb-8 flex justify-center">
+          <img
+            src="/AI-LOGO.png"
+            alt="Woden AI Logo"
+            className="w-24 h-24 md:w-32 md:h-32 animate-pulse drop-shadow-2xl"
+            style={{
+              filter: 'drop-shadow(0 0 20px rgba(255, 255, 255, 0.3))'
+            }}
+          />
+        </div>
+        
         <div className="mb-8 animate-pulse">
           <h1 className="text-4xl md:text-6xl font-bold mb-4 text-white drop-shadow-lg">
             WODEN Stock AI
