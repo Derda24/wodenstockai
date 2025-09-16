@@ -51,6 +51,18 @@ export default function AIAnalysis() {
     loadAnalysisData();
   }, [selectedPeriod]);
 
+  // Auto-refresh when component becomes visible
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        loadAnalysisData();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, []);
+
   const loadAnalysisData = async () => {
     setIsLoading(true);
     setHasError(false);

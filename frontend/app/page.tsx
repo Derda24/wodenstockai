@@ -13,11 +13,13 @@ import {
   Sparkles,
   Zap,
   Brain,
-  Shield
+  Shield,
+  Calendar
 } from 'lucide-react';
 import StockList from '@/components/StockList';
 import AIAnalysis from '@/components/AIAnalysis';
 import AIRecommendations from '@/components/AIRecommendations';
+import AIScheduler from '@/components/AIScheduler';
 import Settings from '@/components/Settings';
 import LoginModal from '@/components/LoginModal';
 import { LoadingScreen } from '@/components/loginscreen';
@@ -82,6 +84,13 @@ export default function Dashboard() {
       gradient: 'from-orange-500 to-red-600'
     },
     { 
+      id: 'scheduler', 
+      name: 'AI Scheduler', 
+      icon: Calendar, 
+      description: 'Weekly Programming',
+      gradient: 'from-purple-500 to-pink-600'
+    },
+    { 
       id: 'settings', 
       name: 'Settings', 
       icon: SettingsIcon, 
@@ -98,6 +107,8 @@ export default function Dashboard() {
         return <AIAnalysis />;
       case 'recommendations':
         return <AIRecommendations />;
+      case 'scheduler':
+        return <AIScheduler />;
       case 'settings':
         return <Settings />;
       default:

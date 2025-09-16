@@ -494,6 +494,46 @@ async def create_test_sales_data():
         print(f"ERROR: Failed to create test sales data: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error creating test data: {str(e)}")
 
+@app.post("/api/refresh-data")
+async def refresh_analysis_data():
+    """Force refresh of analysis and recommendations data"""
+    try:
+        # This endpoint can be called after Excel uploads to refresh the analysis
+        # The frontend can call this to ensure data is up-to-date
+        
+        # Get fresh data
+        sales_data = supabase_service.get_sales_data(30)
+        stock_list = supabase_service.get_flat_stock_list()
+        
+        # Generate fresh recommendations
+        recommendations = []
+        stock_recommendations = generate_stock_recommendations(stock_list)
+        recommendations.extend(stock_recommendations)
+        
+        sales_recommendations = generate_sales_recommendations(sales_data)
+        recommendations.extend(sales_recommendations)
+        
+        business_recommendations = generate_business_recommendations(stock_list, sales_data)
+        recommendations.extend(business_recommendations)
+        
+        seasonal_recommendations = generate_seasonal_recommendations()
+        recommendations.extend(seasonal_recommendations)
+        
+        ai_recommendations = generate_ai_learning_recommendations(sales_data)
+        recommendations.extend(ai_recommendations)
+        
+        return {
+            "success": True,
+            "message": "Data refreshed successfully",
+            "sales_data": sales_data,
+            "recommendations_count": len(recommendations),
+            "stock_items_count": len(stock_list)
+        }
+        
+    except Exception as e:
+        print(f"ERROR: Failed to refresh data: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error refreshing data: {str(e)}")
+
 @app.get("/api/recommendations")
 async def get_recommendations():
     """Get AI-powered recommendations based on sales data and stock levels"""
@@ -501,6 +541,8 @@ async def get_recommendations():
         # Get current data
         stock_list = supabase_service.get_flat_stock_list()
         sales_data = supabase_service.get_sales_data(30)  # Last 30 days
+        
+        print(f"DEBUG: Generating recommendations with {len(stock_list)} stock items and {sales_data.get('total_sales', 0)} total sales")
         
         recommendations = []
         
@@ -520,6 +562,14 @@ async def get_recommendations():
         seasonal_recommendations = generate_seasonal_recommendations()
         recommendations.extend(seasonal_recommendations)
         
+        # 5. AI Learning-based recommendations
+        ai_recommendations = generate_ai_learning_recommendations(sales_data)
+        recommendations.extend(ai_recommendations)
+        
+        # Sort by priority and impact
+        recommendations.sort(key=lambda x: (x.get('priority', 3), x.get('impact', 'low') == 'high'), reverse=True)
+        
+        print(f"DEBUG: Generated {len(recommendations)} total recommendations")
         return {"recommendations": recommendations}
         
     except Exception as e:
@@ -538,12 +588,12 @@ def generate_stock_recommendations(stock_list):
         unit = item.get("unit", "units")
         
         if current_stock == 0:
-            recommendations.append({
+                recommendations.append({
                 "id": f"stock_urgent_{len(recommendations) + 1}",
-                "type": "stock",
+                    "type": "stock",
                 "title": f"🚨 Acil Stok: {name}",
                 "description": f"{name} tamamen tükendi ve acil yeniden stoklanması gerekiyor",
-                "impact": "high",
+                    "impact": "high",
                 "implementation": f"{name} için hemen tedarikçilerden sipariş verin",
                 "expectedResult": "İş kesintisini önleyin ve müşteri memnuniyetini koruyun",
                 "priority": 1,
@@ -551,9 +601,9 @@ def generate_stock_recommendations(stock_list):
                 "urgency": "critical"
             })
         elif current_stock <= min_stock * 0.5:
-            recommendations.append({
+                recommendations.append({
                 "id": f"stock_critical_{len(recommendations) + 1}",
-                "type": "stock",
+                    "type": "stock",
                 "title": f"⚠️ Kritik Stok: {name}",
                 "description": f"{name} minimum seviyenin %50'sinin altında ({current_stock} {unit} kaldı)",
                 "impact": "high",
@@ -569,7 +619,7 @@ def generate_stock_recommendations(stock_list):
                 "type": "stock",
                 "title": f"📉 Düşük Stok: {name}",
                 "description": f"{name} minimum seviyenin altında ({current_stock} {unit} kaldı)",
-                "impact": "medium",
+                    "impact": "medium",
                 "implementation": f"{name} için yakın zamanda yeniden stoklama planlayın",
                 "expectedResult": "Optimal stok seviyelerini koruyun",
                 "priority": 2,
@@ -612,10 +662,10 @@ def generate_sales_recommendations(sales_data):
             if product["percentage"] < 5:  # Low market share
                 recommendations.append({
                     "id": f"sales_low_{len(recommendations) + 1}",
-                    "type": "product",
+                "type": "product",
                     "title": f"📈 {product['name']} - Geliştirme Fırsatı",
                     "description": f"{product['name']} düşük performans gösteriyor (%{product['percentage']:.1f}). Bu ürünü iyileştirmek veya değiştirmek için stratejiler geliştirin",
-                    "impact": "medium",
+                "impact": "medium",
                     "implementation": f"{product['name']} için fiyat optimizasyonu, ürün iyileştirmesi veya alternatif ürün değerlendirmesi yapın",
                     "expectedResult": "Ürün performansını artırın veya daha karlı alternatifler bulun",
                     "priority": 3,
@@ -725,6 +775,90 @@ def generate_seasonal_recommendations():
     
     return recommendations
 
+def generate_ai_learning_recommendations(sales_data):
+    """Generate AI-powered recommendations based on learning data"""
+    recommendations = []
+    
+    # Analyze top products for targeted recommendations
+    top_products = sales_data.get("top_products", [])
+    if top_products:
+        # Get the top product
+        top_product = top_products[0]
+        product_name = top_product.get("name", "")
+        percentage = top_product.get("percentage", 0)
+        
+        if percentage > 15:  # If top product has >15% market share
+            recommendations.append({
+                "id": f"ai_learning_{len(recommendations) + 1}",
+                "type": "product",
+                "title": f"📈 {product_name} - Yıldız Ürün Optimizasyonu",
+                "description": f"{product_name} toplam satışların %{percentage:.1f}'ini oluşturuyor. Bu ürünü daha da büyütmek için özel stratejiler geliştirin",
+                "impact": "high",
+                "implementation": f"{product_name} için özel promosyonlar, sosyal medya kampanyaları ve müşteri sadakat programları oluşturun",
+                "expectedResult": f"Bu ürünün satışlarında %20-30 daha artış bekleniyor",
+                "priority": 1,
+                "category": "pazarlama",
+                "urgency": "medium"
+            })
+    
+    # Analyze category breakdown for category-specific recommendations
+    category_breakdown = sales_data.get("category_breakdown", [])
+    if category_breakdown:
+        # Find the dominant category
+        dominant_category = max(category_breakdown, key=lambda x: x.get("percentage", 0))
+        category_name = dominant_category.get("category", "").replace("_", " ").title()
+        category_percentage = dominant_category.get("percentage", 0)
+        
+        if category_percentage > 50:  # If one category dominates
+            recommendations.append({
+                "id": f"ai_learning_{len(recommendations) + 1}",
+                "type": "strategy",
+                "title": f"🎯 {category_name} Kategorisi Odaklı Strateji",
+                "description": f"{category_name} kategorisi toplam satışların %{category_percentage:.1f}'ini oluşturuyor. Bu kategoride çeşitliliği artırın",
+                "impact": "medium",
+                "implementation": f"{category_name} kategorisinde yeni ürünler ekleyin, mevcut ürünleri optimize edin",
+                "expectedResult": f"Kategori çeşitliliğinde artış ve genel satışlarda %15-25 büyüme",
+                "priority": 2,
+                "category": "strateji",
+                "urgency": "low"
+            })
+    
+    # Analyze daily trends for operational recommendations
+    daily_trends = sales_data.get("daily_trends", [])
+    if len(daily_trends) >= 3:
+        # Calculate trend direction
+        recent_sales = [day.get("totalSales", 0) for day in daily_trends[-3:]]
+        if len(recent_sales) >= 2:
+            trend = recent_sales[-1] - recent_sales[0]
+            if trend < 0:  # Declining trend
+                recommendations.append({
+                    "id": f"ai_learning_{len(recommendations) + 1}",
+                    "type": "campaign",
+                    "title": "📉 Satış Düşüşü Tespit Edildi",
+                    "description": "Son 3 günde satışlarda düşüş trendi tespit edildi. Acil müdahale gerekli",
+                    "impact": "high",
+                    "implementation": "Hızlı promosyonlar, müşteri geri kazanma kampanyaları, fiyat optimizasyonu",
+                    "expectedResult": "Satış trendini tersine çevirme ve %10-20 artış",
+                    "priority": 1,
+                    "category": "operasyon",
+                    "urgency": "critical"
+                })
+            elif trend > 0:  # Growing trend
+                recommendations.append({
+                    "id": f"ai_learning_{len(recommendations) + 1}",
+                    "type": "strategy",
+                    "title": "📈 Pozitif Trend Devam Ettirme",
+                    "description": "Son 3 günde pozitif satış trendi tespit edildi. Bu momentumu koruyun",
+                    "impact": "medium",
+                    "implementation": "Mevcut stratejileri sürdürün, başarılı kampanyaları genişletin",
+                    "expectedResult": "Mevcut pozitif trendi sürdürme ve istikrarlı büyüme",
+                    "priority": 3,
+                    "category": "strateji",
+                    "urgency": "low"
+                })
+    
+    return recommendations
+
 def get_fallback_recommendations():
     """Fallback recommendations when data is not available"""
     return [
@@ -733,7 +867,7 @@ def get_fallback_recommendations():
             "type": "stock",
             "title": "📊 Stok Analizi Yapın",
             "description": "Mevcut stok seviyelerinizi analiz edin ve minimum stok seviyelerini belirleyin",
-            "impact": "medium",
+                "impact": "medium",
             "implementation": "Excel dosyalarınızı yükleyerek stok analizi yapın",
             "expectedResult": "Daha iyi stok yönetimi ve maliyet optimizasyonu",
             "priority": 2,
@@ -943,6 +1077,248 @@ async def get_seasonal_analysis():
             raise HTTPException(status_code=400, detail=result["message"])
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error retrieving seasonal analysis: {str(e)}")
+
+# ============================================================================
+# AI SCHEDULER ENDPOINTS
+# ============================================================================
+
+@app.get("/api/baristas")
+async def get_baristas():
+    """Get all active baristas"""
+    try:
+        result = supabase_service.get_baristas()
+        if result["success"]:
+            return result["baristas"]
+        else:
+            raise HTTPException(status_code=400, detail=result["message"])
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error retrieving baristas: {str(e)}")
+
+@app.post("/api/baristas")
+async def create_barista(
+    name: str = Form(...),
+    email: str = Form(None),
+    phone: str = Form(None),
+    type: str = Form("full-time"),
+    max_hours: int = Form(45),
+    preferred_shifts: str = Form("[]"),  # JSON string
+    skills: str = Form("[]"),  # JSON string
+    username: str = Depends(verify_token)
+):
+    """Create a new barista"""
+    try:
+        import json
+        preferred_shifts_list = json.loads(preferred_shifts) if preferred_shifts else []
+        skills_list = json.loads(skills) if skills else []
+        
+        result = supabase_service.create_barista(
+            name=name,
+            email=email,
+            phone=phone,
+            type=type,
+            max_hours=max_hours,
+            preferred_shifts=preferred_shifts_list,
+            skills=skills_list
+        )
+        
+        if result["success"]:
+            return result
+        else:
+            raise HTTPException(status_code=400, detail=result["message"])
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error creating barista: {str(e)}")
+
+@app.put("/api/baristas/{barista_id}")
+async def update_barista(
+    barista_id: str,
+    name: str = Form(None),
+    email: str = Form(None),
+    phone: str = Form(None),
+    type: str = Form(None),
+    max_hours: int = Form(None),
+    preferred_shifts: str = Form(None),
+    skills: str = Form(None),
+    is_active: bool = Form(None),
+    username: str = Depends(verify_token)
+):
+    """Update a barista"""
+    try:
+        import json
+        update_data = {}
+        
+        if name is not None:
+            update_data["name"] = name
+        if email is not None:
+            update_data["email"] = email
+        if phone is not None:
+            update_data["phone"] = phone
+        if type is not None:
+            update_data["type"] = type
+        if max_hours is not None:
+            update_data["max_hours"] = max_hours
+        if preferred_shifts is not None:
+            update_data["preferred_shifts"] = json.loads(preferred_shifts)
+        if skills is not None:
+            update_data["skills"] = json.loads(skills)
+        if is_active is not None:
+            update_data["is_active"] = is_active
+        
+        result = supabase_service.update_barista(barista_id, update_data)
+        
+        if result["success"]:
+            return result
+        else:
+            raise HTTPException(status_code=400, detail=result["message"])
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error updating barista: {str(e)}")
+
+@app.delete("/api/baristas/{barista_id}")
+async def delete_barista(barista_id: str, username: str = Depends(verify_token)):
+    """Deactivate a barista (soft delete)"""
+    try:
+        result = supabase_service.deactivate_barista(barista_id)
+        
+        if result["success"]:
+            return result
+        else:
+            raise HTTPException(status_code=400, detail=result["message"])
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error deactivating barista: {str(e)}")
+
+@app.get("/api/schedules")
+async def get_schedules():
+    """Get all weekly schedules"""
+    try:
+        result = supabase_service.get_weekly_schedules()
+        if result["success"]:
+            return result["schedules"]
+        else:
+            raise HTTPException(status_code=400, detail=result["message"])
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error retrieving schedules: {str(e)}")
+
+@app.post("/api/schedules/generate")
+async def generate_ai_schedule(
+    week_start: str = Form(...),
+    preferences: str = Form(None)
+):
+    """Generate AI-powered weekly schedule"""
+    try:
+        from datetime import datetime
+        from ai_scheduler import AIScheduler
+        
+        # Parse week start date
+        week_start_date = datetime.strptime(week_start, "%Y-%m-%d").date()
+        
+        # Parse preferences if provided
+        preferences_data = None
+        if preferences:
+            import json
+            try:
+                preferences_data = json.loads(preferences)
+            except json.JSONDecodeError:
+                print("Warning: Invalid preferences JSON, using defaults")
+        
+        # Get baristas
+        baristas_result = supabase_service.get_baristas()
+        if not baristas_result["success"]:
+            raise HTTPException(status_code=400, detail="Failed to get baristas")
+        
+        baristas = baristas_result["baristas"]
+        
+        # Initialize AI Scheduler
+        ai_scheduler = AIScheduler(supabase_service)
+        
+        # Generate schedule
+        result = ai_scheduler.generate_weekly_schedule(week_start_date, baristas, preferences_data)
+        
+        if result["success"]:
+            return result
+        else:
+            raise HTTPException(status_code=400, detail=result["message"])
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error generating schedule: {str(e)}")
+
+@app.get("/api/schedules/{schedule_id}/shifts")
+async def get_schedule_shifts(schedule_id: str):
+    """Get shifts for a specific schedule"""
+    try:
+        result = supabase_service.get_schedule_shifts(schedule_id)
+        if result["success"]:
+            return result["shifts"]
+        else:
+            raise HTTPException(status_code=400, detail=result["message"])
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error retrieving shifts: {str(e)}")
+
+@app.post("/api/schedules/{schedule_id}/publish")
+async def publish_schedule(schedule_id: str, username: str = Depends(verify_token)):
+    """Publish a schedule"""
+    try:
+        result = supabase_service.publish_schedule(schedule_id)
+        
+        if result["success"]:
+            return result
+        else:
+            raise HTTPException(status_code=400, detail=result["message"])
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error publishing schedule: {str(e)}")
+
+@app.get("/api/time-off-requests")
+async def get_time_off_requests():
+    """Get all time-off requests"""
+    try:
+        result = supabase_service.get_time_off_requests()
+        if result["success"]:
+            return result["requests"]
+        else:
+            raise HTTPException(status_code=400, detail=result["message"])
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error retrieving time-off requests: {str(e)}")
+
+@app.post("/api/time-off-requests")
+async def create_time_off_request(
+    barista_id: str = Form(...),
+    request_date: str = Form(...),
+    reason: str = Form("personal"),
+    notes: str = Form(None)
+):
+    """Create a time-off request"""
+    try:
+        from datetime import datetime
+        request_date_obj = datetime.strptime(request_date, "%Y-%m-%d").date()
+        
+        result = supabase_service.create_time_off_request(
+            barista_id=barista_id,
+            request_date=request_date_obj,
+            reason=reason,
+            notes=notes
+        )
+        
+        if result["success"]:
+            return result
+        else:
+            raise HTTPException(status_code=400, detail=result["message"])
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error creating time-off request: {str(e)}")
+
+@app.put("/api/time-off-requests/{request_id}")
+async def update_time_off_request(
+    request_id: str,
+    status: str = Form(...),
+    reviewed_by: str = Form(...),
+    username: str = Depends(verify_token)
+):
+    """Update time-off request status (approve/reject)"""
+    try:
+        result = supabase_service.update_time_off_request(request_id, status, reviewed_by)
+        
+        if result["success"]:
+            return result
+        else:
+            raise HTTPException(status_code=400, detail=result["message"])
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error updating time-off request: {str(e)}")
 
 @app.get("/api/ai-insights")
 async def get_ai_insights():

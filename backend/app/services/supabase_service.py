@@ -507,7 +507,7 @@ class SupabaseService:
             
             print(f"DEBUG: Querying sales_history from {start_date.strftime('%Y-%m-%d')} to {end_date.strftime('%Y-%m-%d')}")
             
-            # Query sales history
+            # Query sales history - try both date and created_at fields
             response = self.client.table("sales_history").select("*").gte("date", start_date.strftime("%Y-%m-%d")).lte("date", end_date.strftime("%Y-%m-%d")).order("date", desc=False).execute()
             
             print(f"DEBUG: Found {len(response.data) if response.data else 0} sales records")
@@ -519,16 +519,48 @@ class SupabaseService:
                 print("DEBUG: No data in date range, checking all recent records...")
                 all_response = self.client.table("sales_history").select("*").order("created_at", desc=True).limit(10).execute()
                 print(f"DEBUG: Recent records (any date): {all_response.data}")
-                return {"total_sales": 0, "daily_trends": [], "top_products": [], "category_breakdown": []}
+                
+                # If we have recent data but not in date range, use it anyway for analysis
+                if all_response.data:
+                    print("DEBUG: Using recent data outside date range for analysis")
+                    response = all_response
+                else:
+                    return {"total_sales": 0, "daily_trends": [], "top_products": [], "category_breakdown": []}
             
             total_sales = 0
             daily_trends = []
             product_counts = {}
             category_counts = {}
             
-            # Get stock items for category mapping
+            # Get stock items for category mapping with better matching
             stock_items = self.get_flat_stock_list()
-            stock_item_map = {item.get("name", "").lower(): item.get("category", "unknown") for item in stock_items}
+            stock_item_map = {}
+            
+            # Create multiple mapping strategies for better category detection
+            for item in stock_items:
+                name = item.get("name", "").lower().strip()
+                category = item.get("category", "unknown")
+                
+                # Direct mapping
+                stock_item_map[name] = category
+                
+                # Partial matching for better detection
+                words = name.split()
+                for word in words:
+                    if len(word) > 2:  # Only use meaningful words
+                        stock_item_map[word] = category
+                
+                # Common product name variations
+                if "kahve" in name or "coffee" in name or "americano" in name or "latte" in name or "espresso" in name:
+                    stock_item_map[name] = "coffee"
+                elif "çay" in name or "tea" in name:
+                    stock_item_map[name] = "tea"
+                elif "süt" in name or "milk" in name or "cream" in name:
+                    stock_item_map[name] = "dairy"
+                elif "şeker" in name or "sugar" in name or "sweet" in name:
+                    stock_item_map[name] = "sweetener"
+                elif "su" in name or "water" in name:
+                    stock_item_map[name] = "beverage"
             
             for record in response.data:
                 date = record.get("date", "")
@@ -550,8 +582,34 @@ class SupabaseService:
                             unique_products.add(product)
                             product_counts[product] = product_counts.get(product, 0) + quantity
                             
-                            # Map product to category
-                            category = stock_item_map.get(product.lower(), "unknown")
+                            # Map product to category with intelligent detection
+                            product_lower = product.lower().strip()
+                            category = stock_item_map.get(product_lower, "unknown")
+                            
+                            # If not found, try partial matching
+                            if category == "unknown":
+                                for key, cat in stock_item_map.items():
+                                    if key in product_lower or product_lower in key:
+                                        category = cat
+                                        break
+                            
+                            # If still unknown, use intelligent categorization
+                            if category == "unknown":
+                                if any(word in product_lower for word in ["kahve", "coffee", "americano", "latte", "espresso", "cappuccino", "mocha"]):
+                                    category = "coffee"
+                                elif any(word in product_lower for word in ["çay", "tea", "chai"]):
+                                    category = "tea"
+                                elif any(word in product_lower for word in ["süt", "milk", "cream", "dairy"]):
+                                    category = "dairy"
+                                elif any(word in product_lower for word in ["şeker", "sugar", "sweet", "honey"]):
+                                    category = "sweetener"
+                                elif any(word in product_lower for word in ["su", "water", "ice"]):
+                                    category = "beverage"
+                                elif any(word in product_lower for word in ["sandwich", "sandviç", "toast", "croissant"]):
+                                    category = "food"
+                                else:
+                                    category = "other"
+                            
                             category_counts[category] = category_counts.get(category, 0) + quantity
                 except Exception as e:
                     print(f"Warning: Could not parse items_sold for {date}: {str(e)}")
@@ -1894,3 +1952,223 @@ class SupabaseService:
             
         except Exception as e:
             return {"success": False, "message": f"Migration failed: {str(e)}"}
+
+    # ============================================================================
+    # AI SCHEDULER METHODS
+    # ============================================================================
+
+    def get_baristas(self) -> Dict[str, Any]:
+        """Get all active baristas"""
+        try:
+            response = self.client.table("baristas").select("*").eq("is_active", True).order("name").execute()
+            
+            if response.data:
+                return {"success": True, "baristas": response.data}
+            else:
+                return {"success": True, "baristas": []}
+                
+        except Exception as e:
+            print(f"Error getting baristas: {str(e)}")
+            return {"success": False, "message": f"Error getting baristas: {str(e)}"}
+
+    def create_barista(self, name: str, email: str = None, phone: str = None, 
+                      type: str = "full-time", max_hours: int = 45, 
+                      preferred_shifts: list = None, skills: list = None) -> Dict[str, Any]:
+        """Create a new barista"""
+        try:
+            barista_data = {
+                "name": name,
+                "email": email,
+                "phone": phone,
+                "type": type,
+                "max_hours": max_hours,
+                "preferred_shifts": preferred_shifts or [],
+                "skills": skills or [],
+                "is_active": True
+            }
+            
+            response = self.client.table("baristas").insert(barista_data).execute()
+            
+            if response.data:
+                return {"success": True, "barista": response.data[0]}
+            else:
+                return {"success": False, "message": "Failed to create barista"}
+                
+        except Exception as e:
+            print(f"Error creating barista: {str(e)}")
+            return {"success": False, "message": f"Error creating barista: {str(e)}"}
+
+    def update_barista(self, barista_id: str, update_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Update a barista"""
+        try:
+            response = self.client.table("baristas").update(update_data).eq("id", barista_id).execute()
+            
+            if response.data:
+                return {"success": True, "barista": response.data[0]}
+            else:
+                return {"success": False, "message": "Barista not found"}
+                
+        except Exception as e:
+            print(f"Error updating barista: {str(e)}")
+            return {"success": False, "message": f"Error updating barista: {str(e)}"}
+
+    def deactivate_barista(self, barista_id: str) -> Dict[str, Any]:
+        """Deactivate a barista (soft delete)"""
+        try:
+            response = self.client.table("baristas").update({"is_active": False}).eq("id", barista_id).execute()
+            
+            if response.data:
+                return {"success": True, "message": "Barista deactivated successfully"}
+            else:
+                return {"success": False, "message": "Barista not found"}
+                
+        except Exception as e:
+            print(f"Error deactivating barista: {str(e)}")
+            return {"success": False, "message": f"Error deactivating barista: {str(e)}"}
+
+    def get_weekly_schedules(self) -> Dict[str, Any]:
+        """Get all weekly schedules"""
+        try:
+            response = self.client.table("weekly_schedules").select("*").order("week_start", desc=True).execute()
+            
+            if response.data:
+                return {"success": True, "schedules": response.data}
+            else:
+                return {"success": True, "schedules": []}
+                
+        except Exception as e:
+            print(f"Error getting weekly schedules: {str(e)}")
+            return {"success": False, "message": f"Error getting weekly schedules: {str(e)}"}
+
+    def create_weekly_schedule(self, week_start: str, week_end: str, created_by: str, notes: str = None) -> Dict[str, Any]:
+        """Create a new weekly schedule"""
+        try:
+            schedule_data = {
+                "week_start": week_start,
+                "week_end": week_end,
+                "status": "draft",
+                "created_by": created_by,
+                "notes": notes
+            }
+            
+            response = self.client.table("weekly_schedules").insert(schedule_data).execute()
+            
+            if response.data:
+                return {"success": True, "schedule": response.data[0]}
+            else:
+                return {"success": False, "message": "Failed to create schedule"}
+                
+        except Exception as e:
+            print(f"Error creating weekly schedule: {str(e)}")
+            return {"success": False, "message": f"Error creating weekly schedule: {str(e)}"}
+
+    def get_schedule_shifts(self, schedule_id: str) -> Dict[str, Any]:
+        """Get shifts for a specific schedule"""
+        try:
+            response = self.client.table("shifts").select("*, baristas(*)").eq("schedule_id", schedule_id).execute()
+            
+            if response.data:
+                return {"success": True, "shifts": response.data}
+            else:
+                return {"success": True, "shifts": []}
+                
+        except Exception as e:
+            print(f"Error getting schedule shifts: {str(e)}")
+            return {"success": False, "message": f"Error getting schedule shifts: {str(e)}"}
+
+    def create_shift(self, schedule_id: str, barista_id: str, day_of_week: int, 
+                    shift_type: str, start_time: str = None, end_time: str = None, 
+                    hours: float = 0, notes: str = None) -> Dict[str, Any]:
+        """Create a shift"""
+        try:
+            shift_data = {
+                "schedule_id": schedule_id,
+                "barista_id": barista_id,
+                "day_of_week": day_of_week,
+                "shift_type": shift_type,
+                "start_time": start_time,
+                "end_time": end_time,
+                "hours": hours,
+                "notes": notes
+            }
+            
+            response = self.client.table("shifts").insert(shift_data).execute()
+            
+            if response.data:
+                return {"success": True, "shift": response.data[0]}
+            else:
+                return {"success": False, "message": "Failed to create shift"}
+                
+        except Exception as e:
+            print(f"Error creating shift: {str(e)}")
+            return {"success": False, "message": f"Error creating shift: {str(e)}"}
+
+    def publish_schedule(self, schedule_id: str) -> Dict[str, Any]:
+        """Publish a schedule"""
+        try:
+            response = self.client.table("weekly_schedules").update({"status": "published"}).eq("id", schedule_id).execute()
+            
+            if response.data:
+                return {"success": True, "message": "Schedule published successfully"}
+            else:
+                return {"success": False, "message": "Schedule not found"}
+                
+        except Exception as e:
+            print(f"Error publishing schedule: {str(e)}")
+            return {"success": False, "message": f"Error publishing schedule: {str(e)}"}
+
+    def get_time_off_requests(self) -> Dict[str, Any]:
+        """Get all time-off requests"""
+        try:
+            response = self.client.table("time_off_requests").select("*, baristas(*)").order("requested_at", desc=True).execute()
+            
+            if response.data:
+                return {"success": True, "requests": response.data}
+            else:
+                return {"success": True, "requests": []}
+                
+        except Exception as e:
+            print(f"Error getting time-off requests: {str(e)}")
+            return {"success": False, "message": f"Error getting time-off requests: {str(e)}"}
+
+    def create_time_off_request(self, barista_id: str, request_date: str, reason: str = "personal", notes: str = None) -> Dict[str, Any]:
+        """Create a time-off request"""
+        try:
+            request_data = {
+                "barista_id": barista_id,
+                "request_date": request_date,
+                "reason": reason,
+                "notes": notes,
+                "status": "pending"
+            }
+            
+            response = self.client.table("time_off_requests").insert(request_data).execute()
+            
+            if response.data:
+                return {"success": True, "request": response.data[0]}
+            else:
+                return {"success": False, "message": "Failed to create time-off request"}
+                
+        except Exception as e:
+            print(f"Error creating time-off request: {str(e)}")
+            return {"success": False, "message": f"Error creating time-off request: {str(e)}"}
+
+    def update_time_off_request(self, request_id: str, status: str, reviewed_by: str) -> Dict[str, Any]:
+        """Update time-off request status"""
+        try:
+            update_data = {
+                "status": status,
+                "reviewed_by": reviewed_by,
+                "reviewed_at": datetime.now(timezone.utc).isoformat()
+            }
+            
+            response = self.client.table("time_off_requests").update(update_data).eq("id", request_id).execute()
+            
+            if response.data:
+                return {"success": True, "request": response.data[0]}
+            else:
+                return {"success": False, "message": "Time-off request not found"}
+                
+        except Exception as e:
+            print(f"Error updating time-off request: {str(e)}")
+            return {"success": False, "message": f"Error updating time-off request: {str(e)}"}

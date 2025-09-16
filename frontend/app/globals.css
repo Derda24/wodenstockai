@@ -17,6 +17,20 @@
   --shadow-large: 0 10px 40px -10px rgba(0, 0, 0, 0.1), 0 2px 10px -2px rgba(0, 0, 0, 0.05);
 }
 
+/* Ensure readable text inside form controls across the site */
+input, select, textarea {
+  color: #111827; /* gray-900 */
+}
+
+input::placeholder, textarea::placeholder {
+  color: #6B7280; /* gray-500 */
+  opacity: 1;
+}
+
+select option {
+  color: #111827; /* ensure visible in dropdown list */
+}
+
 @media (prefers-color-scheme: dark) {
   :root {
     --foreground-rgb: 248, 250, 252;

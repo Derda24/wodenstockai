@@ -256,16 +256,24 @@ export default function StockList() {
         setSelectedFile(null);
         
         // Reload stock data to show updates
-        setTimeout(() => {
+        setTimeout(async () => {
           loadStockData();
           setUploadMessage('');
           
-          // Show notification that AI Analytics should be refreshed
+          // Trigger AI data refresh
+          try {
+            await fetch(API_ENDPOINTS.ANALYSIS.REFRESH, { method: 'POST' });
+            console.log('AI Analytics data refreshed automatically');
+          } catch (refreshError) {
+            console.warn('Could not refresh AI data:', refreshError);
+          }
+          
+          // Show notification that data has been refreshed
           const notification = document.createElement('div');
           notification.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 flex items-center space-x-2';
           notification.innerHTML = `
             <div class="w-2 h-2 bg-white rounded-full animate-pulse"></div>
-            <span>Excel uploaded successfully! Refresh AI Analytics to see new data.</span>
+            <span>Excel uploaded successfully! AI Analytics data refreshed automatically.</span>
             <button onclick="this.parentElement.remove()" class="ml-2 text-white hover:text-gray-200">×</button>
           `;
           document.body.appendChild(notification);

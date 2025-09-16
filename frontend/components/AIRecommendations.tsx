@@ -64,6 +64,19 @@ export default function AIRecommendations() {
     loadCampaigns();
   }, []);
 
+  // Auto-refresh when component becomes visible
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        loadRecommendations();
+        loadCampaigns();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, []);
+
   const loadRecommendations = async () => {
     try {
       const response = await fetch(API_ENDPOINTS.RECOMMENDATIONS.GET);
