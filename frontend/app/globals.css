@@ -111,11 +111,11 @@ body {
   }
   
   .btn-primary {
-    @apply btn bg-gradient-primary text-white shadow-soft hover:shadow-medium hover:scale-105 focus:ring-primary-500;
+    @apply btn bg-primary-500 text-white shadow-soft hover:bg-primary-600 focus:ring-primary-500;
   }
   
   .btn-secondary {
-    @apply btn bg-white text-gray-700 border border-gray-200 shadow-soft hover:shadow-medium hover:bg-gray-50 focus:ring-gray-500;
+    @apply btn bg-white text-gray-700 border border-gray-200 shadow-soft hover:bg-gray-50 focus:ring-primary-500;
   }
   
   .btn-success {
@@ -131,7 +131,7 @@ body {
   }
   
   .btn-ghost {
-    @apply btn text-gray-600 hover:text-gray-900 hover:bg-gray-100 focus:ring-gray-500;
+    @apply btn text-gray-700 hover:text-gray-900 hover:bg-gray-100 focus:ring-primary-500;
   }
   
   .btn-sm {
@@ -358,6 +358,41 @@ body {
   .focus-ring-inset {
     @apply focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-inset;
   }
+}
+
+/* Hero Orb Animations */
+@keyframes orbSpin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes blobMorph {
+  0% { border-radius: 45% 55% 50% 50% / 55% 45% 55% 45%; }
+  50% { border-radius: 60% 40% 55% 45% / 40% 60% 40% 60%; }
+  100% { border-radius: 45% 55% 50% 50% / 55% 45% 55% 45%; }
+}
+
+@keyframes particleDrift {
+  0% { transform: translateY(0) translateX(0); opacity: .4; }
+  50% { transform: translateY(-6px) translateX(4px); opacity: .7; }
+  100% { transform: translateY(0) translateX(0); opacity: .4; }
+}
+
+.orb-ring {
+  background: conic-gradient(from 0deg, rgba(18,188,193,.15), rgba(35,113,123,.35), rgba(18,188,193,.15));
+  filter: blur(6px);
+}
+
+.orb-core {
+  background: radial-gradient(circle at 50% 50%, rgba(255,255,255,.95) 0%, rgba(18,188,193,.25) 60%, rgba(35,113,123,.15) 100%);
+}
+
+.blob-bg {
+  animation: blobMorph 14s ease-in-out infinite;
+}
+
+.particle {
+  animation: particleDrift 5s ease-in-out infinite;
 }
 
 /* Custom Scrollbar */

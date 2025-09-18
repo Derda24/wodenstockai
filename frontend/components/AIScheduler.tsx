@@ -278,6 +278,16 @@ export default function AIScheduler() {
         }
         setShowPreferences(false);
         alert('AI Schedule generated successfully!');
+        // Trigger subtle confetti pulse
+        try {
+          const el = document.createElement('div');
+          el.className = 'fixed inset-0 pointer-events-none';
+          el.innerHTML = '<div style="position:absolute;inset:0;animation:fadeConfetti 1s ease-out forwards;">\
+            <svg width="0" height="0"><defs><filter id="goo"><feGaussianBlur in="SourceGraphic" stdDeviation="6" result="blur"/><feColorMatrix in="blur" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 18 -7" result="goo"/><feBlend in="SourceGraphic" in2="goo"/></filter></defs></svg>\
+          </div>';
+          document.body.appendChild(el);
+          setTimeout(() => document.body.removeChild(el), 1200);
+        } catch {}
       } else {
         const text = await response.text().catch(() => '');
         console.error('Failed to generate schedule', { status: response.status, body: text });

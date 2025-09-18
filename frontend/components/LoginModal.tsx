@@ -49,20 +49,27 @@ export default function LoginModal({ onLogin }: LoginModalProps) {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center p-4 relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-primary-50 to-white flex items-center justify-center p-4 relative overflow-hidden">
       {/* Animated Background Elements */}
       <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-br from-blue-500/20 to-purple-500/20 rounded-full blur-3xl animate-pulse-slow"></div>
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-gradient-to-br from-emerald-500/20 to-teal-500/20 rounded-full blur-3xl animate-pulse-slow"></div>
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-gradient-to-br from-orange-500/10 to-red-500/10 rounded-full blur-3xl animate-pulse-slow"></div>
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-primary-100/70 rounded-[40%] blur-3xl animate-[blobMorph_14s_ease-in-out_infinite]"></div>
+        <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-primary-50/80 rounded-[50%] blur-3xl animate-[blobMorph_18s_ease-in-out_infinite]"></div>
       </div>
 
       <div className="max-w-md w-full relative z-10">
-        <div className="bg-white/10 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/20 p-8 animate-scale-in">
+        <div className="bg-white rounded-3xl shadow-large border border-gray-100 p-8 animate-scale-in">
           {/* Header */}
           <div className="text-center mb-8">
             <div className="relative mx-auto w-24 h-24 mb-6">
-              <div className="w-24 h-24 bg-gradient-primary rounded-2xl flex items-center justify-center shadow-large">
+              {/* Animated synaptic orb */}
+              <div className="pointer-events-none absolute -inset-5 rounded-full bg-primary-200/30 blur-xl" />
+              <div className="pointer-events-none absolute -inset-3 rounded-full orb-ring animate-[orbSpin_16s_linear_infinite]" />
+              <div className="pointer-events-none absolute inset-0">{
+                [0,1,2].map(i => (
+                  <span key={i} className="particle absolute w-1.5 h-1.5 rounded-full bg-primary-500" style={{ top: `${28 + i*16}%`, left: `${36 + i*14}%`, animationDelay: `${i*0.25}s` }} />
+                ))
+              }</div>
+              <div className="w-24 h-24 bg-gradient-primary rounded-2xl flex items-center justify-center shadow-medium">
                 <img src="/AI-LOGO.png" alt="WODEN AI" className="w-16 h-16 object-contain" />
               </div>
               <div className="absolute -top-2 -right-2 w-6 h-6 bg-gradient-accent rounded-full animate-bounce-subtle flex items-center justify-center">
@@ -70,13 +77,11 @@ export default function LoginModal({ onLogin }: LoginModalProps) {
               </div>
             </div>
             
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-white to-gray-200 bg-clip-text text-transparent mb-2">
-              WODEN Stock AI
-            </h1>
-            <p className="text-gray-300 text-lg font-medium">Intelligent Inventory Management</p>
+            <h1 className="text-3xl font-extrabold tracking-tight text-gray-900 mb-1">WODEN AI</h1>
+            <p className="text-gray-600 text-base font-medium">WODEN Stock AI — Inventory, Insights, Scheduling</p>
             <div className="flex items-center justify-center space-x-2 mt-3">
-              <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-              <span className="text-sm text-gray-400">AI-Powered System</span>
+              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+              <span className="text-sm text-gray-600">AI‑Powered System</span>
             </div>
           </div>
 
@@ -84,19 +89,19 @@ export default function LoginModal({ onLogin }: LoginModalProps) {
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-4">
               <div>
-                <label htmlFor="username" className="block text-sm font-semibold text-gray-200 mb-2">
+                <label htmlFor="username" className="block text-sm font-semibold text-gray-700 mb-2">
                   Username
                 </label>
                 <div className="relative group">
                   <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                    <User className="h-5 w-5 text-gray-400 group-focus-within:text-primary-400 transition-colors duration-200" />
+                    <User className="h-5 w-5 text-gray-400 group-focus-within:text-primary-500 transition-colors duration-200" />
                   </div>
                   <input
                     id="username"
                     type="text"
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
-                    className="input w-full pl-12 pr-4 py-4 bg-white/10 border-white/20 text-white placeholder-gray-400 focus:bg-white/20 focus:border-primary-400 focus:ring-primary-400"
+                    className="input w-full pl-12 pr-4 py-4 bg-white border-gray-200 text-gray-900 placeholder-gray-500 focus:bg-white focus:border-primary-300 focus:ring-primary-500"
                     placeholder="Enter username"
                     required
                   />
@@ -104,19 +109,19 @@ export default function LoginModal({ onLogin }: LoginModalProps) {
               </div>
 
               <div>
-                <label htmlFor="password" className="block text-sm font-semibold text-gray-200 mb-2">
+                <label htmlFor="password" className="block text-sm font-semibold text-gray-700 mb-2">
                   Password
                 </label>
                 <div className="relative group">
                   <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                    <Lock className="h-5 w-5 text-gray-400 group-focus-within:text-primary-400 transition-colors duration-200" />
+                    <Lock className="h-5 w-5 text-gray-400 group-focus-within:text-primary-500 transition-colors duration-200" />
                   </div>
                   <input
                     id="password"
                     type={showPassword ? 'text' : 'password'}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="input w-full pl-12 pr-12 py-4 bg-white/10 border-white/20 text-white placeholder-gray-400 focus:bg-white/20 focus:border-primary-400 focus:ring-primary-400"
+                    className="input w-full pl-12 pr-12 py-4 bg-white border-gray-200 text-gray-900 placeholder-gray-500 focus:bg-white focus:border-primary-300 focus:ring-primary-500"
                     placeholder="Enter password"
                     required
                   />
@@ -126,9 +131,9 @@ export default function LoginModal({ onLogin }: LoginModalProps) {
                     onClick={() => setShowPassword(!showPassword)}
                   >
                     {showPassword ? (
-                      <EyeOff className="h-5 w-5 text-gray-400 hover:text-white transition-colors duration-200" />
+                      <EyeOff className="h-5 w-5 text-gray-400 hover:text-gray-700 transition-colors duration-200" />
                     ) : (
-                      <Eye className="h-5 w-5 text-gray-400 hover:text-white transition-colors duration-200" />
+                      <Eye className="h-5 w-5 text-gray-400 hover:text-gray-700 transition-colors duration-200" />
                     )}
                   </button>
                 </div>
@@ -136,10 +141,10 @@ export default function LoginModal({ onLogin }: LoginModalProps) {
             </div>
 
             {error && (
-              <div className="bg-red-500/20 border border-red-400/30 rounded-xl p-4 backdrop-blur-sm">
+              <div className="bg-red-50 border border-red-200 rounded-xl p-4">
                 <div className="flex items-center space-x-2">
-                  <div className="w-2 h-2 bg-red-400 rounded-full"></div>
-                  <p className="text-sm text-red-200 font-medium">{error}</p>
+                  <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                  <p className="text-sm text-red-700 font-medium">{error}</p>
                 </div>
               </div>
             )}
@@ -164,18 +169,18 @@ export default function LoginModal({ onLogin }: LoginModalProps) {
           </form>
 
           {/* Admin Info */}
-            <div className="mt-8 p-4 bg-gradient-to-r from-red-500/10 to-orange-500/10 rounded-2xl border border-red-200/20 backdrop-blur-sm">
+            <div className="mt-8 p-4 bg-red-50 rounded-2xl border border-red-200">
               <div className="text-center">
                 <div className="flex items-center justify-center space-x-2 mb-3">
-                  <Shield className="w-5 h-5 text-red-400" />
-                  <p className="text-sm text-gray-300 font-medium">Secure Access Required</p>
+                  <Shield className="w-5 h-5 text-red-500" />
+                  <p className="text-sm text-gray-800 font-medium">Secure Access Required</p>
                 </div>
                 <div className="space-y-2">
-                  <p className="text-xs text-gray-400">
+                  <p className="text-xs text-gray-600">
                     Authorized personnel only. Contact system administrator for access credentials.
                   </p>
-                  <div className="text-xs text-gray-500">
-                    <p className="text-red-400">⚠️ Security Notice:</p>
+                  <div className="text-xs text-gray-600">
+                    <p className="text-red-600">⚠️ Security Notice:</p>
                     <p>Credentials are not displayed for security reasons.</p>
                     <p>Please contact your administrator for login details.</p>
                   </div>
@@ -185,17 +190,17 @@ export default function LoginModal({ onLogin }: LoginModalProps) {
 
           {/* Features */}
           <div className="mt-8 grid grid-cols-3 gap-4 text-center">
-            <div className="p-3 bg-white/5 rounded-xl">
-              <Brain className="w-6 h-6 text-primary-400 mx-auto mb-2" />
-              <p className="text-xs text-gray-400 font-medium">AI Analytics</p>
+            <div className="p-3 bg-white rounded-xl border border-gray-100">
+              <Brain className="w-6 h-6 text-primary-600 mx-auto mb-2" />
+              <p className="text-xs text-gray-600 font-medium">AI Analytics</p>
             </div>
-            <div className="p-3 bg-white/5 rounded-xl">
-              <Zap className="w-6 h-6 text-accent-400 mx-auto mb-2" />
-              <p className="text-xs text-gray-400 font-medium">Smart Alerts</p>
+            <div className="p-3 bg-white rounded-xl border border-gray-100">
+              <Zap className="w-6 h-6 text-accent-500 mx-auto mb-2" />
+              <p className="text-xs text-gray-600 font-medium">Smart Alerts</p>
             </div>
-            <div className="p-3 bg-white/5 rounded-xl">
-              <Shield className="w-6 h-6 text-success-400 mx-auto mb-2" />
-              <p className="text-xs text-gray-400 font-medium">Secure</p>
+            <div className="p-3 bg-white rounded-xl border border-gray-100">
+              <Shield className="w-6 h-6 text-success-500 mx-auto mb-2" />
+              <p className="text-xs text-gray-600 font-medium">Secure</p>
             </div>
           </div>
         </div>

@@ -9,17 +9,18 @@ module.exports = {
     extend: {
       colors: {
         // Modern gradient primary colors
+        // Brand primary (teal‑cyan)
         primary: {
-          50: '#f0f9ff',
-          100: '#e0f2fe',
-          200: '#bae6fd',
-          300: '#7dd3fc',
-          400: '#38bdf8',
-          500: '#0ea5e9',
-          600: '#0284c7',
-          700: '#0369a1',
-          800: '#075985',
-          900: '#0c4a6e',
+          50: '#E5F9F8',
+          100: '#D6F4F3',
+          200: '#B8ECEC',
+          300: '#8FE1E1',
+          400: '#50CFD1',
+          500: '#12BCC1',
+          600: '#0DA9AE',
+          700: '#0E8E92',
+          800: '#0F7275',
+          900: '#0F5D60',
         },
         // Vibrant secondary colors
         secondary: {
@@ -96,8 +97,12 @@ module.exports = {
           500: '#6b7280',
           600: '#4b5563',
           700: '#374151',
-          800: '#1f2937',
+          800: '#1F2B2D',
           900: '#111827',
+        },
+        surface: {
+          DEFAULT: '#FFFFFF',
+          light: '#E5F9F8',
         },
         // Brand colors (keeping your original)
         brand: {
@@ -179,8 +184,8 @@ module.exports = {
       backgroundImage: {
         'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
         'gradient-conic': 'conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))',
-        'gradient-primary': 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-        'gradient-secondary': 'linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%)',
+        'gradient-primary': 'linear-gradient(135deg, #12BCC1 0%, #23717B 100%)',
+        'gradient-secondary': 'linear-gradient(135deg, #E5F9F8 0%, #ffffff 100%)',
         'gradient-accent': 'linear-gradient(135deg, #f59e0b 0%, #f97316 100%)',
         'gradient-success': 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
         'gradient-danger': 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',

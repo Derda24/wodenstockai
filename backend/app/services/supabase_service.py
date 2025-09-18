@@ -525,7 +525,7 @@ class SupabaseService:
                     print("DEBUG: Using recent data outside date range for analysis")
                     response = all_response
                 else:
-                    return {"total_sales": 0, "daily_trends": [], "top_products": [], "category_breakdown": []}
+                return {"total_sales": 0, "daily_trends": [], "top_products": [], "category_breakdown": []}
             
             total_sales = 0
             daily_trends = []
