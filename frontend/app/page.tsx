@@ -162,15 +162,15 @@ export default function Dashboard() {
                 <div className="absolute -top-1 -right-1 w-4 h-4 bg-gradient-accent rounded-full animate-pulse"></div>
               </div>
               <div>
-                <h1 className="text-3xl lg:text-4xl font-extrabold tracking-tight text-gray-900">
+                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight text-gray-900">
                   WODEN Stock AI
                 </h1>
-                <p className="text-sm lg:text-base text-gray-600 font-medium">AI‑powered inventory, insights, and scheduling</p>
-                <div className="mt-3 flex items-center gap-2">
-                  <a href="#app" className="btn-primary">Open App</a>
-                  <button onClick={() => setActiveTab('scheduler')} className="btn-secondary">See Demo</button>
+                <p className="text-xs sm:text-sm lg:text-base text-gray-600 font-medium">AI‑powered inventory, insights, and scheduling</p>
+                <div className="mt-3 flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full max-w-sm">
+                  <a href="#app" className="btn-primary w-full sm:w-auto">Open App</a>
+                  <button onClick={() => setActiveTab('scheduler')} className="btn-secondary w-full sm:w-auto">See Demo</button>
                 </div>
-                <div className="mt-4 flex items-center gap-2 text-xs text-gray-600">
+                <div className="mt-4 flex flex-wrap items-center gap-2 text-[10px] sm:text-xs text-gray-600">
                   <span className="px-2 py-1 rounded-full bg-white shadow-soft border">Inventory</span>
                   <span className="px-2 py-1 rounded-full bg-white shadow-soft border">Analytics</span>
                   <span className="px-2 py-1 rounded-full bg-white shadow-soft border">Recommendations</span>
@@ -180,12 +180,12 @@ export default function Dashboard() {
             </div>
           </div>
           {/* Animated Orb */}
-          <div className="hidden md:block relative w-56 h-56 mr-2">
+          <div className="hidden md:block relative w-40 lg:w-56 h-40 lg:h-56 mr-2">
             <div className="absolute inset-0 rounded-full orb-ring animate-[orbSpin_18s_linear_infinite]" />
             <div className="absolute inset-2 rounded-full orb-core shadow-glow" />
             <div className="absolute inset-0">{
               [0,1,2,3,4].map(i => (
-                <span key={i} className="particle absolute w-1.5 h-1.5 rounded-full bg-primary-500" style={{ top: `${20 + i*12}%`, left: `${30 + i*10}%`, animationDelay: `${i*0.3}s` }} />
+                <span key={i} className="particle absolute w-1 h-1 lg:w-1.5 lg:h-1.5 rounded-full bg-primary-500" style={{ top: `${20 + i*12}%`, left: `${30 + i*10}%`, animationDelay: `${i*0.3}s` }} />
               ))
             }</div>
           </div>
@@ -222,7 +222,7 @@ export default function Dashboard() {
 
       {/* Value Strip */}
       <section className="bg-surface-light/60">
-        <div className="max-w-7xl mx-auto px-6 py-6 grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
           {[{
             icon: Box, title: 'Inventory', desc: 'Recipe-based stock'
           },{
@@ -234,13 +234,13 @@ export default function Dashboard() {
           }].map((item, idx) => {
             const Icon = item.icon as any;
             return (
-              <div key={idx} className="card rounded-2xl border border-primary-50/40 bg-white/80 backdrop-blur-sm flex items-center space-x-3 p-4">
-                <div className="w-10 h-10 rounded-xl bg-primary-50 flex items-center justify-center">
-                  <Icon className="w-5 h-5 text-primary-600" />
+              <div key={idx} className="card rounded-2xl border border-primary-50/40 bg-white/80 backdrop-blur-sm flex items-center space-x-3 p-3 sm:p-4">
+                <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-primary-50 flex items-center justify-center">
+                  <Icon className="w-4 h-4 sm:w-5 sm:h-5 text-primary-600" />
                 </div>
                 <div>
-                  <div className="text-sm font-semibold text-gray-800">{item.title}</div>
-                  <div className="text-xs text-gray-500">{item.desc}</div>
+                  <div className="text-xs sm:text-sm font-semibold text-gray-800">{item.title}</div>
+                  <div className="text-[11px] sm:text-xs text-gray-500">{item.desc}</div>
                 </div>
               </div>
             );
