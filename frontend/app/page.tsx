@@ -166,11 +166,11 @@ export default function Dashboard() {
                   WODEN Stock AI
                 </h1>
                 <p className="text-xs sm:text-sm lg:text-base text-gray-600 font-medium">AI‑powered inventory, insights, and scheduling</p>
-                <div className="mt-3 hidden md:flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full max-w-sm">
+                <div className="mt-3 flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full max-w-sm">
                   <a href="#app" className="btn-primary w-full sm:w-auto">Open App</a>
                   <button onClick={() => setActiveTab('scheduler')} className="btn-secondary w-full sm:w-auto">See Demo</button>
                 </div>
-                <div className="mt-4 hidden md:flex flex-wrap items-center gap-2 text-[10px] sm:text-xs text-gray-600">
+                <div className="mt-4 hidden sm:flex flex-wrap items-center gap-2 text-[10px] sm:text-xs text-gray-600">
                   <span className="px-2 py-1 rounded-full bg-white shadow-soft border">Inventory</span>
                   <span className="px-2 py-1 rounded-full bg-white shadow-soft border">Analytics</span>
                   <span className="px-2 py-1 rounded-full bg-white shadow-soft border">Recommendations</span>
@@ -221,7 +221,7 @@ export default function Dashboard() {
       </header>
 
       {/* Value Strip */}
-      <section className="hidden lg:block bg-surface-light/60">
+      <section className="bg-surface-light/60">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
           {[{
             icon: Box, title: 'Inventory', desc: 'Recipe-based stock'
@@ -248,9 +248,9 @@ export default function Dashboard() {
         </div>
       </section>
 
-      <div id="app" className="hidden lg:flex">
-        {/* Modern Sidebar */}
-        <aside className={`${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 fixed lg:static inset-y-0 left-0 z-50 w-80 bg-white/90 backdrop-blur-lg shadow-large lg:shadow-none border-r border-white/20 transform transition-all duration-300 ease-in-out`}>
+      <div id="app" className="flex flex-col lg:flex-row">
+        {/* Modern Sidebar - Hidden on mobile, shown on desktop */}
+        <aside className={`${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 fixed lg:static inset-y-0 left-0 z-50 w-80 bg-white/90 backdrop-blur-lg shadow-large lg:shadow-none border-r border-white/20 transform transition-all duration-300 ease-in-out hidden lg:block`}>
           <div className="h-full flex flex-col">
             {/* Sidebar Header */}
             <div className="p-6 border-b border-gray-100">
@@ -331,14 +331,53 @@ export default function Dashboard() {
           </div>
         </aside>
 
+        {/* Mobile Header */}
+        <div className="lg:hidden bg-white border-b border-gray-200 px-4 py-3">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-semibold text-gray-900">
+              {tabs.find(tab => tab.id === activeTab)?.name || 'Dashboard'}
+            </h2>
+            <button
+              onClick={() => setActiveTab('settings')}
+              className="p-2 rounded-lg text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-all duration-200"
+            >
+              <SettingsIcon size={20} />
+            </button>
+          </div>
+        </div>
+
         {/* Main Content */}
-        <main className="flex-1 p-2 sm:p-4 lg:p-8 overflow-x-hidden">
+        <main className="flex-1 p-2 sm:p-4 lg:p-8 overflow-x-hidden pb-20 lg:pb-8">
           <div className="max-w-7xl mx-auto">
             <div className="animate-fade-in">
               {renderContent()}
             </div>
           </div>
         </main>
+
+        {/* Mobile Tab Navigation */}
+        <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50">
+          <div className="flex">
+            {tabs.slice(0, 4).map((tab) => {
+              const Icon = tab.icon;
+              const isActive = activeTab === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`flex-1 flex flex-col items-center py-3 px-2 transition-all duration-200 ${
+                    isActive 
+                      ? 'text-primary-600 bg-primary-50' 
+                      : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                  }`}
+                >
+                  <Icon size={20} className="mb-1" />
+                  <span className="text-xs font-medium">{tab.name.split(' ')[0]}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
       </div>
 
       {/* Mobile overlay */}
