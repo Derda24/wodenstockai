@@ -147,7 +147,7 @@ export default function Dashboard() {
           <div className="flex items-center space-x-4">
             <button
               onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-              className="lg:hidden p-2 rounded-xl text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-all duration-200"
+              className="hidden"
             >
               {isSidebarOpen ? <X size={20} /> : <Menu size={20} />}
             </button>
@@ -166,11 +166,11 @@ export default function Dashboard() {
                   WODEN Stock AI
                 </h1>
                 <p className="text-xs sm:text-sm lg:text-base text-gray-600 font-medium">AI‑powered inventory, insights, and scheduling</p>
-                <div className="mt-3 flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full max-w-sm">
+                <div className="mt-3 hidden md:flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full max-w-sm">
                   <a href="#app" className="btn-primary w-full sm:w-auto">Open App</a>
                   <button onClick={() => setActiveTab('scheduler')} className="btn-secondary w-full sm:w-auto">See Demo</button>
                 </div>
-                <div className="mt-4 flex flex-wrap items-center gap-2 text-[10px] sm:text-xs text-gray-600">
+                <div className="mt-4 hidden md:flex flex-wrap items-center gap-2 text-[10px] sm:text-xs text-gray-600">
                   <span className="px-2 py-1 rounded-full bg-white shadow-soft border">Inventory</span>
                   <span className="px-2 py-1 rounded-full bg-white shadow-soft border">Analytics</span>
                   <span className="px-2 py-1 rounded-full bg-white shadow-soft border">Recommendations</span>
@@ -180,7 +180,7 @@ export default function Dashboard() {
             </div>
           </div>
           {/* Animated Orb */}
-          <div className="hidden md:block relative w-40 lg:w-56 h-40 lg:h-56 mr-2">
+          <div className="block relative w-40 lg:w-56 h-40 lg:h-56 mr-2">
             <div className="absolute inset-0 rounded-full orb-ring animate-[orbSpin_18s_linear_infinite]" />
             <div className="absolute inset-2 rounded-full orb-core shadow-glow" />
             <div className="absolute inset-0">{
@@ -211,7 +211,7 @@ export default function Dashboard() {
             
             <button
               onClick={handleLogout}
-              className="flex items-center space-x-2 px-4 py-2 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-xl transition-all duration-200 group"
+              className="hidden lg:flex items-center space-x-2 px-4 py-2 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-xl transition-all duration-200 group"
             >
               <LogOut size={16} className="group-hover:scale-110 transition-transform duration-200" />
               <span className="font-medium">Logout</span>
@@ -221,7 +221,7 @@ export default function Dashboard() {
       </header>
 
       {/* Value Strip */}
-      <section className="bg-surface-light/60">
+      <section className="hidden lg:block bg-surface-light/60">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
           {[{
             icon: Box, title: 'Inventory', desc: 'Recipe-based stock'
@@ -248,7 +248,7 @@ export default function Dashboard() {
         </div>
       </section>
 
-      <div className="flex">
+      <div id="app" className="hidden lg:flex">
         {/* Modern Sidebar */}
         <aside className={`${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 fixed lg:static inset-y-0 left-0 z-50 w-80 bg-white/90 backdrop-blur-lg shadow-large lg:shadow-none border-r border-white/20 transform transition-all duration-300 ease-in-out`}>
           <div className="h-full flex flex-col">

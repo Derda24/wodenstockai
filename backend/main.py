@@ -579,9 +579,9 @@ async def get_recommendations():
 
 def generate_stock_recommendations(stock_list):
     """Generate stock-based recommendations"""
-        recommendations = []
+    recommendations = []
         
-        for item in stock_list:
+    for item in stock_list:
         current_stock = float(item.get("current_stock", 0))
         min_stock = float(item.get("min_stock", 0))
         name = item.get("name", "")
