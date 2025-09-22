@@ -99,7 +99,7 @@ class SupabaseService:
                 "timestamp": datetime.now(timezone.utc).isoformat()
             }).execute()
 
-            return {"success": True, "name": item_name, "old_stock": current_stock, "new_stock": new_stock}
+            return {"success": True, "name": item_name, "matched_item": item.get("item_name"), "old_stock": current_stock, "new_stock": new_stock}
         except Exception as e:
             return {"success": False, "message": str(e)}
     
@@ -192,13 +192,20 @@ class SupabaseService:
             errors = []
             for ing in recipe["ingredients"]:
                 ing_name = ing.get("name") or ing.get("ingredient") or ""
-                ing_qty = float(ing.get("quantity", 0)) * int(quantity)
+                # Support numeric strings with comma decimal separators
+                raw_qty = ing.get("quantity", 0)
+                try:
+                    ing_qty_val = float(str(raw_qty).replace(",", "."))
+                except Exception:
+                    ing_qty_val = 0.0
+                ing_qty = float(ing_qty_val) * int(quantity)
                 if not ing_name or ing_qty <= 0:
                     continue
                 dec = self.decrement_stock_item(ing_name, ing_qty)
                 if dec.get("success"):
                     consumed.append({
                         "name": ing_name,
+                        "matched_item": dec.get("matched_item"),
                         "consumed": ing_qty,
                         "old_stock": dec.get("old_stock", None),
                         "new_stock": dec.get("new_stock", None)
@@ -213,7 +220,7 @@ class SupabaseService:
         # Fallback: treat product itself as a stock item (ready-made)
         dec = self.decrement_stock_item(product_name, float(quantity))
         if dec.get("success"):
-            return {"success": True, "message": f"Direct stock decrement for {product_name}", "consumed": [{"name": product_name, "consumed": quantity}]}
+            return {"success": True, "message": f"Direct stock decrement for {product_name}", "consumed": [{"name": product_name, "matched_item": dec.get("matched_item"), "consumed": quantity}]}
         return {"success": False, "message": dec.get("message", f"Product {product_name} not found")}
 
     def process_sales_excel(self, excel_file_path: str) -> Dict[str, Any]:
