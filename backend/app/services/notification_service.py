@@ -19,8 +19,10 @@ class NotificationService:
         # Resend (preferred if available)
         self.resend_api_key = os.getenv("RESEND_API_KEY", "")
         self.resend_from = os.getenv("RESEND_FROM", "")
+        self.last_error: str = ""
 
     def send_email(self, subject: str, body: str, to_emails: Optional[List[str]] = None) -> bool:
+        self.last_error = ""
         recipients = to_emails if to_emails else ([self.default_to] if self.default_to else [])
         # Normalize recipients (comma-separated supported)
         if len(recipients) == 1 and isinstance(recipients[0], str) and "," in recipients[0]:
@@ -46,7 +48,16 @@ class NotificationService:
                 )
                 with urlrequest.urlopen(req, timeout=15) as resp:
                     return 200 <= resp.getcode() < 300
-            except (HTTPError, URLError, Exception):
+            except HTTPError as e:
+                try:
+                    body_text = e.read().decode("utf-8")
+                except Exception:
+                    body_text = ""
+                self.last_error = f"HTTPError {e.code}: {body_text or str(e)}"
+            except URLError as e:
+                self.last_error = f"URLError: {getattr(e, 'reason', str(e))}"
+            except Exception as e:
+                self.last_error = str(e)
                 # Fall back to SMTP if Resend fails
                 pass
 
@@ -66,7 +77,8 @@ class NotificationService:
                 server.login(self.smtp_user, self.smtp_pass)
                 server.sendmail(self.default_from, recipients, msg.as_string())
             return True
-        except Exception:
+        except Exception as e:
+            self.last_error = str(e)
             return False
 
 

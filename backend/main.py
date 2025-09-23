@@ -1115,7 +1115,7 @@ async def send_alerts_email_test():
 
         using = "resend" if notification_service.resend_api_key and notification_service.resend_from else ("smtp" if notification_service.smtp_user and notification_service.smtp_pass else "none")
         sent = notification_service.send_email(subject, body)
-        return {"sent": sent, "using": using, "alerts": len(alerts), "critical": len(critical)}
+        return {"sent": sent, "using": using, "alerts": len(alerts), "critical": len(critical), "error": notification_service.last_error}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error sending alerts email: {str(e)}")
 
