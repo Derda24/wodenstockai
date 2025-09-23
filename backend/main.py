@@ -1078,6 +1078,47 @@ async def get_enhanced_alerts():
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error retrieving enhanced alerts: {str(e)}")
 
+@app.post("/api/alerts/send-email-test")
+async def send_alerts_email_test():
+    """Manually send low stock alerts email to verify email configuration."""
+    try:
+        alerts_resp = await get_alerts()
+        alerts = alerts_resp.get("alerts", []) if isinstance(alerts_resp, dict) else []
+
+        # Build critical list and message (same formatting as upload flow)
+        critical = [
+            a for a in alerts
+            if float(a.get('min_stock', 0) or 0) > 0 and float(a.get('current_stock', 0) or 0) <= float(a.get('min_stock', 0) or 0)
+        ]
+
+        def pct(a):
+            cur = float(a.get('current_stock', 0) or 0)
+            mn = float(a.get('min_stock', 0) or 0)
+            return 999 if mn == 0 else max(0.0, (mn - cur) / mn * 100.0)
+
+        critical.sort(key=pct, reverse=True)
+
+        lines = ["Low Stock Alerts\nItems that need immediate attention\n"]
+        for a in critical:
+            cur = float(a.get('current_stock', 0) or 0)
+            mn = float(a.get('min_stock', 0) or 0)
+            perc = 0 if mn == 0 else int(round((mn - cur) / mn * 100))
+            lines.append(f"Critical\n{a['material_name']}\nCurrent: {int(cur) if cur.is_integer() else cur} | Min: {int(mn) if mn.is_integer() else mn}")
+            lines.append(f"-{perc}% below minimum\n")
+
+        if not critical:
+            for a in alerts:
+                lines.append(f"{a['material_name']} — Current: {a['current_stock']} | Min: {a['min_stock']} ({a['alert_type']})")
+
+        subject = f"WODEN: Low Stock Alerts — {len(critical) or len(alerts)} items"
+        body = "\n".join(lines)
+
+        using = "resend" if notification_service.resend_api_key and notification_service.resend_from else ("smtp" if notification_service.smtp_user and notification_service.smtp_pass else "none")
+        sent = notification_service.send_email(subject, body)
+        return {"sent": sent, "using": using, "alerts": len(alerts), "critical": len(critical)}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error sending alerts email: {str(e)}")
+
 @app.get("/api/profitability-analysis")
 async def get_profitability_analysis():
     """Get profitability analysis for all products"""
