@@ -1078,7 +1078,7 @@ async def get_enhanced_alerts():
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error retrieving enhanced alerts: {str(e)}")
 
-@app.post("/api/alerts/send-email-test")
+@app.api_route("/api/alerts/send-email-test", methods=["GET", "POST"])
 async def send_alerts_email_test():
     """Manually send low stock alerts email to verify email configuration."""
     try:
