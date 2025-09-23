@@ -9,6 +9,7 @@ import hashlib
 import secrets
 from datetime import datetime, timedelta, timezone
 from app.services.supabase_service import SupabaseService
+from app.services.notification_service import NotificationService
 from pydantic import BaseModel
 from typing import Optional
 
@@ -38,8 +39,9 @@ app.add_middleware(
     expose_headers=["*"],
 )
 
-# Initialize Supabase service
+# Initialize services
 supabase_service = SupabaseService()
+notification_service = NotificationService()
 
 # Authentication models
 class LoginRequest(BaseModel):
@@ -316,6 +318,21 @@ async def upload_sales_excel(
                 shutil.copyfileobj(file.file, buffer)
 
             result = supabase_service.process_sales_excel(temp_file_path)
+
+            # After processing, attempt to email low-stock alerts
+            try:
+                alerts_resp = await get_alerts()
+                alerts = alerts_resp.get("alerts", []) if isinstance(alerts_resp, dict) else []
+                if alerts:
+                    lines = [
+                        f"{a['material_name']} — Current: {a['current_stock']} Min: {a['min_stock']} ({a['alert_type']})"
+                        for a in alerts
+                    ]
+                    body = "Low Stock Alerts (post sales upload):\n\n" + "\n".join(lines)
+                    notification_service.send_email("WODEN: Low Stock Alerts", body)
+            except Exception:
+                pass
+
             if result.get("success"):
                 return result
             else:
@@ -580,7 +597,7 @@ async def get_recommendations():
 def generate_stock_recommendations(stock_list):
     """Generate stock-based recommendations"""
     recommendations = []
-        
+    
     for item in stock_list:
         current_stock = float(item.get("current_stock", 0))
         min_stock = float(item.get("min_stock", 0))
