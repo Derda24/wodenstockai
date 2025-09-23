@@ -324,12 +324,31 @@ async def upload_sales_excel(
                 alerts_resp = await get_alerts()
                 alerts = alerts_resp.get("alerts", []) if isinstance(alerts_resp, dict) else []
                 if alerts:
-                    lines = [
-                        f"{a['material_name']} — Current: {a['current_stock']} Min: {a['min_stock']} ({a['alert_type']})"
-                        for a in alerts
-                    ]
-                    body = "Low Stock Alerts (post sales upload):\n\n" + "\n".join(lines)
-                    notification_service.send_email("WODEN: Low Stock Alerts", body)
+                    # Critical: items with min_stock > 0 and current <= min
+                    critical = [a for a in alerts if float(a.get('min_stock', 0) or 0) > 0 and float(a.get('current_stock', 0) or 0) <= float(a.get('min_stock', 0) or 0)]
+                    # Sort by percent below min (lowest current/min first)
+                    def pct(a):
+                        cur = float(a.get('current_stock', 0) or 0)
+                        mn = float(a.get('min_stock', 0) or 0)
+                        return 999 if mn == 0 else max(0.0, (mn - cur) / mn * 100.0)
+                    critical.sort(key=pct, reverse=True)
+
+                    lines = ["Low Stock Alerts\nItems that need immediate attention\n"]
+                    for a in critical:
+                        cur = float(a.get('current_stock', 0) or 0)
+                        mn = float(a.get('min_stock', 0) or 0)
+                        perc = 0 if mn == 0 else int(round((mn - cur) / mn * 100))
+                        lines.append(f"Critical\n{a['material_name']}\nCurrent: {int(cur) if cur.is_integer() else cur} {''}\u007C Min: {int(mn) if mn.is_integer() else mn} {''}")
+                        lines.append(f"-{perc}% below minimum\n")
+
+                    # Fallback: if no critical (e.g., all min=0), include all alerts without percent
+                    if not critical:
+                        for a in alerts:
+                            lines.append(f"{a['material_name']} — Current: {a['current_stock']} | Min: {a['min_stock']} ({a['alert_type']})")
+
+                    subject = f"WODEN: Low Stock Alerts — {len(critical) or len(alerts)} items"
+                    body = "\n".join(lines)
+                    notification_service.send_email(subject, body)
             except Exception:
                 pass
 
