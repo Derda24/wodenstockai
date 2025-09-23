@@ -8,6 +8,11 @@ import shutil
 import hashlib
 import secrets
 from datetime import datetime, timedelta, timezone
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except Exception:
+    pass
 from app.services.supabase_service import SupabaseService
 from app.services.notification_service import NotificationService
 from pydantic import BaseModel
@@ -1114,10 +1119,17 @@ async def send_alerts_email_test():
         body = "\n".join(lines)
 
         using = "resend" if notification_service.resend_api_key and notification_service.resend_from else ("smtp" if notification_service.smtp_user and notification_service.smtp_pass else "none")
+        has_to = bool(notification_service.default_to)
+        has_from = bool(notification_service.resend_from or notification_service.default_from)
+        has_key = bool(notification_service.resend_api_key)
+        if not has_to:
+            return {"sent": False, "using": using, "alerts": len(alerts), "critical": len(critical), "error": "No recipient configured (ALERT_EMAIL_TO)", "last_error": notification_service.last_error, "has_to": has_to, "has_from": has_from, "has_key": has_key}
         sent = notification_service.send_email(subject, body)
-        return {"sent": sent, "using": using, "alerts": len(alerts), "critical": len(critical), "error": notification_service.last_error}
+        return {"sent": sent, "using": using, "alerts": len(alerts), "critical": len(critical), "error": notification_service.last_error, "has_to": has_to, "has_from": has_from, "has_key": has_key, "resend_from": notification_service.resend_from, "smtp_from": notification_service.default_from, "to": notification_service.default_to}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error sending alerts email: {str(e)}")
+        # Return diagnostics instead of 500 to ease debugging
+        using = "resend" if notification_service.resend_api_key and notification_service.resend_from else ("smtp" if notification_service.smtp_user and notification_service.smtp_pass else "none")
+        return {"sent": False, "using": using, "alerts": 0, "critical": 0, "error": str(e), "last_error": notification_service.last_error}
 
 @app.get("/api/profitability-analysis")
 async def get_profitability_analysis():
