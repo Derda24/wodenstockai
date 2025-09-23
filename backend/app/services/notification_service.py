@@ -3,6 +3,9 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from typing import List, Optional
 import os
+import json
+from urllib import request as urlrequest
+from urllib.error import URLError, HTTPError
 
 
 class NotificationService:
@@ -13,9 +16,41 @@ class NotificationService:
         self.smtp_pass = os.getenv("SMTP_PASS", "")
         self.default_from = os.getenv("SMTP_FROM", self.smtp_user)
         self.default_to = os.getenv("ALERT_EMAIL_TO", "")
+        # Resend (preferred if available)
+        self.resend_api_key = os.getenv("RESEND_API_KEY", "")
+        self.resend_from = os.getenv("RESEND_FROM", "")
 
     def send_email(self, subject: str, body: str, to_emails: Optional[List[str]] = None) -> bool:
         recipients = to_emails if to_emails else ([self.default_to] if self.default_to else [])
+        # Normalize recipients (comma-separated supported)
+        if len(recipients) == 1 and isinstance(recipients[0], str) and "," in recipients[0]:
+            recipients = [e.strip() for e in recipients[0].split(',') if e.strip()]
+
+        # Prefer Resend if configured
+        if self.resend_api_key and self.resend_from and recipients:
+            try:
+                data = {
+                    "from": self.resend_from,
+                    "to": recipients,
+                    "subject": subject,
+                    "text": body,
+                }
+                req = urlrequest.Request(
+                    url="https://api.resend.com/emails",
+                    data=json.dumps(data).encode("utf-8"),
+                    headers={
+                        "Authorization": f"Bearer {self.resend_api_key}",
+                        "Content-Type": "application/json",
+                    },
+                    method="POST",
+                )
+                with urlrequest.urlopen(req, timeout=15) as resp:
+                    return 200 <= resp.getcode() < 300
+            except (HTTPError, URLError, Exception):
+                # Fall back to SMTP if Resend fails
+                pass
+
+        # SMTP fallback
         if not recipients or not self.smtp_user or not self.smtp_pass:
             return False
 
