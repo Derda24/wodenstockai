@@ -21,7 +21,7 @@ class NotificationService:
         self.resend_from = os.getenv("RESEND_FROM", "")
         self.last_error: str = ""
 
-    def send_email(self, subject: str, body: str, to_emails: Optional[List[str]] = None) -> bool:
+    def send_email(self, subject: str, body: str, to_emails: Optional[List[str]] = None, html_body: Optional[str] = None) -> bool:
         self.last_error = ""
         recipients = to_emails if to_emails else ([self.default_to] if self.default_to else [])
         # Normalize recipients (comma-separated supported)
@@ -37,6 +37,8 @@ class NotificationService:
                     "subject": subject,
                     "text": body,
                 }
+                if html_body:
+                    data["html"] = html_body
                 req = urlrequest.Request(
                     url="https://api.resend.com/emails",
                     data=json.dumps(data).encode("utf-8"),
@@ -65,11 +67,14 @@ class NotificationService:
         if not recipients or not self.smtp_user or not self.smtp_pass:
             return False
 
-        msg = MIMEMultipart()
+        # SMTP: send multipart/alternative if HTML provided
+        msg = MIMEMultipart("alternative") if html_body else MIMEMultipart()
         msg["From"] = self.default_from
         msg["To"] = ", ".join(recipients)
         msg["Subject"] = subject
         msg.attach(MIMEText(body, "plain", "utf-8"))
+        if html_body:
+            msg.attach(MIMEText(html_body, "html", "utf-8"))
 
         try:
             with smtplib.SMTP(self.smtp_host, self.smtp_port) as server:
