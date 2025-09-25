@@ -569,6 +569,63 @@ class SupabaseService:
                 elif "su" in name or "water" in name:
                     stock_item_map[name] = "beverage"
             
+            # Robust parser for items_sold coming in various shapes
+            def normalize_items_sold(raw):
+                try:
+                    # If already a list/dict python object, keep; otherwise try json.loads
+                    val = raw if isinstance(raw, (list, dict)) else json.loads(raw or "[]")
+                except Exception:
+                    # Some rows may contain single product name string or empty
+                    if isinstance(raw, str) and raw.strip():
+                        return [{"product": raw.strip(), "quantity": 1}]
+                    return []
+
+                # If dict mapping product->quantity
+                if isinstance(val, dict):
+                    items = []
+                    for k, v in val.items():
+                        try:
+                            qty = int(v)
+                        except Exception:
+                            try:
+                                qty = int(float(v))
+                            except Exception:
+                                qty = 1
+                        items.append({"product": str(k), "quantity": qty})
+                    return items
+
+                # If list
+                if isinstance(val, list):
+                    items = []
+                    for entry in val:
+                        if isinstance(entry, dict) and ("product" in entry or "name" in entry):
+                            p = entry.get("product") or entry.get("name") or ""
+                            q = entry.get("quantity", entry.get("qty", 1))
+                            try:
+                                q = int(q)
+                            except Exception:
+                                try:
+                                    q = int(float(q))
+                                except Exception:
+                                    q = 1
+                            if p:
+                                items.append({"product": str(p), "quantity": q})
+                        elif isinstance(entry, (list, tuple)) and len(entry) >= 2:
+                            p = str(entry[0])
+                            try:
+                                q = int(entry[1])
+                            except Exception:
+                                try:
+                                    q = int(float(entry[1]))
+                                except Exception:
+                                    q = 1
+                            items.append({"product": p, "quantity": q})
+                        elif isinstance(entry, str) and entry.strip():
+                            items.append({"product": entry.strip(), "quantity": 1})
+                    return items
+
+                return []
+
             for record in response.data:
                 date = record.get("date", "")
                 # Use total_quantity instead of total_sales
@@ -578,48 +635,39 @@ class SupabaseService:
                 # Count unique products sold on this date
                 unique_products = set()
                 
-                # Parse items_sold JSON
-                try:
-                    items = json.loads(record.get("items_sold", "[]"))
-                    for item in items:
-                        product = item.get("product", "")
-                        quantity = int(item.get("quantity", 0))
-                        
-                        if product:
-                            unique_products.add(product)
-                            product_counts[product] = product_counts.get(product, 0) + quantity
-                            
-                            # Map product to category with intelligent detection
-                            product_lower = product.lower().strip()
-                            category = stock_item_map.get(product_lower, "unknown")
-                            
-                            # If not found, try partial matching
-                            if category == "unknown":
-                                for key, cat in stock_item_map.items():
-                                    if key in product_lower or product_lower in key:
-                                        category = cat
-                                        break
-                            
-                            # If still unknown, use intelligent categorization
-                            if category == "unknown":
-                                if any(word in product_lower for word in ["kahve", "coffee", "americano", "latte", "espresso", "cappuccino", "mocha"]):
-                                    category = "coffee"
-                                elif any(word in product_lower for word in ["çay", "tea", "chai"]):
-                                    category = "tea"
-                                elif any(word in product_lower for word in ["süt", "milk", "cream", "dairy"]):
-                                    category = "dairy"
-                                elif any(word in product_lower for word in ["şeker", "sugar", "sweet", "honey"]):
-                                    category = "sweetener"
-                                elif any(word in product_lower for word in ["su", "water", "ice"]):
-                                    category = "beverage"
-                                elif any(word in product_lower for word in ["sandwich", "sandviç", "toast", "croissant"]):
-                                    category = "food"
-                                else:
-                                    category = "other"
-                            
-                            category_counts[category] = category_counts.get(category, 0) + quantity
-                except Exception as e:
-                    print(f"Warning: Could not parse items_sold for {date}: {str(e)}")
+                # Parse items_sold robustly
+                items = normalize_items_sold(record.get("items_sold"))
+                for item in items:
+                    product = item.get("product", "")
+                    quantity = int(item.get("quantity", 0) or 0)
+                    if not product:
+                        continue
+                    unique_products.add(product)
+                    product_counts[product] = product_counts.get(product, 0) + quantity
+                    # Map product to category with intelligent detection
+                    product_lower = product.lower().strip()
+                    category = stock_item_map.get(product_lower, "unknown")
+                    if category == "unknown":
+                        for key, cat in stock_item_map.items():
+                            if key in product_lower or product_lower in key:
+                                category = cat
+                                break
+                    if category == "unknown":
+                        if any(word in product_lower for word in ["kahve", "coffee", "americano", "latte", "espresso", "cappuccino", "mocha"]):
+                            category = "coffee"
+                        elif any(word in product_lower for word in ["çay", "tea", "chai"]):
+                            category = "tea"
+                        elif any(word in product_lower for word in ["süt", "milk", "cream", "dairy"]):
+                            category = "dairy"
+                        elif any(word in product_lower for word in ["şeker", "sugar", "sweet", "honey"]):
+                            category = "sweetener"
+                        elif any(word in product_lower for word in ["su", "water", "ice"]):
+                            category = "beverage"
+                        elif any(word in product_lower for word in ["sandwich", "sandviç", "toast", "croissant"]):
+                            category = "food"
+                        else:
+                            category = "other"
+                    category_counts[category] = category_counts.get(category, 0) + quantity
                 
                 daily_trends.append({
                     "date": date,

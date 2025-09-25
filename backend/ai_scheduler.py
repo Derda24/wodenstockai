@@ -4,7 +4,7 @@ Generates intelligent weekly schedules for baristas
 """
 
 from datetime import datetime, timedelta, date
-from typing import List, Dict, Any, Tuple
+from typing import List, Dict, Any, Tuple, Optional, Set
 import random
 import math
 import traceback
@@ -28,11 +28,11 @@ class AIScheduler:
         
         # AI Rules
         self.rules = {
-            'max_hours_full_time': 54,   # Full-time weekly cap
-            'max_hours_part_time': 21,   # Part-time weekly cap
+            'max_hours_full_time': 54,   # Full-time weekly cap per request
+            'max_hours_part_time': 30,   # Part-time weekly cap (no strict restriction given)
             'morning_before_day_off': True,
-            'opening_baristas_per_day': 2,  # Always 2 people for opening
-            'closing_baristas_per_day': 3,  # Always 3 people for closing
+            'opening_baristas_per_day': 2,  # strictly 2 people for opening
+            'closing_baristas_per_day': 4,  # 4 people for closing per request
             'max_consecutive_days': 6
         }
 
@@ -76,15 +76,16 @@ class AIScheduler:
             schedule_id = schedule_result["schedule"]["id"]
             print(f"AI Scheduler: Created schedule with ID {schedule_id}")
             
-            # Track assigned hours per barista for weekly caps
+            # Track assigned hours and working days per barista for weekly caps and day-off rule
             hours_assigned: Dict[str, int] = {b['id']: 0 for b in active_baristas}
+            days_assigned: Dict[str, int] = {b['id']: 0 for b in active_baristas}
 
             # Generate shifts for each day to ensure proper coverage
             generated_shifts = []
             
             for day in range(7):  # Monday to Sunday
                 day_shifts = self._generate_day_schedule(
-                    active_baristas, day, schedule_id, preferences, hours_assigned or {}
+                    active_baristas, day, schedule_id, preferences, hours_assigned or {}, days_assigned or {}
                 )
                 generated_shifts.extend(day_shifts)
             
@@ -104,8 +105,10 @@ class AIScheduler:
                 if not shift_result["success"]:
                     print(f"Warning: Failed to create shift for barista {shift['barista_id']}")
                 else:
-                    # Update assigned hours
+                    # Update assigned hours and days
                     hours_assigned[shift['barista_id']] = hours_assigned.get(shift['barista_id'], 0) + int(shift['hours'])
+                    if int(shift['hours']) > 0:
+                        days_assigned[shift['barista_id']] = days_assigned.get(shift['barista_id'], 0) + 1
             
             # Get the complete schedule with barista details
             shifts_result = self.supabase_service.get_schedule_shifts(schedule_id)
@@ -129,7 +132,7 @@ class AIScheduler:
                 "message": f"Error generating schedule: {repr(e)}"
             }
 
-    def _generate_day_schedule(self, baristas: List[Dict[str, Any]], day: int, schedule_id: str, preferences: Dict[str, Any] = None, hours_assigned: Dict[str, int] = None) -> List[Dict[str, Any]]:
+    def _generate_day_schedule(self, baristas: List[Dict[str, Any]], day: int, schedule_id: str, preferences: Dict[str, Any] = None, hours_assigned: Dict[str, int] = None, days_assigned: Dict[str, int] = None) -> List[Dict[str, Any]]:
         """
         Generate schedule for a specific day ensuring proper coverage
         
@@ -162,15 +165,46 @@ class AIScheduler:
                 day_off = hash(barista_id) % 7
             barista_day_off[barista_id] = day_off
             
+            # Enforce one day off for full-time: if already 6 working days assigned, force day off
+            if barista.get('type','full-time') == 'full-time' and (days_assigned or {}).get(barista_id, 0) >= 6:
+                # Consider as day off today
+                barista_day_off[barista_id] = day
+                continue
+
             if day != day_off:
                 available_baristas.append(barista)
         
-        # Separate full-time and part-time baristas
+        # Separate full-time and part-time baristas (available today)
         full_time_baristas = [b for b in available_baristas if b.get("type", "full-time") == "full-time"]
         part_time_baristas = [b for b in available_baristas if b.get("type", "full-time") == "part-time"]
+        # Also keep global (ignoring day-off) for guaranteed fill
+        all_full_time = [b for b in baristas if b.get("type", "full-time") == "full-time"]
+        all_part_time = [b for b in baristas if b.get("type", "full-time") == "part-time"]
         
-        # Select opening baristas (2 people)
-        # Opening must be full-time only. Priority: full-time with day off tomorrow get opening today
+        # Helper: strict constraint checks
+        def is_allowed_open(b: Dict[str, Any]) -> bool:
+            # Özge can do morning; Boran/Can should not do morning
+            name = (b.get('name') or '').lower()
+            if name in {'boran', 'can'} and True:
+                return False
+            # Only allow part-time if they prefer morning
+            if b.get('type') == 'part-time':
+                prefs = [s.lower() for s in (b.get('preferred_shifts') or [])]
+                return 'morning' in prefs
+            return True
+
+        def is_allowed_close(b: Dict[str, Any]) -> bool:
+            name = (b.get('name') or '').lower()
+            if name.startswith('özge'):
+                return False
+            return True
+
+        # Select opening baristas (strictly 2 people)
+        # Priority order:
+        # 1) Full-time whose day off is tomorrow (must_open)
+        # 2) Baristas with explicit opening preference for this day (from preferences), including part-time (e.g., Özge)
+        # 3) Remaining full-time
+        # 4) Morning-capable part-time
         opening_needed = self.rules["opening_baristas_per_day"]
         must_open: List[Dict[str, Any]] = []
         if self.rules.get("morning_before_day_off", True):
@@ -186,10 +220,52 @@ class AIScheduler:
         opening_selected_ids = set(b['id'] for b in must_open)
         remaining_needed = max(0, opening_needed - len(must_open))
         opening_baristas = must_open.copy()
+
+        # 2) Strong preferences for opening on this day
         if remaining_needed > 0:
-            remaining_candidates = [b for b in full_time_baristas if b['id'] not in opening_selected_ids]
-            fill = self._select_baristas_for_shift(
-                remaining_candidates,
+            preferred_openers: List[Dict[str, Any]] = []
+            for b in available_baristas:
+                b_id = b['id']
+                if b_id in opening_selected_ids:
+                    continue
+                # Only allow morning if policy allows it
+                if b.get('type') == 'part-time':
+                    prefs_shifts = [s.lower() for s in (b.get('preferred_shifts') or [])]
+                    if 'morning' not in prefs_shifts:
+                        continue
+                # Check explicit daily preferences
+                if preferences and b_id in preferences:
+                    if day in (preferences[b_id].get('preferredOpening') or []):
+                        preferred_openers.append(b)
+                else:
+                    # If no explicit preferences, prefer Özge for morning
+                    name = (b.get('name') or '').lower()
+                    if name.startswith('özge'):
+                        preferred_openers.append(b)
+            # De-dup and cap
+            dedup_pref = []
+            seen = set()
+            for b in preferred_openers:
+                if b['id'] in seen:
+                    continue
+                seen.add(b['id'])
+                dedup_pref.append(b)
+            # Sort to prefer full-time first among preferred, but keep Özge at top if present
+            def pref_key(b):
+                name = (b.get('name') or '').lower()
+                is_ozge = 0 if name.startswith('özge') else 1
+                is_ft = 0 if b.get('type') == 'full-time' else 1
+                return (is_ozge, is_ft, (hours_assigned or {}).get(b['id'], 0))
+            dedup_pref.sort(key=pref_key)
+            take = dedup_pref[:remaining_needed]
+            opening_baristas.extend(take)
+            opening_selected_ids.update(b['id'] for b in take)
+            remaining_needed = max(0, opening_needed - len(opening_baristas))
+        if remaining_needed > 0:
+            # First, try remaining full-time
+            remaining_candidates_full = [b for b in full_time_baristas if b['id'] not in opening_selected_ids]
+            fill_full = self._select_baristas_for_shift(
+                remaining_candidates_full,
                 remaining_needed,
                 "morning",
                 day,
@@ -197,9 +273,56 @@ class AIScheduler:
                 hours_assigned,
                 required_hours=9
             )
-            opening_baristas.extend(fill)
+            opening_baristas.extend(fill_full)
+            remaining_needed = max(0, opening_needed - len(opening_baristas))
+        if remaining_needed > 0:
+            # Then allow part-time who are permitted mornings (strict prefs) and prioritize Özge
+            def pt_morning_ok(b: Dict[str, Any]) -> bool:
+                if b.get('type') != 'part-time':
+                    return False
+                name = (b.get('name') or '').lower()
+                if name in {'boran', 'can'}:
+                    return False
+                prefs = [s.lower() for s in (b.get('preferred_shifts') or [])]
+                return 'morning' in prefs
+            remaining_candidates_pt = [b for b in part_time_baristas if pt_morning_ok(b) and b['id'] not in opening_selected_ids]
+            # Prefer Özge first if present
+            remaining_candidates_pt.sort(key=lambda b: 0 if (b.get('name') or '').lower().startswith('özge') else 1)
+            fill_pt = self._select_baristas_for_shift(
+                remaining_candidates_pt,
+                remaining_needed,
+                "morning",
+                day,
+                preferences,
+                hours_assigned,
+                required_hours=9
+            )
+            opening_baristas.extend(fill_pt)
+
+        # Final fallback: allow pulling from day-off (global lists) to reach exactly opening_needed
+        if len(opening_baristas) < opening_needed:
+            need = opening_needed - len(opening_baristas)
+            # Consider all baristas, not just available, with priority full-time then part-time
+            all_full = [b for b in all_full_time if b not in opening_baristas]
+            all_part = [b for b in all_part_time if b not in opening_baristas]
+            # Filter by open-allowed
+            all_full = [b for b in all_full if is_allowed_open(b)]
+            all_part = [b for b in all_part if is_allowed_open(b)]
+            # Sort by hours asc
+            all_full.sort(key=lambda b: (hours_assigned or {}).get(b['id'], 0))
+            all_part.sort(key=lambda b: (hours_assigned or {}).get(b['id'], 0))
+            # Prefer Özgë if exists among part-time
+            all_part.sort(key=lambda b: 0 if (b.get('name') or '').lower().startswith('özge') else 1)
+            for pool in (all_full, all_part):
+                for b in pool:
+                    if len(opening_baristas) >= opening_needed:
+                        break
+                    opening_baristas.append(b)
+
+        # Fallback top-up to guarantee exactly opening_needed (ignore weekly caps as last resort)
+        # Do NOT force-fill beyond eligibility; if fewer than opening_needed remain after FT+PT, leave empty
         
-        # Select closing baristas (3 people) - exclude opening and allow both types
+        # Select closing baristas (4 people) - exclude opening and allow both types
         candidates_for_closing = [b for b in (full_time_baristas + part_time_baristas) if b not in opening_baristas]
         closing_baristas = self._select_baristas_for_shift(
             candidates_for_closing,
@@ -212,8 +335,60 @@ class AIScheduler:
             required_hours=7,
             exclude_ids=set(b['id'] for b in opening_baristas)
         )
+
+        # Re-select closers: prioritize full-time first, then part-time
+        if len(closing_baristas) < self.rules["closing_baristas_per_day"]:
+            # First pass already mixed; rebuild according to priority
+            closing_needed = self.rules["closing_baristas_per_day"]
+            closing_baristas = []
+            # Full-time candidates first (prefer globally to guarantee fill)
+            ft_candidates = [b for b in all_full_time if b not in opening_baristas]
+            ft_candidates = [b for b in ft_candidates if is_allowed_close(b)]
+            ft_fill = self._select_baristas_for_shift(
+                ft_candidates,
+                closing_needed,
+                "evening",
+                day,
+                preferences,
+                hours_assigned,
+                required_hours=9,
+                exclude_ids=set(b['id'] for b in opening_baristas)
+            )
+            closing_baristas.extend(ft_fill)
+            rem = closing_needed - len(closing_baristas)
+            if rem > 0:
+                # Then part-time (prefer globally to guarantee fill)
+                pt_candidates = [b for b in all_part_time if b not in opening_baristas]
+                pt_candidates = [b for b in pt_candidates if is_allowed_close(b)]
+                pt_fill = self._select_baristas_for_shift(
+                    pt_candidates,
+                    rem,
+                    "evening",
+                    day,
+                    preferences,
+                    hours_assigned,
+                    required_hours=7,
+                    exclude_ids=set(b['id'] for b in opening_baristas)
+                )
+                closing_baristas.extend(pt_fill)
+
+        # Final fallback for closers: include day-off baristas if still short, respecting strict constraints
+        if len(closing_baristas) < self.rules["closing_baristas_per_day"]:
+            need = self.rules["closing_baristas_per_day"] - len(closing_baristas)
+            all_full = [b for b in all_full_time if b not in opening_baristas and b not in closing_baristas]
+            all_part = [b for b in all_part_time if b not in opening_baristas and b not in closing_baristas]
+            all_full = [b for b in all_full if is_allowed_close(b)]
+            all_part = [b for b in all_part if is_allowed_close(b)]
+            all_full.sort(key=lambda b: (hours_assigned or {}).get(b['id'], 0))
+            all_part.sort(key=lambda b: (hours_assigned or {}).get(b['id'], 0))
+            for pool in (all_full, all_part):
+                for b in pool:
+                    if len(closing_baristas) >= self.rules["closing_baristas_per_day"]:
+                        break
+                    closing_baristas.append(b)
         
-        # Create opening shifts (full-time only, 9h)
+        # Create opening shifts (9h). Track day assignment once per barista per day
+        counted_today: Set[str] = set()
         for barista in opening_baristas:
             shifts.append({
                 "barista_id": barista["id"],
@@ -224,8 +399,14 @@ class AIScheduler:
                 "hours": 9,
                 "notes": "Opening shift"
             })
+            # update assignment tracker early for fair distribution
+            if hours_assigned is not None:
+                hours_assigned[barista['id']] = hours_assigned.get(barista['id'], 0) + 9
+            if days_assigned is not None and barista['id'] not in counted_today:
+                days_assigned[barista['id']] = days_assigned.get(barista['id'], 0) + 1
+                counted_today.add(barista['id'])
         
-        # Create closing shifts (full-time 9h, part-time 7h 17:30-00:30) with safety check
+        # Create closing shifts (full-time 9h 15:30-00:30, part-time 7h 17:30-00:30) with safety check
         for barista in closing_baristas:
             if any(ob['id'] == barista['id'] for ob in opening_baristas):
                 continue
@@ -242,10 +423,15 @@ class AIScheduler:
                 "hours": hours,
                 "notes": "Closing shift"
             })
+            if hours_assigned is not None:
+                hours_assigned[barista['id']] = hours_assigned.get(barista['id'], 0) + int(hours)
+            if days_assigned is not None and barista['id'] not in counted_today:
+                days_assigned[barista['id']] = days_assigned.get(barista['id'], 0) + 1
+                counted_today.add(barista['id'])
         
         return shifts
 
-    def _select_baristas_for_shift(self, baristas: List[Dict[str, Any]], count: int, shift_type: str, day: int, preferences: Dict[str, Any] = None, hours_assigned: Dict[str, int] = None, required_hours: int = 9, exclude_ids: set | None = None) -> List[Dict[str, Any]]:
+    def _select_baristas_for_shift(self, baristas: List[Dict[str, Any]], count: int, shift_type: str, day: int, preferences: Dict[str, Any] = None, hours_assigned: Dict[str, int] = None, required_hours: int = 9, exclude_ids: Optional[Set[str]] = None) -> List[Dict[str, Any]]:
         """
         Select baristas for a specific shift type
         
@@ -269,9 +455,28 @@ class AIScheduler:
             eff_required = required_hours
             if shift_type == 'evening':
                 eff_required = 7 if b_type == 'part-time' else 9
-            # Part-time cannot work morning
-            if b_type == 'part-time' and shift_type == 'morning':
+            # Hard constraints from business rules
+            # - Özge morning-only (block evening)
+            if (b.get('name') or b.get('email') or '').lower().startswith('özge') and shift_type == 'evening':
                 continue
+            # - Boran and Can evenings only (block morning)
+            if (b.get('name') or '').lower() in {'boran', 'can'} and shift_type == 'morning':
+                continue
+            # Part-time morning policy: generally avoid but allow if they prefer morning
+            if b_type == 'part-time' and shift_type == 'morning':
+                preferred = set([s.lower() for s in (b.get('preferred_shifts') or [])])
+                if 'morning' not in preferred:
+                    continue
+            # Hard preference enforcement: if barista has preferences, only schedule within them
+            prefs = [s.lower() for s in (b.get('preferred_shifts') or [])]
+            if prefs and shift_type not in prefs:
+                # allow full-time with both, block those without this shift in prefs
+                pass_allowed = False
+                if 'morning' in prefs and 'evening' in prefs:
+                    pass_allowed = True
+                if not pass_allowed:
+                    # Do not allow e.g., Özge to be assigned evening
+                    continue
             # Exclusion by ID
             if exclude_ids and b['id'] in exclude_ids:
                 continue
@@ -333,7 +538,7 @@ class AIScheduler:
         shifts = []
         barista_id = barista["id"]
         barista_type = barista.get("type", "full-time")
-        max_hours = barista.get("max_hours", 45)
+        max_hours = barista.get("max_hours", 54)
         preferred_shifts = barista.get("preferred_shifts", [])
         
         # Determine day off (random for now, but could be based on preferences)

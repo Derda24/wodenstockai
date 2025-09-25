@@ -330,37 +330,56 @@ export default function AIScheduler() {
   const exportScheduleCSV = () => {
     try {
       const dayNamesTr = ['Pazartesi','Salı','Çarşamba','Perşembe','Cuma','Cumartesi','Pazar'];
-      const headers = ['Gün','Vardiya','Başlangıç','Bitiş','Barista'];
+      const sep = ';'; // Excel-friendly in many locales
+      const quote = (v: any) => '"' + String(v ?? '').replace(/"/g, '""') + '"';
+      const headers = ['Gün','Tarih','Vardiya','Saat','Barista','Tür'];
       const rows: string[] = [];
-      rows.push(headers.join(','));
+      rows.push(headers.map(quote).join(sep));
       for (let d = 0; d < 7; d++) {
+        const date = getWeekDates(selectedWeek)[d];
+        const dateStr = `${date.getDate().toString().padStart(2,'0')}.${(date.getMonth()+1).toString().padStart(2,'0')}.${date.getFullYear()}`;
         const shifts = getShiftsForDay(d) as any[];
-        shifts.forEach(shift => {
+        // Ensure deterministic order: opening first then closing
+        const opening = shifts.filter(s => s.shift_type === 'morning');
+        const closing = shifts.filter(s => s.shift_type === 'evening');
+        const ordered = [
+          ...opening.map(s => ({...s, label: 'Açılış'})),
+          ...closing.map(s => ({...s, label: 'Kapanış'})),
+        ];
+        ordered.forEach(shift => {
           const barista = getBaristaById(shift.barista_id);
-          const shiftName = shift.shift_type === 'morning' ? 'Açılış' : (shift.shift_type === 'evening' ? 'Kapanış' : shift.shift_type);
           const start = (shift.start_time || '').toString().slice(0,5);
           const end = (shift.end_time || '').toString().slice(0,5);
           rows.push([
-            dayNamesTr[d],
-            shiftName,
-            start,
-            end,
-            (barista?.name || 'Bilinmiyor').replace(/,/g,' ')
-          ].join(','));
+            quote(dayNamesTr[d]),
+            quote(dateStr),
+            quote(shift.label),
+            quote(`${start}-${end}`),
+            quote(barista?.name || 'Bilinmiyor'),
+            quote(barista?.type || '-')
+          ].join(sep));
         });
         // Off list
         const offs = getOffBaristasForDay(d);
         if (offs.length > 0) {
-          rows.push([dayNamesTr[d],'İzinli','-','-', offs.map(b=>b.name.replace(/,/g,' ')).join(' / ')].join(','));
+          rows.push([
+            quote(dayNamesTr[d]),
+            quote(dateStr),
+            quote('İzinli'),
+            quote('-'),
+            quote(offs.map(b=>b.name).join(' / ')),
+            quote('-')
+          ].join(sep));
         }
       }
-      const csvContent = rows.join('\n');
+      // Prepend UTF-8 BOM so Excel renders Turkish characters correctly
+      const csvContent = '\ufeff' + rows.join('\n');
       const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
       const weekStartStr = currentSchedule?.week_start || getWeekStart(selectedWeek).toISOString().split('T')[0];
-      a.download = `weekly_schedule_${weekStartStr}.csv`;
+      a.download = `haftalik_vardiya_${weekStartStr}.csv`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -762,6 +781,8 @@ export default function AIScheduler() {
                   const shifts = getShiftsForDay(dayIndex);
                   const openingShifts = shifts.filter((s: any) => s.shift_type === 'morning');
                   const closingShifts = shifts.filter((s: any) => s.shift_type === 'evening');
+                  const openRequired = 2;
+                  const closeRequired = 4;
                   const offList = getOffBaristasForDay(dayIndex);
                   
                   return (
@@ -772,46 +793,48 @@ export default function AIScheduler() {
                         <div className="text-sm text-gray-500">{date.getDate()}/{date.getMonth() + 1}</div>
                       </div>
                       
-                      {/* Opening Shifts (1 shown + 1 empty slot) */}
+                      {/* Opening Shifts (2 people) */}
                       <div className="mb-4">
                         <div className="text-xs font-semibold text-blue-600 mb-2 uppercase tracking-wide">
                           Açılış (2 kişi)
                         </div>
                         <div className="space-y-2">
-                          {openingShifts.slice(0, 1).map((shift: any, idx: number) => {
+                          {openingShifts.slice(0, openRequired).map((shift: any, idx: number) => {
                             const barista = getBaristaById(shift.barista_id);
                             return (
                               <div key={idx} className="bg-blue-50 rounded-lg p-2 text-sm">
                                 <div className="font-medium text-blue-900">{barista?.name || 'Unknown'}</div>
-                                <div className="text-blue-700">07:30-16:30</div>
+                                <div className="text-blue-700">{(shift.start_time || '07:30').toString().slice(0,5)}-{(shift.end_time || '16:30').toString().slice(0,5)}</div>
                               </div>
                             );
                           })}
-                          {/* Always render second empty slot */}
-                          <div className="bg-gray-100 rounded-lg p-2 text-sm text-gray-400 italic">
-                            Boş
-                          </div>
+                          {openingShifts.length < openRequired &&
+                            Array.from({ length: openRequired - openingShifts.length }).map((_, i) => (
+                              <div key={`open-empty-${i}`} className="bg-gray-100 rounded-lg p-2 text-sm text-gray-400 italic">
+                                Boş
+                              </div>
+                            ))}
                         </div>
                       </div>
                       
-                      {/* Closing Shifts (3 people) */}
+                      {/* Closing Shifts (4 people) */}
                       <div>
                         <div className="text-xs font-semibold text-green-600 mb-2 uppercase tracking-wide">
-                          Kapanış (3 kişi)
+                          Kapanış (4 kişi)
                         </div>
                         <div className="space-y-2">
-                          {closingShifts.slice(0, 3).map((shift: any, idx: number) => {
+                          {closingShifts.slice(0, closeRequired).map((shift: any, idx: number) => {
                             const barista = getBaristaById(shift.barista_id);
                             return (
                               <div key={idx} className="bg-green-50 rounded-lg p-2 text-sm">
                                 <div className="font-medium text-green-900">{barista?.name || 'Unknown'}</div>
-                                <div className="text-green-700">15:30-00:30</div>
+                                <div className="text-green-700">{(shift.start_time || '15:30').toString().slice(0,5)}-{(shift.end_time || '00:30').toString().slice(0,5)}</div>
                               </div>
                             );
                           })}
-                          {closingShifts.length < 3 && (
+                          {closingShifts.length < closeRequired && (
                             <div className="bg-gray-100 rounded-lg p-2 text-sm text-gray-500 italic">
-                              {3 - closingShifts.length} kişi daha gerekli
+                              {closeRequired - closingShifts.length} kişi daha gerekli
                             </div>
                           )}
                         </div>
