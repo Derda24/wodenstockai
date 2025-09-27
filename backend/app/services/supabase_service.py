@@ -524,7 +524,7 @@ class SupabaseService:
             if not response.data:
                 # Try to get any recent data to see what's available
                 print("DEBUG: No data in date range, checking all recent records...")
-                all_response = self.client.table("sales_history").select("*").order("created_at", desc=True).limit(10).execute()
+                all_response = self.client.table("sales_history").select("*").order("created_at", desc=True).limit(30).execute()
                 print(f"DEBUG: Recent records (any date): {all_response.data}")
                 
                 # If we have recent data but not in date range, use it anyway for analysis
@@ -696,11 +696,29 @@ class SupabaseService:
                     "percentage": round(percentage, 1)
                 })
             
+            # Check if we're using data from outside the requested date range
+            using_outdated_data = False
+            if response.data:
+                first_record_date = response.data[0].get("date", "")
+                if first_record_date:
+                    try:
+                        record_date = datetime.strptime(first_record_date, "%Y-%m-%d")
+                        days_diff = (end_date - record_date).days
+                        if days_diff > days:
+                            using_outdated_data = True
+                    except:
+                        pass
+            
             return {
                 "total_sales": total_sales,
                 "daily_trends": daily_trends,
                 "top_products": top_products_list,
-                "category_breakdown": category_breakdown_list
+                "category_breakdown": category_breakdown_list,
+                "data_info": {
+                    "using_outdated_data": using_outdated_data,
+                    "requested_days": days,
+                    "actual_data_range": f"Last {len(response.data)} records" if response.data else "No data"
+                }
             }
             
         except Exception as e:

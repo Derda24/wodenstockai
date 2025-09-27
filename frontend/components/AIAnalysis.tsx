@@ -33,6 +33,11 @@ interface AnalysisData {
   lowStockAlerts: Array<{ name: string; current: number; min: number; unit: string }>;
   dailyTrends: Array<{ date: string; totalSales: number; products: number }>;
   categoryBreakdown: Array<{ category: string; count: number; percentage: number }>;
+  dataInfo?: {
+    using_outdated_data: boolean;
+    requested_days: number;
+    actual_data_range: string;
+  };
 }
 
 export default function AIAnalysis() {
@@ -161,6 +166,14 @@ export default function AIAnalysis() {
               <div>
                 <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">AI Analytics</h1>
                 <p className="text-gray-600 text-sm sm:text-lg">Intelligent insights powered by AI</p>
+                {analysisData.dataInfo?.using_outdated_data && (
+                  <div className="mt-1 flex items-center space-x-2">
+                    <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
+                    <span className="text-sm text-yellow-700">
+                      Showing available data ({analysisData.dataInfo.actual_data_range})
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
             <div className="flex flex-wrap items-center gap-2 sm:gap-4">
@@ -313,6 +326,11 @@ export default function AIAnalysis() {
             <p className="text-sm font-medium text-gray-600 mb-1">Analysis Period</p>
             <p className="text-lg font-bold text-gray-900 mb-2">{getPeriodLabel(selectedPeriod)}</p>
             <p className="text-xs text-gray-500">Current time range</p>
+            {analysisData.dataInfo?.using_outdated_data && (
+              <p className="text-xs text-amber-600 mt-1">
+                💡 Upload Excel files to update analytics with current data
+              </p>
+            )}
           </div>
         </div>
       </div>
