@@ -237,6 +237,8 @@ class SupabaseService:
             errors = []
             sales_data = {}  # Group by date for sales_history
             total_sales = 0
+            # Ensure we have a container for learning data used in failure branch below
+            learning_insights: Dict[str, Any] = {"new_products": []}
             
             # Initialize AI Learning System
             ai_learning = AILearningSystem(self)
@@ -270,8 +272,10 @@ class SupabaseService:
                     else:
                         # Learn about failed matches
                         self._learn_from_failed_match(product_name, quantity)
-                        learning_insights["new_products"].append(product_name)
-                        
+                        try:
+                            learning_insights.setdefault("new_products", []).append(product_name)
+                        except Exception:
+                            pass
                         errors.append(f"Row {idx + 1}: {res.get('message')}")
                         processed.append({"product": product_name, "quantity": quantity, "status": "failed", "message": res.get('message')})
                 except Exception as e:
@@ -294,7 +298,8 @@ class SupabaseService:
                     }
                     print(f"DEBUG: Storing sales record for {date}: {sales_record}")
                     
-                    result = self.client.table("sales_history").upsert(sales_record).execute()
+                    # Insert new record (no unique constraint on date, so upsert is unnecessary)
+                    result = self.client.table("sales_history").insert(sales_record).execute()
                     print(f"DEBUG: Sales record stored successfully: {result.data}")
                 except Exception as e:
                     print(f"ERROR: Could not store sales data for {date}: {str(e)}")
