@@ -64,6 +64,14 @@ out/
 ehthumbs.db
 Thumbs.db
 
+# Local data files (keep locally, not in Git)
+*.xlsx
+*.csv
+backend/ai_learning_data.json
+backend/sales_history.json
+weekly_schedule_*.csv
+haftalik_vardiya_*.csv
+
 # Logs
 *.log
 npm-debug.log*

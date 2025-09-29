@@ -1,6 +1,8 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import * as XLSX from 'xlsx';
+import { Workbook } from 'exceljs';
 import { 
   Calendar, 
   Users, 
@@ -390,6 +392,156 @@ export default function AIScheduler() {
     }
   };
 
+  const exportScheduleXLSX = () => {
+    try {
+      const wb = XLSX.utils.book_new();
+      // Pretty grouped layout, single column lines per your sample
+      const wsData: any[] = [];
+      const trDays = ['Pazartesi','Salı','Çarşamba','Perşembe','Cuma','Cumartesi','Pazar'];
+      for (let d = 0; d < 7; d++) {
+        const date = getWeekDates(selectedWeek)[d];
+        const dateStr = `${date.getDate().toString().padStart(2,'0')}.${(date.getMonth()+1).toString().padStart(2,'0')}.${date.getFullYear()}`;
+        const shifts = getShiftsForDay(d) as any[];
+        const opening = shifts.filter(s => s.shift_type === 'morning');
+        const closing = shifts.filter(s => s.shift_type === 'evening');
+        wsData.push([`Tarih - ${dateStr}`]);
+        wsData.push([`Gün - ${trDays[d]}`]);
+        opening.forEach(s => {
+          const b = getBaristaById(s.barista_id);
+          wsData.push([`Açılış - ${b?.name || 'Bilinmiyor'}`]);
+        });
+        closing.forEach(s => {
+          const b = getBaristaById(s.barista_id);
+          wsData.push([`Kapanış - ${b?.name || 'Bilinmiyor'}`]);
+        });
+        const offs = getOffBaristasForDay(d);
+        if (offs.length > 0) {
+          wsData.push([`İzinli - ${offs.map(b=>b.name).join(' / ')}`]);
+        }
+        wsData.push(['']);
+      }
+      const ws = XLSX.utils.aoa_to_sheet(wsData);
+      (ws as any)['!cols'] = [ { wch: 40 } ];
+      XLSX.utils.book_append_sheet(wb, ws, 'Haftalık Vardiya');
+      const weekStartStr = currentSchedule?.week_start || getWeekStart(selectedWeek).toISOString().split('T')[0];
+      XLSX.writeFile(wb, `haftalik_vardiya_${weekStartStr}.xlsx`);
+    } catch (e) {
+      console.error('Export XLSX failed:', e);
+      alert('Excel dışa aktarımı başarısız oldu.');
+    }
+  };
+
+  const exportStyledExcel = async () => {
+    try {
+      const wb = new Workbook();
+      const ws = wb.addWorksheet('Haftalık Vardiya');
+
+      // Column widths: first label col + 7 days
+      ws.columns = [{ width: 18 }, { width: 20 }, { width: 20 }, { width: 20 }, { width: 20 }, { width: 20 }, { width: 20 }, { width: 20 }];
+
+      const weekDatesArr = getWeekDates(selectedWeek);
+      const dateStrings = weekDatesArr.map(d => `${d.getDate().toString().padStart(2,'0')}.${(d.getMonth()+1).toString().padStart(2,'0')}.${d.getFullYear()}`);
+      const trDays = ['Pazartesi','Salı','Çarşamba','Perşembe','Cuma','Cumartesi','Pazar'];
+
+      // Header row: Tarih
+      const headerRow = ws.addRow(['Tarih', ...dateStrings]);
+      headerRow.eachCell((cell, col) => {
+        cell.font = { bold: true };
+        cell.alignment = { horizontal: col === 1 ? 'left' : 'center', vertical: 'middle' };
+        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE8EEF7' } };
+        cell.border = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } };
+      });
+
+      // Row: Gün
+      const dayRow = ws.addRow(['Gün', ...trDays]);
+      dayRow.eachCell((cell) => {
+        cell.font = { bold: true };
+        cell.alignment = { horizontal: 'center', vertical: 'middle' };
+        cell.border = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } };
+      });
+
+      // Prepare shift rows
+      const openLabelRows = ['Açılış /Saat', 'Açılış /Saat'];
+      const closeLabelRows = ['Kapanış/Saat', 'Kapanış/Saat', 'Kapanış/Saat', 'Kapanış/Saat'];
+
+      const openingFill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE3F2FD' } } as const; // light blue
+      const closingFill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE8F5E9' } } as const; // light green
+
+      const addDataRow = (label: string, values: string[], fill?: any) => {
+        const row = ws.addRow([label, ...values]);
+        row.eachCell((cell, col) => {
+          cell.alignment = { vertical: 'middle', horizontal: col === 1 ? 'left' : 'left', wrapText: true };
+          cell.border = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } };
+          if (col !== 1 && fill) cell.fill = fill;
+        });
+      };
+
+      // Build opening rows
+      for (let i = 0; i < openLabelRows.length; i++) {
+        const vals: string[] = [];
+        for (let d = 0; d < 7; d++) {
+          const shifts = getShiftsForDay(d) as any[];
+          const opening = shifts.filter(s => s.shift_type === 'morning');
+          const s = opening[i];
+          if (s) {
+            const b = getBaristaById(s.barista_id);
+            const start = (s.start_time || '07:30').toString().slice(0,5);
+            const end = (s.end_time || '16:30').toString().slice(0,5);
+            vals.push(`Açılış - ${b?.name || 'Bilinmiyor'}/${start}-${end}`);
+          } else {
+            vals.push('');
+          }
+        }
+        addDataRow(openLabelRows[i], vals, openingFill);
+      }
+
+      // Build closing rows
+      for (let i = 0; i < closeLabelRows.length; i++) {
+        const vals: string[] = [];
+        for (let d = 0; d < 7; d++) {
+          const shifts = getShiftsForDay(d) as any[];
+          const closing = shifts.filter(s => s.shift_type === 'evening');
+          const s = closing[i];
+          if (s) {
+            const b = getBaristaById(s.barista_id);
+            const start = (s.start_time || '15:30').toString().slice(0,5);
+            const end = (s.end_time || '00:30').toString().slice(0,5);
+            vals.push(`Kapanış - ${b?.name || 'Bilinmiyor'}/${start}-${end}`);
+          } else {
+            vals.push('');
+          }
+        }
+        addDataRow(closeLabelRows[i], vals, closingFill);
+      }
+
+      // Off row
+      const offVals: string[] = [];
+      for (let d = 0; d < 7; d++) {
+        const offs = getOffBaristasForDay(d);
+        offVals.push(offs.map(b => b.name).join(' / '));
+      }
+      addDataRow('İzinli', offVals);
+
+      // Freeze top two rows
+      ws.views = [{ state: 'frozen', xSplit: 1, ySplit: 2 }];
+
+      const weekStartStr = currentSchedule?.week_start || getWeekStart(selectedWeek).toISOString().split('T')[0];
+      const buffer = await wb.xlsx.writeBuffer();
+      const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `haftalik_vardiya_${weekStartStr}.xlsx`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      console.error('Styled export failed:', e);
+      alert('Excel dışa aktarımı başarısız oldu.');
+    }
+  };
+
   const getBaristaById = (baristaId: string) => {
     return baristas.find(b => b.id === baristaId);
   };
@@ -764,9 +916,9 @@ export default function AIScheduler() {
                 )}
                 <span>{isLoading ? 'Generating...' : 'Generate AI Schedule'}</span>
               </button>
-              <button onClick={exportScheduleCSV} className="flex items-center space-x-2 px-4 py-3 bg-white border border-gray-200 text-gray-700 rounded-xl text-sm font-medium shadow-soft hover:bg-gray-50 focus:ring-2 focus:ring-purple-500 transition-all duration-200 touch-manipulation min-h-[44px]">
+              <button onClick={exportStyledExcel} className="flex items-center space-x-2 px-4 py-3 bg-white border border-gray-200 text-gray-700 rounded-xl text-sm font-medium shadow-soft hover:bg-gray-50 focus:ring-2 focus:ring-purple-500 transition-all duration-200 touch-manipulation min-h-[44px]">
                 <Download className="w-4 h-4" />
-                <span>Export CSV</span>
+                <span>Export Excel</span>
               </button>
             </div>
           </div>
