@@ -285,7 +285,11 @@ class SupabaseService:
             print("🧠 AI Learning System: Analyzing sales data...")
             learning_insights = ai_learning.learn_from_excel_upload(sales_data, processed)
             
+            print(f"DEBUG: sales_data keys: {list(sales_data.keys())}")
+            print(f"DEBUG: Number of dates to store: {len(sales_data)}")
+            
             # Store sales data in sales_history table with AI learning data
+            stored_count = 0
             for date, data in sales_data.items():
                 try:
                     sales_record = {
@@ -293,17 +297,25 @@ class SupabaseService:
                         "total_quantity": data["total_quantity"],
                         "total_sales": data["total_quantity"],  # Keep both for compatibility
                         "items_sold": json.dumps(data["items"]),
-                        "learning_data": json.dumps(learning_insights),
-                        "created_at": datetime.now(timezone.utc).isoformat()
+                        "learning_data": json.dumps(learning_insights)
                     }
-                    print(f"DEBUG: Storing sales record for {date}: {sales_record}")
+                    print(f"DEBUG: Attempting to store sales record for {date}")
+                    print(f"DEBUG:   - total_quantity: {sales_record['total_quantity']}")
+                    print(f"DEBUG:   - items count: {len(data['items'])}")
                     
                     # Insert new record (no unique constraint on date, so upsert is unnecessary)
                     result = self.client.table("sales_history").insert(sales_record).execute()
-                    print(f"DEBUG: Sales record stored successfully: {result.data}")
+                    if result.data:
+                        stored_count += 1
+                        print(f"✅ Sales record stored successfully for {date}, ID: {result.data[0].get('id') if result.data else 'unknown'}")
+                    else:
+                        print(f"⚠️ Insert returned but no data for {date}")
                 except Exception as e:
                     print(f"ERROR: Could not store sales data for {date}: {str(e)}")
-                    print(f"ERROR: Sales record was: {sales_record}")
+                    import traceback
+                    traceback.print_exc()
+            
+            print(f"DEBUG: Successfully stored {stored_count}/{len(sales_data)} sales records to sales_history")
 
             # Generate enhanced learning summary with AI insights
             learning_summary = self._generate_enhanced_learning_summary(learning_insights, processed, ai_learning)
