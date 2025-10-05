@@ -1,0 +1,17 @@
+{
+  "instructions": [
+    "Bu template YAZAR KASA LİNK'den export edilecek veri formatını gösterir",
+    "YAZAR KASA LİNK'de bu formatta export yapın",
+    "Export edilen dosyayı bizim sisteme yükleyin"
+  ],
+  "required_columns": [
+    "Tarih",
+    "Ürün Adı",
+    "Miktar",
+    "Birim Fiyat",
+    "Toplam Tutar",
+    "Müşteri (opsiyonel)"
+  ],
+  "date_format": "YYYY-MM-DD",
+  "file_format": "Excel (.xlsx)"
+}

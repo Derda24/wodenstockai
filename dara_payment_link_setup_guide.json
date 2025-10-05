@@ -1,0 +1,68 @@
+{
+  "title": "DARA Payment Link API Kurulum Rehberi",
+  "based_on": "Fotoğraftaki 'Payment Link Request Response' 401 hatası",
+  "steps": [
+    {
+      "step": 1,
+      "title": "DARA YAZILIM ile İletişim",
+      "description": "Payment Link API bilgilerini alın",
+      "required_info": [
+        "Doğru API URL'leri",
+        "Authentication yöntemi",
+        "API Key doğrulaması",
+        "Payment Link endpoint'leri",
+        "Cloud sync endpoint'leri"
+      ]
+    },
+    {
+      "step": 2,
+      "title": "API Key Doğrulama",
+      "description": "Mevcut API Key'i doğrulayın",
+      "current_key": "6cbeec6d6e56797f335916a9736b24e58c21c641fa1bba81cd21ea4a81f953dd",
+      "serial_number": "PAV860076930",
+      "note": "Bu bilgiler fotoğraftaki JSON'da görülen bilgilerle eşleşiyor"
+    },
+    {
+      "step": 3,
+      "title": "401 Unauthorized Çözümü",
+      "description": "Fotoğraftaki 401 hatasını çözün",
+      "possible_causes": [
+        "API Key yanlış veya eksik",
+        "Authentication header'ı eksik",
+        "Endpoint URL'i yanlış",
+        "Permission eksik"
+      ],
+      "solutions": [
+        "DARA YAZILIM'dan doğru API Key'i alın",
+        "Authentication yöntemini öğrenin",
+        "Doğru endpoint URL'lerini alın"
+      ]
+    },
+    {
+      "step": 4,
+      "title": "Test ve Doğrulama",
+      "description": "Bağlantıyı test edin",
+      "commands": [
+        "python backend/test_dara_payment_link_api.py"
+      ]
+    }
+  ],
+  "json_format": {
+    "description": "DARA JSON formatı (gönderilen örnekten)",
+    "sample": {
+      "TransactionHandle": {
+        "SerialNumber": "PAV860076930",
+        "TransactionDate": "2025-10-05T18:57:21.31077",
+        "TransactionSequence": 31,
+        "Fingerprint": "DARA"
+      },
+      "Sale": {
+        "OrderNo": "0000000000ABC0020",
+        "TotalPrice": 20.0,
+        "AddedSaleItems": [],
+        "PaymentInformations": [],
+        "CustomerParty": {}
+      }
+    }
+  }
+}
