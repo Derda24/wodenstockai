@@ -221,6 +221,39 @@ class AIScheduler:
         remaining_needed = max(0, opening_needed - len(must_open))
         opening_baristas = must_open.copy()
 
+        # 1.5) Hard overrides provided as names for that day (preferences.fixed_opening_by_day)
+        if remaining_needed > 0 and preferences and isinstance(preferences, dict):
+            fixed_map = preferences.get("fixed_opening_by_day") or {}
+            wanted_names = [n.lower().strip() for n in (fixed_map.get(day) or [])]
+            if wanted_names:
+                fixed_candidates = []
+                for b in available_baristas + [x for x in baristas if x not in available_baristas]:
+                    if b['id'] in opening_selected_ids:
+                        continue
+                    name = (b.get('name') or '').lower().strip()
+                    if name in wanted_names and is_allowed_open(b):
+                        # Check weekly cap feasibility
+                        assigned = (hours_assigned or {}).get(b['id'], 0)
+                        cap = self.rules['max_hours_part_time'] if b.get('type') == 'part-time' else self.rules['max_hours_full_time']
+                        if assigned + 9 <= cap:
+                            fixed_candidates.append(b)
+                # Preserve wanted order
+                ordered_fixed = []
+                used = set()
+                for wn in wanted_names:
+                    for c in fixed_candidates:
+                        if c['id'] in used:
+                            continue
+                        if (c.get('name') or '').lower().strip() == wn:
+                            ordered_fixed.append(c)
+                            used.add(c['id'])
+                            break
+                take = ordered_fixed[:remaining_needed]
+                if take:
+                    opening_baristas.extend(take)
+                    opening_selected_ids.update(b['id'] for b in take)
+                    remaining_needed = max(0, opening_needed - len(opening_baristas))
+
         # 2) Strong preferences for opening on this day
         if remaining_needed > 0:
             preferred_openers: List[Dict[str, Any]] = []
