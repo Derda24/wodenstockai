@@ -13,6 +13,10 @@ import sqlite3
 import pymysql
 import psycopg2
 from dotenv import load_dotenv
+try:
+    import pyodbc  # For Microsoft SQL Server
+except Exception:
+    pyodbc = None
 
 load_dotenv()
 
@@ -103,7 +107,31 @@ class CloudDatabaseSync:
         try:
             db_type = self.cloud_db_config['type'].lower()
             
-            if db_type == 'mysql':
+            if db_type in ['mssql', 'sqlserver']:
+                if pyodbc is None:
+                    return {
+                        "success": False,
+                        "method": "Direct DB",
+                        "error": "pyodbc not installed for MSSQL"
+                    }
+                conn_str = (
+                    f"DRIVER={{ODBC Driver 17 for SQL Server}};"
+                    f"SERVER={self.cloud_db_config['host']},{self.cloud_db_config['port']};"
+                    f"DATABASE={self.cloud_db_config['database']};"
+                    f"UID={self.cloud_db_config['username']};"
+                    f"PWD={self.cloud_db_config['password']}"
+                )
+                connection = pyodbc.connect(conn_str, timeout=5)
+                cursor = connection.cursor()
+                cursor.execute("SELECT 1")
+                cursor.fetchone()
+                connection.close()
+                return {
+                    "success": True,
+                    "method": "Direct DB",
+                    "type": "MSSQL"
+                }
+            elif db_type == 'mysql':
                 connection = pymysql.connect(
                     host=self.cloud_db_config['host'],
                     port=self.cloud_db_config['port'],
@@ -225,7 +253,9 @@ class CloudDatabaseSync:
         try:
             db_type = self.cloud_db_config['type'].lower()
             
-            if db_type == 'mysql':
+            if db_type in ['mssql', 'sqlserver']:
+                return self._get_sales_data_from_mssql(date_from, date_to)
+            elif db_type == 'mysql':
                 return self._get_sales_data_from_mysql(date_from, date_to)
             elif db_type == 'postgresql':
                 return self._get_sales_data_from_postgresql(date_from, date_to)
@@ -315,6 +345,49 @@ class CloudDatabaseSync:
             
         except Exception as e:
             print(f"PostgreSQL bağlantı hatası: {str(e)}")
+            return []
+
+    def _get_sales_data_from_mssql(self, date_from: str, date_to: str) -> List[Dict[str, Any]]:
+        """Microsoft SQL Server'dan satış verilerini al"""
+        try:
+            if pyodbc is None:
+                print("pyodbc not installed")
+                return []
+            conn_str = (
+                f"DRIVER={{ODBC Driver 17 for SQL Server}};"
+                f"SERVER={self.cloud_db_config['host']},{self.cloud_db_config['port']};"
+                f"DATABASE={self.cloud_db_config['database']};"
+                f"UID={self.cloud_db_config['username']};"
+                f"PWD={self.cloud_db_config['password']}"
+            )
+            connection = pyodbc.connect(conn_str)
+            cursor = connection.cursor()
+
+            # Yaygın tablo/alan isimlerini dene (MSSQL tarih fonksiyonu CONVERT)
+            table_queries = [
+                "SELECT * FROM sales WHERE CAST(created_at AS DATE) BETWEEN ? AND ?",
+                "SELECT * FROM transactions WHERE CAST(transaction_date AS DATE) BETWEEN ? AND ?",
+                "SELECT * FROM orders WHERE CAST(order_date AS DATE) BETWEEN ? AND ?",
+                "SELECT * FROM receipts WHERE CAST(receipt_date AS DATE) BETWEEN ? AND ?"
+            ]
+
+            for query in table_queries:
+                try:
+                    cursor.execute(query, (date_from, date_to))
+                    columns = [col[0] for col in cursor.description]
+                    rows = cursor.fetchall()
+                    results = [dict(zip(columns, row)) for row in rows]
+                    if results:
+                        print(f"MSSQL'den {len(results)} kayıt alındı")
+                        connection.close()
+                        return results
+                except Exception:
+                    continue
+
+            connection.close()
+            return []
+        except Exception as e:
+            print(f"MSSQL bağlantı/veri alma hatası: {str(e)}")
             return []
     
     def convert_cloud_data_to_our_format(self, cloud_data: List[Dict[str, Any]]) -> List[Dict[str, Any]]:

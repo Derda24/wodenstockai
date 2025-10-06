@@ -13,6 +13,28 @@ class DaraExcelProcessor:
         self.supabase = supabase_service
         self.date_from_file = None  # Dosya adından tarih çıkar
         
+    def _normalize_text(self, text: str) -> str:
+        """Turkce karakter ve bazi ekleri normalize et, parantez/ek aciklamalari kaldir."""
+        if not isinstance(text, str):
+            text = str(text) if text is not None else ""
+        base = text.strip()
+        # Parantez ve sonrasini temizle: "Latte (Soguk)" -> "Latte"
+        import re
+        base = re.split(r"[\(\[]", base, maxsplit=1)[0].strip()
+        # Asiri bosluklari tek bosluga indir
+        base = re.sub(r"\s+", " ", base)
+        # Turkce karakterleri ascii'ye cikar
+        mapping = {
+            'ı': 'i', 'İ': 'I', 'ğ': 'g', 'Ğ': 'G',
+            'ü': 'u', 'Ü': 'U', 'ş': 's', 'Ş': 'S',
+            'ö': 'o', 'Ö': 'O', 'ç': 'c', 'Ç': 'C',
+            'i̇': 'i', 'ï': 'i', 'ü': 'u', 'ö': 'o', 'ç': 'c', 'ş': 's', 'ğ': 'g'
+        }
+        normalized = base
+        for k, v in mapping.items():
+            normalized = normalized.replace(k, v)
+        return normalized.strip()
+        
     def process_dara_excel(self, file_path: str) -> Dict[str, Any]:
         """DARA Excel dosyasını işle ve Supabase'e kaydet"""
         try:
@@ -42,6 +64,10 @@ class DaraExcelProcessor:
                     "error": "No data could be processed"
                 }
             
+            # Stok güncellemelerini uygula (reçete/ürün bazlı düşüm)
+            stock_update_result = self.update_stock_from_processed(processed_data)
+            mapping_diagnostics = self.suggest_name_mappings(processed_data)
+            
             # Supabase'e kaydet
             result = self.save_to_supabase(processed_data)
             
@@ -50,7 +76,10 @@ class DaraExcelProcessor:
                 "processed_count": len(processed_data),
                 "saved_count": result.get("saved_count", 0),
                 "errors": result.get("errors", []),
-                "date": self.date_from_file
+                "date": self.date_from_file,
+                "stock_updates": stock_update_result,
+                "message": f"DARA Excel isleme tamamlandi: {len(processed_data)} kayit, stok guncelleme denemesi: {stock_update_result.get('attempted', 0)}, basari: {stock_update_result.get('updated', 0)}",
+                "mapping": mapping_diagnostics
             }
             
         except Exception as e:
@@ -59,6 +88,172 @@ class DaraExcelProcessor:
                 "error": str(e)
             }
     
+    def update_stock_from_processed(self, processed_data: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """İşlenmiş veriden ürünleri okuyup stoktan düş."""
+        updated = 0
+        attempted = 0
+        warnings: List[str] = []
+        errors: List[str] = []
+        try:
+            for record in processed_data:
+                items_sold_raw = record.get("items_sold")
+                if not items_sold_raw:
+                    continue
+                try:
+                    items_payload = json.loads(items_sold_raw)
+                except Exception:
+                    # Eski format: dict içinde items olabilir
+                    try:
+                        items_payload = json.loads(items_sold_raw).get("items", [])
+                    except Exception:
+                        warnings.append("items_sold parse edilemedi")
+                        continue
+                
+                # items_payload hem liste hem dict formatında olabilir
+                if isinstance(items_payload, dict) and "items" in items_payload:
+                    items = items_payload.get("items", [])
+                else:
+                    items = items_payload if isinstance(items_payload, list) else []
+                
+                for item in items:
+                    raw_product_name = str(item.get("product", "")).strip()
+                    product_name = raw_product_name
+                    normalized_product_name = self._normalize_text(product_name)
+                    try:
+                        quantity = float(item.get("quantity", 0))
+                    except Exception:
+                        quantity = 0.0
+                    if not product_name or quantity <= 0:
+                        continue
+                    attempted += 1
+                    # Önce reçete bul, yoksa direkt stok kalemi düş
+                    recipe = None
+                    try:
+                        # Hem ham hem normalize adla dene
+                        recipe = self.supabase.get_recipe_by_name(product_name) or self.supabase.get_recipe_by_name(normalized_product_name)
+                    except Exception:
+                        recipe = None
+                    if recipe and recipe.get("ingredients"):
+                        matched_recipe_name = recipe.get("name", product_name)
+                        print(f"RECIPE MATCH: '{raw_product_name}' -> '{matched_recipe_name}' (qty={quantity})")
+                        for ingr in recipe.get("ingredients", []):
+                            ingr_name_raw = (
+                                ingr.get("name") or 
+                                ingr.get("item_name") or 
+                                ingr.get("ingredient_name") or ""
+                            )
+                            name = self._normalize_text(ingr_name_raw)
+                            per_unit = (
+                                ingr.get("quantity") or 
+                                ingr.get("amount") or 
+                                ingr.get("qty") or 0
+                            )
+                            try:
+                                per_unit = float(per_unit)
+                            except Exception:
+                                per_unit = 0.0
+                            total_consume = per_unit * quantity
+                            if not name or total_consume <= 0:
+                                continue
+                            try:
+                                # Hem ham hem normalize isimle dene
+                                dec_res = self.supabase.decrement_stock_item(name, total_consume)
+                                if not dec_res.get("success"):
+                                    dec_res = self.supabase.decrement_stock_item(ingr_name_raw, total_consume)
+                                if dec_res.get("success"):
+                                    updated += 1
+                                else:
+                                    msg = dec_res.get("message", f"Stok düşülemedi: {name}")
+                                    warnings.append(msg)
+                                    print(f"DECREMENT WARN: {msg}")
+                            except Exception as ex:
+                                err = f"Stok düşüm hatası ({name}): {str(ex)}"
+                                errors.append(err)
+                                print(f"DECREMENT ERROR: {err}")
+                    else:
+                        # Reçete yoksa ürünü doğrudan stoktan düşmeyi dene
+                        try:
+                            print(f"NO RECIPE: '{raw_product_name}' -> direct decrement (qty={quantity})")
+                            # normalize ve ham adla dene
+                            dec_res = self.supabase.decrement_stock_item(normalized_product_name, quantity)
+                            if not dec_res.get("success"):
+                                dec_res = self.supabase.decrement_stock_item(product_name, quantity)
+                            if dec_res.get("success"):
+                                updated += 1
+                            else:
+                                msg = dec_res.get("message", f"Stok düşülemedi: {product_name}")
+                                warnings.append(msg)
+                                print(f"DECREMENT WARN: {msg}")
+                        except Exception as ex:
+                            err = f"Stok düşüm hatası ({product_name}): {str(ex)}"
+                            errors.append(err)
+                            print(f"DECREMENT ERROR: {err}")
+            
+            return {
+                "attempted": attempted,
+                "updated": updated,
+                "warnings": warnings,
+                "errors": errors
+            }
+        except Exception as e:
+            return {
+                "attempted": attempted,
+                "updated": updated,
+                "warnings": warnings,
+                "errors": errors + [str(e)]
+            }
+
+    def suggest_name_mappings(self, processed_data: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """Eşleşmeyen ürünler için Supabase'den en yakın eşleşmeleri öner."""
+        suggestions: List[Dict[str, Any]] = []
+        try:
+            # Tüm tarif ve stok isimlerini al
+            recipes_resp = self.supabase.client.table("recipes").select("recipe_name").execute()
+            recipe_names = [r.get("recipe_name", "") for r in (recipes_resp.data or [])]
+            items_resp = self.supabase.client.table("stock_items").select("item_name").execute()
+            stock_names = [r.get("item_name", "") for r in (items_resp.data or [])]
+            
+            seen: set = set()
+            for record in processed_data:
+                items_sold_raw = record.get("items_sold")
+                if not items_sold_raw:
+                    continue
+                try:
+                    payload = json.loads(items_sold_raw)
+                except Exception:
+                    continue
+                items = payload.get("items", payload if isinstance(payload, list) else [])
+                for it in items:
+                    raw_name = str(it.get("product", "")).strip()
+                    if not raw_name or raw_name in seen:
+                        continue
+                    seen.add(raw_name)
+                    norm = self._normalize_text(raw_name)
+                    # Basit bulunurluk testi
+                    has_recipe = any(self._normalize_text(n) == norm for n in recipe_names)
+                    has_stock = any(self._normalize_text(n) == norm for n in stock_names)
+                    if has_recipe or has_stock:
+                        continue
+                    # Fuzzy en iyi adayları bul (mevcut yardımcıyı kullanmak için private fonksiyon yok, basit skorlama)
+                    def score(cand: str) -> float:
+                        from difflib import SequenceMatcher
+                        return SequenceMatcher(None, norm.lower(), self._normalize_text(cand).lower()).ratio()
+                    best_recipe = max(recipe_names, key=score, default="")
+                    best_stock = max(stock_names, key=score, default="")
+                    suggestions.append({
+                        "product": raw_name,
+                        "normalized": norm,
+                        "best_recipe": best_recipe,
+                        "best_stock_item": best_stock
+                    })
+            if suggestions:
+                print("NAME MAPPING SUGGESTIONS:")
+                for s in suggestions[:20]:
+                    print(f"  '{s['product']}' -> recipe?: '{s['best_recipe']}', stock?: '{s['best_stock_item']}'")
+            return {"suggestions": suggestions}
+        except Exception as e:
+            return {"error": str(e), "suggestions": suggestions}
+
     def extract_date_from_filename(self, file_path: str) -> str:
         """Dosya adından tarih çıkar (5.10.2025.xls -> 2025-10-05)"""
         try:

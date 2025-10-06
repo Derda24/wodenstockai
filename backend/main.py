@@ -14,6 +14,7 @@ try:
 except Exception:
     pass
 from app.services.supabase_service import SupabaseService
+from app.services.cloud_database_sync import CloudDatabaseSync
 from app.services.notification_service import NotificationService
 from pydantic import BaseModel
 from typing import Optional
@@ -47,6 +48,7 @@ app.add_middleware(
 # Initialize services
 supabase_service = SupabaseService()
 notification_service = NotificationService()
+cloud_sync_service = CloudDatabaseSync(supabase_service)
 
 # Authentication models
 class LoginRequest(BaseModel):
@@ -153,6 +155,22 @@ def verify_token(credentials: HTTPAuthorizationCredentials = Depends(security)) 
     
     return token_data["username"]
 
+@app.get("/api/cloud/test-connection")
+async def cloud_test_connection(username: str = Depends(verify_token)):
+    try:
+        result = cloud_sync_service.test_cloud_connection()
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Cloud connection test failed: {str(e)}")
+
+@app.post("/api/cloud/sync")
+async def cloud_sync(date_from: Optional[str] = Form(None), date_to: Optional[str] = Form(None), username: str = Depends(verify_token)):
+    try:
+        result = cloud_sync_service.sync_to_supabase(date_from, date_to)
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Cloud sync failed: {str(e)}")
+
 @app.options("/{full_path:path}")
 async def options_handler(full_path: str):
     """Handle CORS preflight requests"""
@@ -183,6 +201,8 @@ async def api_info():
             "analysis": "/api/analysis",
             "recommendations": "/api/recommendations",
             "alerts": "/api/alerts",
+            "cloud_sync_test": "/api/cloud/test-connection",
+            "cloud_sync_now": "/api/cloud/sync",
             "summary": "/api/summary"
         }
     }
