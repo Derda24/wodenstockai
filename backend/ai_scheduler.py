@@ -61,6 +61,27 @@ class AIScheduler:
                     "message": "Need at least 2 active baristas to generate schedule"
                 }
             
+            # Normalize and enrich preferences (target days per person)
+            if preferences is None:
+                preferences = {}
+            # Build a quick lookup for target/min/max days per person by name
+            target_days_map = {}
+            try:
+                days_per_person = preferences.get("days_per_person") or {}
+                for name, cfg in days_per_person.items():
+                    key = (name or "").lower().strip()
+                    if not key:
+                        continue
+                    target_days_map[key] = {
+                        "min": int(cfg.get("min", 0) or 0),
+                        "max": int(cfg.get("max", 7) or 7),
+                        "target": int(cfg.get("target", cfg.get("min", 0) or 0) or 0)
+                    }
+            except Exception:
+                target_days_map = {}
+            # Stash in preferences for downstream helpers
+            preferences["_target_days_map"] = target_days_map
+
             # Create weekly schedule record
             week_end = week_start + timedelta(days=6)
             schedule_result = self.supabase_service.create_weekly_schedule(
@@ -199,6 +220,29 @@ class AIScheduler:
                 return False
             return True
 
+        # Helper: compute how many days a barista already has (today included when adding)
+        def days_so_far(b_id: str) -> int:
+            return int((days_assigned or {}).get(b_id, 0))
+
+        # Helper: check target days window (min/max) if provided
+        target_map = (preferences or {}).get("_target_days_map", {})
+        def within_target_days(b: Dict[str, Any]) -> bool:
+            name_key = (b.get('name') or '').lower().strip()
+            cfg = target_map.get(name_key)
+            if not cfg:
+                return True
+            used = days_so_far(b['id'])
+            # allow assigning if we haven't exceeded max
+            return used < cfg.get('max', 7)
+
+        def below_target_days(b: Dict[str, Any]) -> bool:
+            name_key = (b.get('name') or '').lower().strip()
+            cfg = target_map.get(name_key)
+            if not cfg:
+                return False
+            used = days_so_far(b['id'])
+            return used < cfg.get('target', cfg.get('min', 0))
+
         # Select opening baristas (strictly 2 people)
         # Priority order:
         # 1) Full-time whose day off is tomorrow (must_open)
@@ -269,11 +313,12 @@ class AIScheduler:
                 # Check explicit daily preferences
                 if preferences and b_id in preferences:
                     if day in (preferences[b_id].get('preferredOpening') or []):
-                        preferred_openers.append(b)
+                        if within_target_days(b):
+                            preferred_openers.append(b)
                 else:
                     # If no explicit preferences, prefer Özge for morning
                     name = (b.get('name') or '').lower()
-                    if name.startswith('özge'):
+                    if name.startswith('özge') and within_target_days(b):
                         preferred_openers.append(b)
             # De-dup and cap
             dedup_pref = []
@@ -288,7 +333,9 @@ class AIScheduler:
                 name = (b.get('name') or '').lower()
                 is_ozge = 0 if name.startswith('özge') else 1
                 is_ft = 0 if b.get('type') == 'full-time' else 1
-                return (is_ozge, is_ft, (hours_assigned or {}).get(b['id'], 0))
+                # Prefer those below target days first
+                below_target = 0 if below_target_days(b) else 1
+                return (below_target, is_ozge, is_ft, (hours_assigned or {}).get(b['id'], 0))
             dedup_pref.sort(key=pref_key)
             take = dedup_pref[:remaining_needed]
             opening_baristas.extend(take)
@@ -296,7 +343,7 @@ class AIScheduler:
             remaining_needed = max(0, opening_needed - len(opening_baristas))
         if remaining_needed > 0:
             # First, try remaining full-time
-            remaining_candidates_full = [b for b in full_time_baristas if b['id'] not in opening_selected_ids]
+            remaining_candidates_full = [b for b in full_time_baristas if b['id'] not in opening_selected_ids and within_target_days(b)]
             fill_full = self._select_baristas_for_shift(
                 remaining_candidates_full,
                 remaining_needed,
@@ -318,7 +365,7 @@ class AIScheduler:
                     return False
                 prefs = [s.lower() for s in (b.get('preferred_shifts') or [])]
                 return 'morning' in prefs
-            remaining_candidates_pt = [b for b in part_time_baristas if pt_morning_ok(b) and b['id'] not in opening_selected_ids]
+            remaining_candidates_pt = [b for b in part_time_baristas if pt_morning_ok(b) and b['id'] not in opening_selected_ids and within_target_days(b)]
             # Prefer Özge first if present
             remaining_candidates_pt.sort(key=lambda b: 0 if (b.get('name') or '').lower().startswith('özge') else 1)
             fill_pt = self._select_baristas_for_shift(
