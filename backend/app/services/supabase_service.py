@@ -599,8 +599,31 @@ class SupabaseService:
 
                 # If dict mapping product->quantity
                 if isinstance(val, dict):
+                    # Prefer explicit 'items' array if present (DARA format)
+                    if "items" in val and isinstance(val["items"], list):
+                        items_list = []
+                        for entry in val["items"]:
+                            if not isinstance(entry, dict):
+                                continue
+                            p = entry.get("product") or entry.get("name") or ""
+                            q = entry.get("quantity", entry.get("qty", 1))
+                            try:
+                                q = int(q)
+                            except Exception:
+                                try:
+                                    q = int(float(q))
+                                except Exception:
+                                    q = 1
+                            if p:
+                                items_list.append({"product": str(p), "quantity": q})
+                        if items_list:
+                            return items_list
+                    # Else treat as product->quantity map but skip meta keys
+                    meta_keys = {"total_quantity", "transaction_id", "order_no", "source", "import_date", "file_date", "total_items", "processing_method"}
                     items = []
                     for k, v in val.items():
+                        if k in meta_keys:
+                            continue
                         try:
                             qty = int(v)
                         except Exception:
