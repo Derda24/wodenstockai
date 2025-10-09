@@ -3,55 +3,106 @@ from sqlalchemy.orm import Session
 from typing import List, Optional
 from datetime import datetime
 import logging
+import pandas as pd
+from io import BytesIO
 
 from app.database import get_db
 from app.models import Sale, SaleItem, Product
 from app.schemas import SaleCreate, Sale as SaleSchema, ExcelUploadResponse
 from app.services.excel_processor import ExcelProcessor
+from app.services.dara_excel_processor import DaraExcelProcessor
+from app.services.supabase_service import SupabaseService
 from app.services.stock_manager import StockManager
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
-@router.post("/sales/upload", response_model=ExcelUploadResponse)
-async def upload_sales_excel(
-    file: UploadFile = File(..., description="Excel file containing daily sales data"),
-    db: Session = Depends(get_db)
-):
+def detect_excel_format(file_content: bytes, filename: str) -> str:
     """
-    Upload a daily sales Excel file and process it to update stock levels.
-    
-    The Excel file should contain the following columns:
-    - product_sku (required): Product SKU identifier
-    - quantity (required): Quantity sold
-    - unit_price (required): Unit price of the product
-    
-    Optional columns:
-    - customer_name: Name of the customer
-    - invoice_number: Invoice number
-    - payment_method: Payment method used
-    - notes: Additional notes
-    - sale_date: Date of the sale
+    Detect if the Excel file is in DARA format or Adisyo format.
+    Returns: 'dara' or 'adisyo'
     """
     try:
-        # Validate file type
-        if not file.filename.lower().endswith(('.xlsx', '.xls')):
-            raise HTTPException(
-                status_code=400, 
-                detail="File must be an Excel file (.xlsx or .xls)"
-            )
+        # Read the first sheet to check the format
+        engine = 'openpyxl' if filename.endswith('.xlsx') else 'xlrd'
+        df = pd.read_excel(BytesIO(file_content), sheet_name=0, header=None, engine=engine)
         
-        # Read file content
-        file_content = await file.read()
-        if not file_content:
-            raise HTTPException(
-                status_code=400, 
-                detail="File is empty"
-            )
+        # Check for DARA format indicators
+        # DARA files typically have "SATIŞ RAPORU" or "AÇIKLAMA" in the first few rows
+        first_rows_text = ' '.join(df.iloc[:10].astype(str).values.flatten())
         
+        if 'SATIŞ RAPORU' in first_rows_text or 'AÇIKLAMA' in first_rows_text or 'WODEN COFFEE' in first_rows_text:
+            logger.info(f"Detected DARA format for file: {filename}")
+            return 'dara'
+        
+        # Check if it has proper column headers (Adisyo format)
+        # Try to read with the first row as header
+        df_with_header = pd.read_excel(BytesIO(file_content), sheet_name=0, engine=engine)
+        if any(col in str(df_with_header.columns).lower() for col in ['product', 'quantity', 'miktar', 'ürün']):
+            logger.info(f"Detected Adisyo format for file: {filename}")
+            return 'adisyo'
+        
+        # Default to DARA if uncertain (since most Turkish files are DARA format)
+        logger.info(f"Format uncertain for file: {filename}, defaulting to DARA")
+        return 'dara'
+        
+    except Exception as e:
+        logger.warning(f"Error detecting format for {filename}: {str(e)}, defaulting to DARA")
+        return 'dara'
+
+async def process_dara_format(file_content: bytes, filename: str) -> ExcelUploadResponse:
+    """Process DARA format Excel file"""
+    import tempfile
+    import os
+    
+    try:
+        # Save to temporary file since DaraExcelProcessor expects a file path
+        with tempfile.NamedTemporaryFile(delete=False, suffix='.xls') as tmp_file:
+            tmp_file.write(file_content)
+            tmp_file_path = tmp_file.name
+        
+        try:
+            # Initialize processors
+            supabase_service = SupabaseService()
+            dara_processor = DaraExcelProcessor(supabase_service)
+            
+            # Process the file
+            result = dara_processor.process_dara_excel(tmp_file_path)
+            
+            if result.get('success'):
+                return ExcelUploadResponse(
+                    message=result.get('message', 'DARA file processed successfully'),
+                    sales_processed=result.get('processed_count', 0),
+                    stock_updated=result.get('stock_updates', {}).get('updated', 0) > 0,
+                    errors=result.get('errors', []),
+                    warnings=result.get('stock_updates', {}).get('warnings', [])
+                )
+            else:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Error processing DARA file: {result.get('error', 'Unknown error')}"
+                )
+        finally:
+            # Clean up temp file
+            if os.path.exists(tmp_file_path):
+                os.unlink(tmp_file_path)
+                
+    except HTTPException:
+        raise
+    except Exception as e:
+        error_msg = str(e) if str(e) else "Unknown error processing DARA format file"
+        logger.error(f"Error in process_dara_format: {error_msg}", exc_info=True)
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error processing DARA file: {error_msg}"
+        )
+
+async def process_adisyo_format(file_content: bytes, filename: str, db: Session) -> ExcelUploadResponse:
+    """Process Adisyo format Excel file"""
+    try:
         # Process Excel file
         excel_processor = ExcelProcessor()
-        success, sale_data, errors = excel_processor.process_excel_file(file_content, file.filename)
+        success, sale_data, errors = excel_processor.process_excel_file(file_content, filename)
         
         if not success:
             raise HTTPException(
@@ -124,7 +175,7 @@ async def upload_sales_excel(
             # Commit all changes
             db.commit()
             
-            logger.info(f"Successfully processed {sales_processed} sales from Excel file")
+            logger.info(f"Successfully processed {sales_processed} sales from Adisyo Excel file")
             
             return ExcelUploadResponse(
                 message=f"Successfully processed {sales_processed} sales from Excel file",
@@ -136,19 +187,73 @@ async def upload_sales_excel(
             
         except Exception as e:
             db.rollback()
-            logger.error(f"Error processing sales data: {str(e)}")
+            error_msg = str(e) if str(e) else "Unknown error occurred while processing sales data"
+            logger.error(f"Error processing Adisyo sales data: {error_msg}", exc_info=True)
             raise HTTPException(
                 status_code=500,
-                detail=f"Error processing sales data: {str(e)}"
+                detail=f"Error processing sales data: {error_msg}"
             )
             
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Unexpected error in upload_sales_excel: {str(e)}")
+        error_msg = str(e) if str(e) else "Unknown error occurred during file upload"
+        logger.error(f"Unexpected error in process_adisyo_format: {error_msg}", exc_info=True)
         raise HTTPException(
             status_code=500,
-            detail=f"Unexpected error: {str(e)}"
+            detail=f"Error processing sales file: {error_msg}"
+        )
+
+@router.post("/sales/upload", response_model=ExcelUploadResponse)
+async def upload_sales_excel(
+    file: UploadFile = File(..., description="Excel file containing daily sales data"),
+    db: Session = Depends(get_db)
+):
+    """
+    Upload a daily sales Excel file and process it to update stock levels.
+    
+    Supports two formats:
+    1. DARA format (Turkish sales reports with SATIŞ RAPORU header)
+    2. Adisyo format (structured product/quantity data)
+    
+    The Excel file will be automatically detected and processed accordingly.
+    """
+    try:
+        # Validate file type
+        if not file.filename.lower().endswith(('.xlsx', '.xls')):
+            raise HTTPException(
+                status_code=400, 
+                detail="File must be an Excel file (.xlsx or .xls)"
+            )
+        
+        # Read file content
+        file_content = await file.read()
+        if not file_content:
+            raise HTTPException(
+                status_code=400, 
+                detail="File is empty"
+            )
+        
+        # Detect format
+        file_format = detect_excel_format(file_content, file.filename)
+        logger.info(f"Processing {file.filename} as {file_format} format")
+        
+        # Process based on detected format
+        if file_format == 'dara':
+            # Handle DARA format using DaraExcelProcessor
+            return await process_dara_format(file_content, file.filename)
+        else:
+            # Handle Adisyo format using ExcelProcessor
+            return await process_adisyo_format(file_content, file.filename, db)
+            
+    except HTTPException:
+        raise
+    except Exception as e:
+        error_msg = str(e) if str(e) else "Unknown error occurred during file upload"
+        logger.error(f"Unexpected error in upload_sales_excel: {error_msg}", exc_info=True)
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error processing sales file: {error_msg}"
         )
 
 @router.get("/sales", response_model=List[SaleSchema])

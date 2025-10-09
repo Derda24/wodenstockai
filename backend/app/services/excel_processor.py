@@ -39,16 +39,34 @@ class ExcelProcessor:
 
     def _read_excel_file(self, file_content: bytes, filename: str) -> Optional[pd.DataFrame]:
         """
-        Read Excel file content from the "data" sheet and return a pandas DataFrame.
+        Read Excel file content from the "data" sheet or first available sheet and return a pandas DataFrame.
         """
         try:
-            # Try to read the file based on its extension, specifically from "data" sheet
+            # Determine the engine based on file extension
             if filename.endswith('.xlsx'):
-                df = pd.read_excel(BytesIO(file_content), sheet_name="data", engine='openpyxl')
+                engine = 'openpyxl'
             elif filename.endswith('.xls'):
-                df = pd.read_excel(BytesIO(file_content), sheet_name="data", engine='xlrd')
+                engine = 'xlrd'
             else:
                 logger.error(f"Unsupported file format: {filename}")
+                return None
+            
+            # Try to read from different sheet names in order of preference
+            sheet_names_to_try = ["data", "Data", "DATA", "Page 1", 0]  # 0 means first sheet
+            df = None
+            last_error = None
+            
+            for sheet_name in sheet_names_to_try:
+                try:
+                    df = pd.read_excel(BytesIO(file_content), sheet_name=sheet_name, engine=engine)
+                    logger.info(f"Successfully read Excel file from sheet: {sheet_name}")
+                    break
+                except Exception as e:
+                    last_error = str(e)
+                    continue
+            
+            if df is None:
+                logger.error(f"Error reading Excel file - tried sheets {sheet_names_to_try}. Last error: {last_error}")
                 return None
 
             # Clean the DataFrame
@@ -56,7 +74,7 @@ class ExcelProcessor:
             return df
 
         except Exception as e:
-            logger.error(f"Error reading Excel file from 'data' sheet: {str(e)}")
+            logger.error(f"Error reading Excel file: {str(e)}")
             return None
 
     def _clean_dataframe(self, df: pd.DataFrame) -> pd.DataFrame:
