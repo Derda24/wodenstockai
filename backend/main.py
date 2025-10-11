@@ -16,7 +16,7 @@ except Exception:
 from app.services.supabase_service import SupabaseService
 from app.services.notification_service import NotificationService
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, Dict, Any
 
 app = FastAPI(
     title="Woden AI Stock Management System",
