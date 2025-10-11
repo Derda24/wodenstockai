@@ -64,9 +64,16 @@ class DaraExcelProcessor:
                     "error": "No data could be processed"
                 }
             
+            # Excel'den ek analiz verilerini çıkar (grafik, demografik bilgiler)
+            analysis_data = self.extract_analysis_data(df)
+            
             # Stok güncellemelerini uygula (reçete/ürün bazlı düşüm)
             stock_update_result = self.update_stock_from_processed(processed_data)
             mapping_diagnostics = self.suggest_name_mappings(processed_data)
+            
+            # Analiz verilerini processed_data'ya ekle
+            for data in processed_data:
+                data["analysis_data"] = json.dumps(analysis_data)
             
             # Supabase'e kaydet
             result = self.save_to_supabase(processed_data)
@@ -78,6 +85,7 @@ class DaraExcelProcessor:
                 "errors": result.get("errors", []),
                 "date": self.date_from_file,
                 "stock_updates": stock_update_result,
+                "analysis_data": analysis_data,  # Yeni: Analiz verileri
                 "message": f"DARA Excel isleme tamamlandi: {len(processed_data)} kayit, stok guncelleme denemesi: {stock_update_result.get('attempted', 0)}, basari: {stock_update_result.get('updated', 0)}",
                 "mapping": mapping_diagnostics
             }
@@ -87,6 +95,142 @@ class DaraExcelProcessor:
                 "success": False,
                 "error": str(e)
             }
+    
+    def extract_analysis_data(self, df: pd.DataFrame) -> Dict[str, Any]:
+        """Excel'den satış analizi için ek veriler çıkar (grafik, demografik bilgiler)"""
+        analysis_data = {
+            "sales_summary": {},
+            "top_products": [],
+            "demographics": {},
+            "sales_chart": [],
+            "category_breakdown": {}
+        }
+        
+        try:
+            # Excel'deki tüm veriyi string olarak oku
+            df_str = df.astype(str)
+            
+            # Satış raporu başlığını ara
+            report_title_row = None
+            for idx, row in df_str.iterrows():
+                if "SATIŞ RAPORU" in str(row.values) or "SATIS RAPORU" in str(row.values):
+                    report_title_row = idx
+                    break
+            
+            if report_title_row is not None:
+                # Tarih aralığı bilgisini çıkar
+                for idx in range(report_title_row, min(report_title_row + 10, len(df))):
+                    row_text = " ".join(str(cell) for cell in df_str.iloc[idx].values if str(cell) != 'nan')
+                    if "Tarih Aralığı" in row_text or "Tarih Araligi" in row_text:
+                        analysis_data["sales_summary"]["date_range"] = row_text
+                        break
+                
+                # Şirket adını çıkar
+                for idx in range(report_title_row, min(report_title_row + 10, len(df))):
+                    row_text = " ".join(str(cell) for cell in df_str.iloc[idx].values if str(cell) != 'nan')
+                    if "WODEN" in row_text.upper() or "COFFEE" in row_text.upper():
+                        analysis_data["sales_summary"]["company"] = row_text.strip()
+                        break
+            
+            # GENEL YEKUN (Grand Total) satırını ara
+            grand_total_row = None
+            for idx, row in df_str.iterrows():
+                if "GENEL YEKUN" in str(row.values) or "GENEL TOPLAM" in str(row.values):
+                    grand_total_row = idx
+                    break
+            
+            if grand_total_row is not None:
+                # Toplam miktar ve tutar bilgilerini çıkar
+                total_row = df_str.iloc[grand_total_row]
+                for i, cell in enumerate(total_row):
+                    if str(cell) != 'nan' and str(cell).replace('.', '').isdigit():
+                        if i == 1:  # Miktar
+                            analysis_data["sales_summary"]["total_quantity"] = float(str(cell))
+                        elif i == 2:  # Tutar
+                            analysis_data["sales_summary"]["total_amount"] = float(str(cell))
+            
+            # Demografik bilgileri ara (Kişi Sayısı, Masa Sayısı, vb.)
+            demographics_row = None
+            for idx, row in df_str.iterrows():
+                row_text = " ".join(str(cell) for cell in row.values if str(cell) != 'nan')
+                if "Kişi Sayısı" in row_text or "Kisi Sayisi" in row_text:
+                    demographics_row = idx
+                    break
+            
+            if demographics_row is not None:
+                # Demografik verileri çıkar
+                demo_row = df_str.iloc[demographics_row]
+                demo_values = [str(cell) for cell in demo_row.values if str(cell) != 'nan' and str(cell).replace('.', '').isdigit()]
+                
+                if len(demo_values) >= 4:
+                    analysis_data["demographics"] = {
+                        "total_people": int(float(demo_values[0])),
+                        "total_tables": int(float(demo_values[1])),
+                        "male_count": int(float(demo_values[2])),
+                        "female_count": int(float(demo_values[3]))
+                    }
+            
+            # En çok satan ürünleri analiz et (satış tablosundan)
+            top_products = []
+            for idx, row in df_str.iterrows():
+                row_values = [str(cell) for cell in row.values if str(cell) != 'nan']
+                if len(row_values) >= 3:
+                    # Ürün adı, miktar, tutar formatında satır ara
+                    product_name = row_values[0].strip()
+                    if (product_name and 
+                        not any(keyword in product_name.upper() for keyword in ["SATIŞ", "RAPORU", "GENEL", "TOPLAM", "AÇIKLAMA", "MİKTAR", "TUTAR"]) and
+                        len(product_name) > 2):
+                        
+                        try:
+                            quantity = float(row_values[1]) if row_values[1].replace('.', '').isdigit() else 0
+                            amount = float(row_values[2]) if row_values[2].replace('.', '').isdigit() else 0
+                            
+                            if quantity > 0 and amount > 0:
+                                top_products.append({
+                                    "product_name": product_name,
+                                    "quantity": quantity,
+                                    "amount": amount,
+                                    "unit_price": amount / quantity if quantity > 0 else 0
+                                })
+                        except (ValueError, ZeroDivisionError):
+                            continue
+            
+            # En çok satan ürünleri sırala
+            top_products.sort(key=lambda x: x["amount"], reverse=True)
+            analysis_data["top_products"] = top_products[:10]  # Top 10
+            
+            # Kategori analizi (ürün adlarından kategori çıkar)
+            category_stats = {}
+            for product in top_products:
+                product_name = product["product_name"].upper()
+                
+                # Kategori belirleme
+                if any(word in product_name for word in ["KAHVE", "COFFEE", "AMERICANO", "LATTE", "ESPRESSO", "CAPPUCCINO"]):
+                    category = "coffee"
+                elif any(word in product_name for word in ["ÇAY", "TEA", "ÇAYI"]):
+                    category = "tea"
+                elif any(word in product_name for word in ["PASTA", "KEK", "KURA", "BÖREK"]):
+                    category = "pastry"
+                elif any(word in product_name for word in ["SODA", "SU", "İÇECEK", "SOĞUK", "ICED"]):
+                    category = "beverage"
+                else:
+                    category = "other"
+                
+                if category not in category_stats:
+                    category_stats[category] = {"count": 0, "total_amount": 0}
+                
+                category_stats[category]["count"] += product["quantity"]
+                category_stats[category]["total_amount"] += product["amount"]
+            
+            analysis_data["category_breakdown"] = category_stats
+            
+            print(f"Analysis data extracted: {len(top_products)} products, demographics: {analysis_data.get('demographics', {})}")
+            
+        except Exception as e:
+            print(f"Error extracting analysis data: {str(e)}")
+            analysis_data["error"] = str(e)
+        
+        return analysis_data
     
     def update_stock_from_processed(self, processed_data: List[Dict[str, Any]]) -> Dict[str, Any]:
         """İşlenmiş veriden ürünleri okuyup stoktan düş."""

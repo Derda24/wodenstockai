@@ -2285,3 +2285,41 @@ class SupabaseService:
         except Exception as e:
             print(f"Error updating time-off request: {str(e)}")
             return {"success": False, "message": f"Error updating time-off request: {str(e)}"}
+    
+    def get_recent_excel_analysis(self, days: int = 7) -> Dict[str, Any]:
+        """Get recent Excel analysis data from sales_history table"""
+        try:
+            # Son N gün içindeki Excel yüklemelerinden analiz verilerini çek
+            cutoff_date = datetime.now(timezone.utc) - timedelta(days=days)
+            
+            response = self.client.table("sales_history")\
+                .select("analysis_data, created_at, date")\
+                .gte("created_at", cutoff_date.isoformat())\
+                .not_.is_("analysis_data", "null")\
+                .order("created_at", desc=True)\
+                .execute()
+            
+            if response.data:
+                # En son Excel analiz verisini döndür
+                latest_record = response.data[0]
+                analysis_data = latest_record.get("analysis_data")
+                
+                if analysis_data:
+                    if isinstance(analysis_data, str):
+                        try:
+                            analysis_data = json.loads(analysis_data)
+                        except json.JSONDecodeError:
+                            return {"success": False, "error": "Invalid JSON in analysis_data"}
+                    
+                    return {
+                        "success": True,
+                        "data": analysis_data,
+                        "date": latest_record.get("date"),
+                        "created_at": latest_record.get("created_at")
+                    }
+            
+            return {"success": False, "error": "No Excel analysis data found"}
+            
+        except Exception as e:
+            print(f"Error getting Excel analysis data: {str(e)}")
+            return {"success": False, "error": str(e)}

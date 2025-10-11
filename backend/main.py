@@ -529,21 +529,84 @@ async def get_analysis(period: str = "7d"):
                     "percentage": f"{percentage:.0f}% below minimum"
                 })
         
-        # Ensure we have proper data structure
+        # Get Excel sales report analysis data (if available)
+        excel_analysis = get_excel_analysis_data(days)
+        
+        # Merge Excel analysis data with existing sales data
+        enhanced_top_products = sales_data.get("top_products", [])
+        if excel_analysis.get("top_products"):
+            # Excel'den gelen ürün verilerini mevcut verilerle birleştir
+            excel_products = excel_analysis["top_products"]
+            for excel_product in excel_products:
+                # Aynı ürün var mı kontrol et
+                existing_product = next((p for p in enhanced_top_products if p["name"].upper() == excel_product["product_name"].upper()), None)
+                if existing_product:
+                    # Mevcut veriyi güncelle
+                    existing_product["quantity"] += excel_product["quantity"]
+                    existing_product["revenue"] = existing_product.get("revenue", 0) + excel_product["amount"]
+                else:
+                    # Yeni ürün ekle
+                    enhanced_top_products.append({
+                        "name": excel_product["product_name"],
+                        "quantity": excel_product["quantity"],
+                        "revenue": excel_product["amount"],
+                        "percentage": 0  # Will be calculated below
+                    })
+            
+            # Yüzdelik hesapla
+            total_sales = sum(p.get("quantity", 0) for p in enhanced_top_products)
+            for product in enhanced_top_products:
+                product["percentage"] = (product.get("quantity", 0) / total_sales * 100) if total_sales > 0 else 0
+            
+            # Gelir bazında sırala
+            enhanced_top_products.sort(key=lambda x: x.get("revenue", 0), reverse=True)
+        
+        # Excel demografik verilerini ekle
+        demographics = {}
+        if excel_analysis.get("demographics"):
+            demographics = excel_analysis["demographics"]
+        
+        # Excel kategori analizini ekle
+        excel_categories = excel_analysis.get("category_breakdown", {})
+        enhanced_category_breakdown = sales_data.get("category_breakdown", [])
+        
+        # Ensure we have proper data structure with Excel enhancements
         result = {
             "totalSales": sales_data.get("total_sales", 0),
-            "topProducts": sales_data.get("top_products", []),
+            "totalRevenue": excel_analysis.get("sales_summary", {}).get("total_amount", 0),
+            "topProducts": enhanced_top_products[:10],  # Top 10
             "lowStockAlerts": low_stock_alerts,
             "dailyTrends": sales_data.get("daily_trends", []),
-            "categoryBreakdown": sales_data.get("category_breakdown", [])
+            "categoryBreakdown": enhanced_category_breakdown,
+            "demographics": demographics,  # Excel'den gelen demografik veriler
+            "excelAnalysis": {  # Excel'den çıkarılan ek analiz verileri
+                "company": excel_analysis.get("sales_summary", {}).get("company", ""),
+                "dateRange": excel_analysis.get("sales_summary", {}).get("date_range", ""),
+                "totalQuantity": excel_analysis.get("sales_summary", {}).get("total_quantity", 0),
+                "categoryStats": excel_categories
+            }
         }
         
-        print(f"DEBUG: Analysis result: {result}")
+        print(f"DEBUG: Enhanced analysis result with Excel data: {result}")
         return result
         
     except Exception as e:
         print(f"ERROR: Analysis failed: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error retrieving analysis: {str(e)}")
+
+def get_excel_analysis_data(days: int = 7) -> Dict[str, Any]:
+    """Get Excel sales report analysis data from recent uploads"""
+    try:
+        # Get recent sales history that includes Excel analysis data
+        result = supabase_service.get_recent_excel_analysis(days)
+        if result["success"]:
+            return result["data"]
+        else:
+            print(f"WARNING: Excel analysis data not available: {result.get('error', 'Unknown error')}")
+            return {}
+    except Exception as e:
+        print(f"WARNING: Could not get Excel analysis data: {str(e)}")
+        return {}
 
 @app.post("/api/test/sales-data")
 async def create_test_sales_data():
@@ -724,23 +787,38 @@ def generate_stock_recommendations(stock_list):
     return recommendations
 
 def generate_sales_recommendations(sales_data):
-    """Generate sales-based recommendations"""
+    """Generate sales-based recommendations enhanced with Excel data"""
     recommendations = []
     
     if not sales_data or not sales_data.get("top_products"):
         return recommendations
     
+    # Get Excel analysis data for enhanced recommendations
+    excel_analysis = get_excel_analysis_data(7)
+    
     top_products = sales_data["top_products"][:5]
     total_sales = sales_data.get("total_sales", 0)
     
-    # High-performing product recommendations
+    # High-performing product recommendations with Excel data
     for i, product in enumerate(top_products):
         if product["percentage"] > 15:  # High market share
+            
+            # Excel'den gelen veri ile karşılaştır
+            excel_top_products = excel_analysis.get("top_products", [])
+            excel_product_match = next((p for p in excel_top_products if p["product_name"].upper() == product["name"].upper()), None)
+            
+            description = f"{product['name']} toplam satışların %{product['percentage']:.1f}'ini oluşturuyor. Bu ürünü daha da büyütmek için özel kampanyalar düşünün"
+            
+            if excel_product_match:
+                unit_price = excel_product_match.get("unit_price", 0)
+                revenue = excel_product_match.get("amount", 0)
+                description += f" Excel raporuna göre {revenue:.0f} TL gelir, birim fiyatı: {unit_price:.2f} TL."
+            
             recommendations.append({
                 "id": f"sales_high_{len(recommendations) + 1}",
                 "type": "campaign",
                 "title": f"🎯 {product['name']} - Yıldız Ürün",
-                "description": f"{product['name']} toplam satışların %{product['percentage']:.1f}'ini oluşturuyor. Bu ürünü daha da büyütmek için özel kampanyalar düşünün",
+                "description": description,
                 "impact": "high",
                 "implementation": f"{product['name']} için özel promosyonlar, sosyal medya kampanyaları ve müşteri sadakat programları oluşturun",
                 "expectedResult": f"Bu ürünün satışlarında %20-30 daha artış bekleniyor",
@@ -749,6 +827,74 @@ def generate_sales_recommendations(sales_data):
                 "urgency": "medium"
             })
     
+    # Excel demografik verilerine dayalı öneriler
+    demographics = excel_analysis.get("demographics", {})
+    if demographics:
+        total_people = demographics.get("total_people", 0)
+        total_tables = demographics.get("total_tables", 0)
+        male_count = demographics.get("male_count", 0)
+        female_count = demographics.get("female_count", 0)
+        
+        if total_people > 0 and total_tables > 0:
+            avg_people_per_table = total_people / total_tables
+            
+            if avg_people_per_table > 3:
+                recommendations.append({
+                    "id": f"demographic_group_{len(recommendations) + 1}",
+                    "type": "campaign",
+                    "title": "👥 Grup Müşterileri İçin Özel Kampanya",
+                    "description": f"Ortalama masa başına {avg_people_per_table:.1f} kişi düşüyor. Grup müşterilerine özel kampanyalar düşünün.",
+                    "impact": "high",
+                    "implementation": "Grup indirimleri, kombo menüler ve grup rezervasyon sistemi oluşturun.",
+                    "expectedResult": "Grup müşteri sayısında artış ve ortalama sipariş değerinde yükselme",
+                    "priority": 2,
+                    "category": "demographics",
+                    "urgency": "medium"
+                })
+        
+        # Cinsiyet dağılımına göre öneriler
+        if male_count > female_count * 2:
+            recommendations.append({
+                "id": f"demographic_male_{len(recommendations) + 1}",
+                "type": "campaign",
+                "title": "👨 Erkek Müşterilere Yönelik Kampanya",
+                "description": f"Müşterilerinizin %{male_count/(male_count+female_count)*100:.0f}'i erkek. Erkek müşterilere yönelik özel kampanyalar düşünün.",
+                "impact": "medium",
+                "implementation": "Erkek müşterilerin tercih ettiği ürünlere odaklanan kampanyalar ve promosyonlar.",
+                "expectedResult": "Erkek müşteri sadakati ve sipariş frekansında artış",
+                "priority": 3,
+                "category": "demographics",
+                "urgency": "low"
+            })
+    
+    # Excel kategori analizine dayalı öneriler
+    category_stats = excel_analysis.get("category_breakdown", {})
+    if category_stats:
+        # En başarılı kategori
+        best_category = max(category_stats.items(), key=lambda x: x[1]["total_amount"])
+        category_name, category_data = best_category
+        
+        category_names = {
+            "coffee": "Kahve",
+            "tea": "Çay", 
+            "pastry": "Pastane Ürünleri",
+            "beverage": "İçecek",
+            "other": "Diğer"
+        }
+        
+        recommendations.append({
+            "id": f"category_best_{len(recommendations) + 1}",
+            "type": "campaign",
+            "title": f"🏆 {category_names.get(category_name, category_name.title())} Kategorisi - En Başarılı",
+            "description": f"{category_names.get(category_name, category_name.title())} kategorisi {category_data['total_amount']:.0f} TL ile en yüksek geliri sağlıyor.",
+            "impact": "high",
+            "implementation": "Bu kategoriye odaklanan yeni ürünler ve kampanyalar geliştirin.",
+            "expectedResult": "Kategori gelirinde daha da artış",
+            "priority": 2,
+            "category": "category_analysis",
+            "urgency": "medium"
+        })
+    
     # Low-performing product recommendations
     if len(top_products) > 3:
         low_performers = top_products[-2:]  # Last 2 products
@@ -756,10 +902,10 @@ def generate_sales_recommendations(sales_data):
             if product["percentage"] < 5:  # Low market share
                 recommendations.append({
                     "id": f"sales_low_{len(recommendations) + 1}",
-                "type": "product",
+                    "type": "product",
                     "title": f"📈 {product['name']} - Geliştirme Fırsatı",
                     "description": f"{product['name']} düşük performans gösteriyor (%{product['percentage']:.1f}). Bu ürünü iyileştirmek veya değiştirmek için stratejiler geliştirin",
-                "impact": "medium",
+                    "impact": "medium",
                     "implementation": f"{product['name']} için fiyat optimizasyonu, ürün iyileştirmesi veya alternatif ürün değerlendirmesi yapın",
                     "expectedResult": "Ürün performansını artırın veya daha karlı alternatifler bulun",
                     "priority": 3,
