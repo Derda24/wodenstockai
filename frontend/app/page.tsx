@@ -166,16 +166,6 @@ export default function Dashboard() {
                   WODEN Stock AI
                 </h1>
                 <p className="text-xs sm:text-sm lg:text-base text-gray-600 font-medium">AI‑powered inventory, insights, and scheduling</p>
-                <div className="mt-3 flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full max-w-sm">
-                  <a href="#app" className="btn-primary w-full sm:w-auto">Open App</a>
-                  <button onClick={() => setActiveTab('scheduler')} className="btn-secondary w-full sm:w-auto">See Demo</button>
-                </div>
-                <div className="mt-4 hidden sm:flex flex-wrap items-center gap-2 text-[10px] sm:text-xs text-gray-600">
-                  <span className="px-2 py-1 rounded-full bg-white shadow-soft border">Inventory</span>
-                  <span className="px-2 py-1 rounded-full bg-white shadow-soft border">Analytics</span>
-                  <span className="px-2 py-1 rounded-full bg-white shadow-soft border">Recommendations</span>
-                  <span className="px-2 py-1 rounded-full bg-white shadow-soft border">Scheduler</span>
-                </div>
               </div>
             </div>
           </div>
@@ -195,19 +185,6 @@ export default function Dashboard() {
               <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
               <span className="text-sm font-medium text-green-700">AI Active</span>
             </div>
-            {/* KPI chips */}
-            <div className="hidden lg:flex items-center space-x-2">
-              <div className="px-3 py-1.5 rounded-xl bg-white shadow-soft border border-gray-100 text-xs text-gray-700">Baristas: <span className="font-semibold text-gray-900">{kpis.baristas}</span></div>
-              <div className="px-3 py-1.5 rounded-xl bg-white shadow-soft border border-gray-100 text-xs text-gray-700">Low Stock: <span className="font-semibold text-danger-600">{kpis.lowStock}</span></div>
-              <div className="px-3 py-1.5 rounded-xl bg-white shadow-soft border border-gray-100 text-xs text-gray-700">Coverage: <span className="font-semibold text-primary-700">{kpis.weekCoverage}</span></div>
-            </div>
-            <button
-              onClick={() => setActiveTab('scheduler')}
-              className="hidden lg:inline-flex items-center space-x-2 px-5 py-3 rounded-xl text-sm font-semibold text-white bg-primary-500 hover:bg-primary-600 shadow-soft focus:ring-2 focus:ring-primary-500 transition-all"
-            >
-              <Calendar className="w-4 h-4" />
-              <span>Generate AI Schedule</span>
-            </button>
             
             <button
               onClick={handleLogout}
@@ -220,33 +197,6 @@ export default function Dashboard() {
         </div>
       </header>
 
-      {/* Value Strip */}
-      <section className="bg-surface-light/60">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
-          {[{
-            icon: Box, title: 'Inventory', desc: 'Recipe-based stock'
-          },{
-            icon: BarChart3, title: 'Analytics', desc: 'Sales insights'
-          },{
-            icon: Brain, title: 'Recommendations', desc: 'AI suggestions'
-          },{
-            icon: Calendar, title: 'Scheduler', desc: 'Weekly programming'
-          }].map((item, idx) => {
-            const Icon = item.icon as any;
-            return (
-              <div key={idx} className="card rounded-2xl border border-primary-50/40 bg-white/80 backdrop-blur-sm flex items-center space-x-3 p-3 sm:p-4">
-                <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-primary-50 flex items-center justify-center">
-                  <Icon className="w-4 h-4 sm:w-5 sm:h-5 text-primary-600" />
-                </div>
-                <div>
-                  <div className="text-xs sm:text-sm font-semibold text-gray-800">{item.title}</div>
-                  <div className="text-[11px] sm:text-xs text-gray-500">{item.desc}</div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </section>
 
       <div id="app" className="flex flex-col lg:flex-row">
         {/* Modern Sidebar - Hidden on mobile, shown on desktop */}
