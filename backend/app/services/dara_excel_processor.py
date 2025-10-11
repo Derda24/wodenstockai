@@ -178,7 +178,7 @@ class DaraExcelProcessor:
                     # Ürün adı, miktar, tutar formatında satır ara
                     product_name = row_values[0].strip()
                     if (product_name and 
-                        not any(keyword in product_name.upper() for keyword in ["SATIŞ", "RAPORU", "GENEL", "TOPLAM", "AÇIKLAMA", "MİKTAR", "TUTAR"]) and
+                        not any(keyword in product_name.upper() for keyword in ["SATIŞ", "RAPORU", "GENEL", "TOPLAM", "AÇIKLAMA", "MİKTAR", "TUTAR", "YEKUN", "GENEL YEKUN", "GENEL TOPLAM"]) and
                         len(product_name) > 2):
                         
                         try:
@@ -485,6 +485,11 @@ class DaraExcelProcessor:
                 product_name = str(row.iloc[0]).strip() if pd.notna(row.iloc[0]) else ""
                 
                 if not product_name or len(product_name) < 2:
+                    continue
+                
+                # Toplam satırlarını filtrele (GENEL YEKUN, GENEL TOPLAM, vb.)
+                product_name_upper = product_name.upper()
+                if any(keyword in product_name_upper for keyword in ["GENEL YEKUN", "GENEL TOPLAM", "TOPLAM", "YEKUN", "SATIŞ RAPORU", "AÇIKLAMA", "MİKTAR", "TUTAR"]):
                     continue
                 
                 # Miktar (Sütun 7)
