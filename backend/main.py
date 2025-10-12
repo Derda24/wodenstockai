@@ -1537,41 +1537,76 @@ async def generate_ai_schedule(
     week_start: str = Form(...),
     preferences: str = Form(None)
 ):
-    """Generate AI-powered weekly schedule"""
+    """Generate AI-powered weekly schedule with barista preferences"""
     try:
-        from datetime import datetime
+        from datetime import datetime, timedelta
+        import json
+        import sys
+        import os
+        
+        # Add backend directory to path to import ai_scheduler
+        backend_dir = os.path.dirname(os.path.abspath(__file__))
+        if backend_dir not in sys.path:
+            sys.path.insert(0, backend_dir)
+        
         from ai_scheduler import AIScheduler
         
         # Parse week start date
         week_start_date = datetime.strptime(week_start, "%Y-%m-%d").date()
         
         # Parse preferences if provided
-        preferences_data = None
+        # Format from frontend: {barista_id: {dayOff: 0, preferredOpening: [0,1], preferredClosing: [2,3]}}
+        # Convert to backend format: {barista_name: {preferred_day_off: 0, preferred_opening_days: [0,1], preferred_closing_days: [2,3]}}
+        preferences_data = {}
         if preferences:
-            import json
             try:
-                preferences_data = json.loads(preferences)
-            except json.JSONDecodeError:
-                print("Warning: Invalid preferences JSON, using defaults")
-        
-        # Get baristas
-        baristas_result = supabase_service.get_baristas()
-        if not baristas_result["success"]:
-            raise HTTPException(status_code=400, detail="Failed to get baristas")
-        
-        baristas = baristas_result["baristas"]
+                frontend_prefs = json.loads(preferences)
+                
+                # Get baristas to map IDs to names
+                baristas_result = supabase_service.get_baristas()
+                if baristas_result["success"]:
+                    baristas = baristas_result["baristas"]
+                    barista_map = {b["id"]: b["name"] for b in baristas}
+                    
+                    # Convert preferences format
+                    for barista_id, prefs in frontend_prefs.items():
+                        barista_name = barista_map.get(barista_id)
+                        if barista_name:
+                            preferences_data[barista_name] = {
+                                "preferred_day_off": prefs.get("dayOff") if prefs.get("dayOff", -1) >= 0 else None,
+                                "preferred_opening_days": prefs.get("preferredOpening", []),
+                                "preferred_closing_days": prefs.get("preferredClosing", [])
+                            }
+                    
+                    print(f"✅ Converted preferences for {len(preferences_data)} baristas")
+            except json.JSONDecodeError as e:
+                print(f"Warning: Invalid preferences JSON: {e}, using defaults")
         
         # Initialize AI Scheduler
-        ai_scheduler = AIScheduler(supabase_service)
+        scheduler = AIScheduler()
+        
+        # Set preferences if provided
+        if preferences_data:
+            scheduler.set_barista_preferences(preferences_data)
         
         # Generate schedule
-        result = ai_scheduler.generate_weekly_schedule(week_start_date, baristas, preferences_data)
+        schedule_result = scheduler.generate_weekly_schedule(week_start_date)
         
-        if result["success"]:
-            return result
-        else:
-            raise HTTPException(status_code=400, detail=result["message"])
+        # TODO: Save to Supabase
+        # For now, return the generated schedule
+        
+        return {
+            "success": True,
+            "message": "Schedule generated successfully",
+            "schedule": schedule_result,
+            "week_start": week_start,
+            "week_end": (week_start_date + timedelta(days=6)).strftime("%Y-%m-%d")
+        }
+        
     except Exception as e:
+        import traceback
+        print(f"Error generating schedule: {str(e)}")
+        print(traceback.format_exc())
         raise HTTPException(status_code=500, detail=f"Error generating schedule: {str(e)}")
 
 @app.get("/api/schedules/{schedule_id}/shifts")
