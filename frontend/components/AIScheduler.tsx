@@ -153,19 +153,19 @@ export default function AIScheduler() {
     const mockBaristas: Barista[] = [
       {
         id: '1',
-        name: 'Enes',
-        email: 'ahmet@woden.com',
+        name: 'Derda',
+        email: 'derda@woden.com',
         phone: '+90 555 123 4567',
         type: 'full-time',
         max_hours: 45,
         preferred_shifts: ['morning', 'evening'],
-        skills: ['coffee', 'cashier', 'cleaning'],
+        skills: ['coffee', 'cashier', 'management'],
         is_active: true
       },
       {
         id: '2',
         name: 'Ahmet',
-        email: 'mehmet@woden.com',
+        email: 'ahmet@woden.com',
         phone: '+90 555 234 5678',
         type: 'full-time',
         max_hours: 45,
@@ -175,20 +175,9 @@ export default function AIScheduler() {
       },
       {
         id: '3',
-        name: 'Boran',
-        email: 'ayse@woden.com',
-        phone: '+90 555 345 6789',
-        type: 'part-time',
-        max_hours: 25,
-        preferred_shifts: ['evening'],
-        skills: ['coffee', 'cashier'],
-        is_active: true
-      },
-      {
-        id: '4',
         name: 'İlker',
-        email: 'fatma@woden.com',
-        phone: '+90 555 456 7890',
+        email: 'ilker@woden.com',
+        phone: '+90 555 345 6789',
         type: 'full-time',
         max_hours: 45,
         preferred_shifts: ['morning', 'evening'],
@@ -196,25 +185,69 @@ export default function AIScheduler() {
         is_active: true
       },
       {
+        id: '4',
+        name: 'Boran',
+        email: 'boran@woden.com',
+        phone: '+90 555 456 7890',
+        type: 'part-time',
+        max_hours: 25,
+        preferred_shifts: ['evening'],
+        skills: ['coffee', 'cashier'],
+        is_active: true
+      },
+      {
         id: '5',
-        name: 'Can',
-        email: 'ali@woden.com',
+        name: 'Bedi',
+        email: 'bedi@woden.com',
         phone: '+90 555 567 8901',
         type: 'part-time',
-        max_hours: 30,
+        max_hours: 25,
+        preferred_shifts: ['evening'],
+        skills: ['coffee', 'cashier'],
+        is_active: true
+      },
+      {
+        id: '6',
+        name: 'Emin',
+        email: 'emin@woden.com',
+        phone: '+90 555 678 9012',
+        type: 'part-time',
+        max_hours: 25,
         preferred_shifts: ['evening'],
         skills: ['coffee', 'cleaning'],
         is_active: true
       },
       {
-        id: '6',
-        name: 'Derda',
-        email: 'zeynep@woden.com',
-        phone: '+90 555 678 9012',
-        type: 'full-time',
-        max_hours: 45,
-        preferred_shifts: ['morning', 'evening'],
-        skills: ['coffee', 'cashier', 'management'],
+        id: '7',
+        name: 'Özge',
+        email: 'ozge@woden.com',
+        phone: '+90 555 789 0123',
+        type: 'part-time',
+        max_hours: 20,
+        preferred_shifts: ['morning'],
+        skills: ['coffee', 'cashier'],
+        is_active: true
+      },
+      {
+        id: '8',
+        name: 'Sultan',
+        email: 'sultan@woden.com',
+        phone: '+90 555 890 1234',
+        type: 'part-time',
+        max_hours: 20,
+        preferred_shifts: ['evening'],
+        skills: ['coffee', 'cleaning'],
+        is_active: true
+      },
+      {
+        id: '9',
+        name: 'Can',
+        email: 'can@woden.com',
+        phone: '+90 555 901 2345',
+        type: 'part-time',
+        max_hours: 20,
+        preferred_shifts: ['evening'],
+        skills: ['coffee', 'cleaning'],
         is_active: true
       }
     ];
@@ -543,7 +576,8 @@ export default function AIScheduler() {
   };
 
   const getBaristaById = (baristaId: string) => {
-    return baristas.find(b => b.id === baristaId);
+    // First try to find by ID, then by name (fallback)
+    return baristas.find(b => b.id === baristaId) || baristas.find(b => b.name === baristaId);
   };
 
   const initializePreferences = () => {

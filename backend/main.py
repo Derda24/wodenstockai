@@ -1595,12 +1595,59 @@ async def generate_ai_schedule(
         # TODO: Save to Supabase
         # For now, return the generated schedule
         
+        # Get baristas for ID mapping
+        baristas_result = supabase_service.get_baristas()
+        name_to_id_map = {}
+        if baristas_result["success"]:
+            name_to_id_map = {b["name"]: b["id"] for b in baristas_result["baristas"]}
+        
+        # Convert schedule result to frontend format
+        shifts = []
+        if "weekly_schedule" in schedule_result:
+            for day_name, day_schedule in schedule_result["weekly_schedule"].items():
+                day_index = ["Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi", "Pazar"].index(day_name)
+                
+                # Add opening shifts
+                for shift in day_schedule.get("açılış", []):
+                    employee_name = shift["employee"]
+                    barista_id = name_to_id_map.get(employee_name, employee_name)  # Fallback to name if ID not found
+                    shifts.append({
+                        "id": f"shift_{day_index}_{barista_id}_opening",
+                        "barista_id": barista_id,
+                        "day_of_week": day_index,
+                        "shift_type": "morning",
+                        "start_time": "07:30",
+                        "end_time": "15:30",
+                        "hours": 8,
+                        "notes": shift.get("notes", "")
+                    })
+                
+                # Add closing shifts
+                for shift in day_schedule.get("kapanış", []):
+                    employee_name = shift["employee"]
+                    barista_id = name_to_id_map.get(employee_name, employee_name)  # Fallback to name if ID not found
+                    shifts.append({
+                        "id": f"shift_{day_index}_{barista_id}_closing",
+                        "barista_id": barista_id,
+                        "day_of_week": day_index,
+                        "shift_type": "evening",
+                        "start_time": "15:30",
+                        "end_time": "00:30",
+                        "hours": 9,
+                        "notes": shift.get("notes", "")
+                    })
+        
+        # Generate a unique schedule ID
+        schedule_id = f"schedule_{week_start}_{int(datetime.now().timestamp())}"
+        
         return {
             "success": True,
             "message": "Schedule generated successfully",
-            "schedule": schedule_result,
+            "schedule_id": schedule_id,
             "week_start": week_start,
-            "week_end": (week_start_date + timedelta(days=6)).strftime("%Y-%m-%d")
+            "week_end": (week_start_date + timedelta(days=6)).strftime("%Y-%m-%d"),
+            "shifts": shifts,
+            "schedule": schedule_result  # Keep original for debugging
         }
         
     except Exception as e:
