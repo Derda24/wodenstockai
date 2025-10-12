@@ -68,14 +68,25 @@ def test_scheduler_api():
             # Show full schedule if available
             if 'schedule' in result:
                 schedule = result['schedule']
-                if 'weekly_schedule' in schedule:
-                    print(f"\n📅 Weekly Schedule:")
-                    for day, day_schedule in schedule['weekly_schedule'].items():
+                print(f"\n📅 Schedule Keys: {list(schedule.keys())}")
+                if 'schedule' in schedule:
+                    weekly_schedule = schedule['schedule']
+                    print(f"📅 Weekly Schedule Keys: {list(weekly_schedule.keys())}")
+                    for day, day_schedule in weekly_schedule.items():
                         print(f"  {day}:")
-                        for shift_type, shifts_list in day_schedule.items():
-                            if shifts_list:
-                                names = [s.get('employee', 'unknown') for s in shifts_list]
-                                print(f"    {shift_type}: {', '.join(names)}")
+                        print(f"    Keys: {list(day_schedule.keys())}")
+                        if isinstance(day_schedule, dict):
+                            for shift_type, shifts_list in day_schedule.items():
+                                if isinstance(shifts_list, list):
+                                    if shifts_list:
+                                        names = [s.get('employee', 'unknown') if isinstance(s, dict) else str(s) for s in shifts_list]
+                                        print(f"    {shift_type}: {', '.join(names)}")
+                                    else:
+                                        print(f"    {shift_type}: []")
+                                else:
+                                    print(f"    {shift_type}: {shifts_list}")
+                        else:
+                            print(f"    Data: {day_schedule}")
             
         else:
             print("❌ Error!")

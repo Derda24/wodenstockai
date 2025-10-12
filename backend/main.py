@@ -1603,12 +1603,23 @@ async def generate_ai_schedule(
         
         # Convert schedule result to frontend format
         shifts = []
-        if "weekly_schedule" in schedule_result:
-            for day_name, day_schedule in schedule_result["weekly_schedule"].items():
-                day_index = ["Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi", "Pazar"].index(day_name)
+        # AI Scheduler returns "schedule" not "weekly_schedule"
+        weekly_schedule = schedule_result.get("schedule", {})
+        if weekly_schedule:
+            for date_str, day_schedule in weekly_schedule.items():
+                # Convert date string to day index (0=Monday, 6=Sunday)
+                from datetime import datetime
+                date_obj = datetime.strptime(date_str, '%Y-%m-%d').date()
+                day_index = date_obj.weekday()  # 0=Monday, 6=Sunday
                 
                 # Add opening shifts
-                for shift in day_schedule.get("açılış", []):
+                openings_data = day_schedule.get("openings", [])
+                if isinstance(openings_data, str):
+                    # If it's a string like "Ahmet, Boran", split it
+                    employee_names = [name.strip() for name in openings_data.split(',')]
+                    openings_data = [{"employee": name} for name in employee_names]
+                
+                for shift in openings_data:
                     employee_name = shift["employee"]
                     barista_id = name_to_id_map.get(employee_name, employee_name)  # Fallback to name if ID not found
                     shifts.append({
@@ -1623,7 +1634,13 @@ async def generate_ai_schedule(
                     })
                 
                 # Add closing shifts
-                for shift in day_schedule.get("kapanış", []):
+                closings_data = day_schedule.get("closings", [])
+                if isinstance(closings_data, str):
+                    # If it's a string like "Sultan, Ahmet, İlker, Boran", split it
+                    employee_names = [name.strip() for name in closings_data.split(',')]
+                    closings_data = [{"employee": name} for name in employee_names]
+                
+                for shift in closings_data:
                     employee_name = shift["employee"]
                     barista_id = name_to_id_map.get(employee_name, employee_name)  # Fallback to name if ID not found
                     shifts.append({
@@ -1639,6 +1656,10 @@ async def generate_ai_schedule(
         
         # Generate a unique schedule ID
         schedule_id = f"schedule_{week_start}_{int(datetime.now().timestamp())}"
+        
+        print(f"🔍 DEBUG: Created {len(shifts)} shifts")
+        if shifts:
+            print(f"🔍 DEBUG: First shift: {shifts[0]}")
         
         return {
             "success": True,
