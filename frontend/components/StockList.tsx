@@ -51,7 +51,53 @@ export default function StockList() {
   });
 
   // Get unique categories for filter
-  const categories = ['All Categories', ...Array.from(new Set(stockData.map((item: StockItem) => item.category)))];
+  const categories = ['Tüm Kategoriler', ...Array.from(new Set(stockData.map((item: StockItem) => item.category)))];
+
+  // Group items by category for better organization
+  const groupedData = filteredData.reduce((acc: { [key: string]: StockItem[] }, item) => {
+    const category = item.category;
+    if (!acc[category]) {
+      acc[category] = [];
+    }
+    acc[category].push(item);
+    return acc;
+  }, {});
+
+  // Define category display order and names
+  const categoryOrder = [
+    'surup_pureler',
+    'bardak_kapaklar', 
+    'kullan_at_urunleri',
+    'sivi_turleri',
+    'sut_turleri',
+    'kahve_cekirdekleri',
+    'hazir_urunler',
+    'diger_malzemeler',
+    'hizmet_urunleri',
+    'cay_urunleri'
+  ];
+
+  const categoryDisplayNames: { [key: string]: string } = {
+    'surup_pureler': 'Şuruplar & Püreler',
+    'bardak_kapaklar': 'Bardak & Kapaklar',
+    'kullan_at_urunleri': 'Kullan-at Ürünleri',
+    'sivi_turleri': 'Sıvı Türleri',
+    'sut_turleri': 'Süt Türleri',
+    'kahve_cekirdekleri': 'Kahve Çekirdekleri',
+    'hazir_urunler': 'Hazır Ürünler',
+    'diger_malzemeler': 'Diğer Malzemeler',
+    'hizmet_urunleri': 'Hizmet Ürünleri',
+    'cay_urunleri': 'Çay Ürünleri'
+  };
+
+  // Sort items within each category by name
+  Object.keys(groupedData).forEach(category => {
+    groupedData[category].sort((a, b) => a.name.localeCompare(b.name, 'tr'));
+  });
+
+  // Get ordered categories
+  const orderedCategories = categoryOrder.filter(cat => groupedData[cat] && groupedData[cat].length > 0)
+    .concat(Object.keys(groupedData).filter(cat => !categoryOrder.includes(cat)));
 
   const loadStockData = async () => {
     try {
@@ -96,7 +142,7 @@ export default function StockList() {
     }
 
     // Apply category filter
-    if (selectedCategory !== 'All Categories') {
+    if (selectedCategory !== 'Tüm Kategoriler') {
       filtered = filtered.filter((item: StockItem) => item.category === selectedCategory);
     }
 
@@ -408,8 +454,8 @@ export default function StockList() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Stock List</h1>
-          <p className="text-sm sm:text-base text-gray-600">Manage your inventory and upload daily sales</p>
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Stok Listesi</h1>
+          <p className="text-sm sm:text-base text-gray-600">Envanterinizi yönetin ve günlük satışları yükleyin</p>
         </div>
         <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
           <button
@@ -417,8 +463,8 @@ export default function StockList() {
             className="inline-flex items-center justify-center px-4 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm sm:text-base touch-manipulation min-h-[44px]"
           >
             <Plus className="w-4 h-4 mr-2" />
-            <span className="hidden sm:inline">Add New Product</span>
-            <span className="sm:hidden">Add Product</span>
+            <span className="hidden sm:inline">Yeni Ürün Ekle</span>
+            <span className="sm:hidden">Ürün Ekle</span>
           </button>
           <button
             onClick={() => setShowUploadModal(true)}
@@ -426,23 +472,23 @@ export default function StockList() {
             className="inline-flex items-center justify-center px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm sm:text-base touch-manipulation min-h-[44px]"
           >
             <Upload className="w-4 h-4 mr-2" />
-            <span className="hidden sm:inline">Upload Daily Sales Excel</span>
-            <span className="sm:hidden">Upload Excel</span>
+            <span className="hidden sm:inline">Günlük Satış Excel Yükle</span>
+            <span className="sm:hidden">Excel Yükle</span>
           </button>
           <button
             onClick={handleDailyConsumption}
             className="inline-flex items-center justify-center px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm sm:text-base touch-manipulation min-h-[44px]"
           >
             <Calendar className="w-4 h-4 mr-2" />
-            <span className="hidden sm:inline">Apply Daily Consumption</span>
-            <span className="sm:hidden">Daily Consumption</span>
+            <span className="hidden sm:inline">Günlük Tüketim Uygula</span>
+            <span className="sm:hidden">Günlük Tüketim</span>
           </button>
           <button
             onClick={loadStockData}
             className="inline-flex items-center justify-center px-4 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors text-sm sm:text-base touch-manipulation min-h-[44px]"
           >
             <RefreshCw className="w-4 h-4 mr-2" />
-            <span className="hidden sm:inline">Refresh</span>
+            <span className="hidden sm:inline">Yenile</span>
             <span className="sm:hidden">↻</span>
           </button>
         </div>
@@ -462,7 +508,7 @@ export default function StockList() {
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
             <input
               type="text"
-              placeholder="Search by name or category..."
+              placeholder="İsim veya kategori ile ara..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-base touch-manipulation min-h-[44px]"
@@ -476,7 +522,9 @@ export default function StockList() {
             className="w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-base touch-manipulation min-h-[44px]"
           >
             {categories.map(category => (
-              <option key={category} value={category}>{category}</option>
+              <option key={category} value={category}>
+                {category === 'Tüm Kategoriler' ? category : (categoryDisplayNames[category] || category)}
+              </option>
             ))}
           </select>
         </div>
@@ -486,97 +534,115 @@ export default function StockList() {
       <div className="bg-white rounded-lg shadow overflow-hidden w-full">
         {/* Mobile Card Layout */}
         <div className="block sm:hidden">
-          <div className="overflow-y-auto max-h-[75vh] p-4 space-y-4">
-            {filteredData.map((item) => {
-              const status = getStockStatus(item);
+          <div className="overflow-y-auto max-h-[75vh] p-4 space-y-6">
+            {orderedCategories.map((category) => {
+              const categoryItems = groupedData[category];
+              const categoryName = categoryDisplayNames[category] || category;
+              
               return (
-                <div key={item.id} className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                  {/* Header with status */}
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center">
-                      {getStatusIcon(status)}
-                      <h3 className="ml-2 font-semibold text-gray-900 text-sm truncate flex-1">
-                        {item.name}
-                      </h3>
-                    </div>
-                    <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(status)}`}>
-                      {item.current_stock} {item.unit}
-                    </span>
+                <div key={category} className="space-y-3">
+                  {/* Category Header */}
+                  <div className="bg-blue-50 border-l-4 border-blue-400 p-3 rounded-r-lg">
+                    <h2 className="text-lg font-semibold text-blue-900">{categoryName}</h2>
+                    <p className="text-sm text-blue-700">{categoryItems.length} ürün</p>
                   </div>
                   
-                  {/* Details */}
-                  <div className="grid grid-cols-2 gap-3 mb-4 text-sm">
-                    <div>
-                      <span className="text-gray-500">Category:</span>
-                      <p className="font-medium text-gray-900">{item.category}</p>
-                    </div>
-                    <div>
-                      <span className="text-gray-500">Min Level:</span>
-                      <p className="font-medium text-gray-900">{item.min_stock} {item.unit}</p>
-                    </div>
-                  </div>
-                  
-                  {/* Stock Update Section */}
+                  {/* Category Items */}
                   <div className="space-y-3">
-                    <div>
-                      <label className="block text-xs font-medium text-gray-700 mb-1">
-                        Update Stock
-                      </label>
-                      <input
-                        type="number"
-                        min="0"
-                        step="0.01"
-                        placeholder={`New value (${item.current_stock})`}
-                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent touch-manipulation"
-                        onKeyPress={(e) => {
-                          if (e.key === 'Enter') {
-                            const target = e.target as HTMLInputElement;
-                            if (target.value && target.value.trim() !== '') {
-                              const newValue = parseFloat(target.value);
-                              if (!isNaN(newValue) && newValue >= 0) {
-                                const change = newValue - item.current_stock;
-                                updateStock(item.id, change);
-                                target.value = '';
-                              } else {
-                                alert('Please enter a valid number (0 or greater)');
-                              }
-                            } else {
-                              alert('Please enter a new stock value before pressing Enter');
-                            }
-                          }
-                        }}
-                      />
-                    </div>
-                    
-                    {/* Action Buttons */}
-                    <div className="flex space-x-2">
-                      <button
-                        onClick={(e) => {
-                          const input = e.currentTarget.parentElement?.previousElementSibling?.querySelector('input[type="number"]') as HTMLInputElement;
-                          if (input && input.value && input.value.trim() !== '') {
-                            const newValue = parseFloat(input.value);
-                            if (!isNaN(newValue) && newValue >= 0) {
-                              const change = newValue - item.current_stock;
-                              updateStock(item.id, change);
-                              input.value = '';
-                            } else {
-                              alert('Please enter a valid number (0 or greater)');
-                            }
-                          } else {
-                            alert('Please enter a new stock value before clicking Update');
-                          }
-                        }}
-                        className="flex-1 inline-flex items-center justify-center px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 touch-manipulation min-h-[44px]"
-                      >
-                        ✓ Update
-                      </button>
-                      <button
-                        onClick={() => removeStockItem(item.name)}
-                        className="flex-1 inline-flex items-center justify-center px-4 py-2 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 touch-manipulation min-h-[44px]"
-                      >
-                        × Remove
-                      </button>
-                    </div>
+                    {categoryItems.map((item) => {
+                      const status = getStockStatus(item);
+                      return (
+                        <div key={item.id} className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                          {/* Header with status */}
+                          <div className="flex items-center justify-between mb-3">
+                            <div className="flex items-center">
+                              {getStatusIcon(status)}
+                              <h3 className="ml-2 font-semibold text-gray-900 text-sm truncate flex-1">
+                                {item.name}
+                              </h3>
+                            </div>
+                            <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(status)}`}>
+                              {item.current_stock} {item.unit}
+                            </span>
+                          </div>
+                          
+                          {/* Details */}
+                          <div className="grid grid-cols-2 gap-3 mb-4 text-sm">
+                            <div>
+                              <span className="text-gray-500">Min Level:</span>
+                              <p className="font-medium text-gray-900">{item.min_stock} {item.unit}</p>
+                            </div>
+                            <div>
+                              <span className="text-gray-500">Status:</span>
+                              <p className="font-medium text-gray-900 capitalize">{status.replace('-', ' ')}</p>
+                            </div>
+                          </div>
+                          
+                          {/* Stock Update Section */}
+                          <div className="space-y-3">
+                            <div>
+                              <label className="block text-xs font-medium text-gray-700 mb-1">
+                                Update Stock
+                              </label>
+                              <input
+                                type="number"
+                                min="0"
+                                step="0.01"
+                                placeholder={`New value (${item.current_stock})`}
+                                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent touch-manipulation"
+                                onKeyPress={(e) => {
+                                  if (e.key === 'Enter') {
+                                    const target = e.target as HTMLInputElement;
+                                    if (target.value && target.value.trim() !== '') {
+                                      const newValue = parseFloat(target.value);
+                                      if (!isNaN(newValue) && newValue >= 0) {
+                                        const change = newValue - item.current_stock;
+                                        updateStock(item.id, change);
+                                        target.value = '';
+                                      } else {
+                                        alert('Please enter a valid number (0 or greater)');
+                                      }
+                                    } else {
+                                      alert('Please enter a new stock value before pressing Enter');
+                                    }
+                                  }
+                                }}
+                              />
+                            </div>
+                            
+                            {/* Action Buttons */}
+                            <div className="flex space-x-2">
+                              <button
+                                onClick={(e) => {
+                                  const input = e.currentTarget.parentElement?.previousElementSibling?.querySelector('input[type="number"]') as HTMLInputElement;
+                                  if (input && input.value && input.value.trim() !== '') {
+                                    const newValue = parseFloat(input.value);
+                                    if (!isNaN(newValue) && newValue >= 0) {
+                                      const change = newValue - item.current_stock;
+                                      updateStock(item.id, change);
+                                      input.value = '';
+                                    } else {
+                                      alert('Please enter a valid number (0 or greater)');
+                                    }
+                                  } else {
+                                    alert('Please enter a new stock value before clicking Update');
+                                  }
+                                }}
+                                className="flex-1 inline-flex items-center justify-center px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 touch-manipulation min-h-[44px]"
+                              >
+                                ✓ Update
+                              </button>
+                              <button
+                                onClick={() => removeStockItem(item.name)}
+                                className="flex-1 inline-flex items-center justify-center px-4 py-2 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 touch-manipulation min-h-[44px]"
+                              >
+                                × Remove
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               );
@@ -593,121 +659,140 @@ export default function StockList() {
         {/* Desktop Table Layout */}
         <div className="hidden sm:block">
           <div className="overflow-x-auto overflow-y-auto max-h-[70vh] w-full" style={{WebkitOverflowScrolling: 'touch', scrollbarWidth: 'thin'}}>
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50 sticky top-0 z-10">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Item Name
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Category
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Current Stock
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Min Level
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Unit
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Stock Update
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {filteredData.map((item) => {
-                  const status = getStockStatus(item);
-                  return (
-                    <tr key={item.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center">
-                          {getStatusIcon(status)}
-                          <span className="ml-2 font-medium text-gray-900">
-                            {item.name}
-                          </span>
+            {orderedCategories.map((category) => {
+              const categoryItems = groupedData[category];
+              const categoryName = categoryDisplayNames[category] || category;
+              
+              return (
+                <div key={category} className="mb-8">
+                  {/* Category Header */}
+                  <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-l-4 border-blue-500 p-4 mb-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h2 className="text-xl font-bold text-blue-900">{categoryName}</h2>
+                        <p className="text-sm text-blue-700">{categoryItems.length} ürün</p>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-sm text-blue-600">
+                          Toplam Stok: {categoryItems.reduce((sum, item) => sum + item.current_stock, 0).toLocaleString('tr-TR')}
                         </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {item.category}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(status)}`}>
-                          {item.current_stock} {item.unit}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {item.min_stock} {item.unit}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {item.unit}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        <div className="flex items-center space-x-2">
-                          <input
-                            type="number"
-                            min="0"
-                            step="0.01"
-                            placeholder={`New value (${item.current_stock})`}
-                            className="w-20 px-3 py-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                            onKeyPress={(e) => {
-                              if (e.key === 'Enter') {
-                                const target = e.target as HTMLInputElement;
-                                if (target.value && target.value.trim() !== '') {
-                                  const newValue = parseFloat(target.value);
-                                  if (!isNaN(newValue) && newValue >= 0) {
-                                    const change = newValue - item.current_stock;
-                                    updateStock(item.id, change);
-                                    target.value = '';
-                                  } else {
-                                    alert('Please enter a valid number (0 or greater)');
-                                  }
-                                } else {
-                                  alert('Please enter a new stock value before pressing Enter');
-                                }
-                              }
-                            }}
-                          />
-                          <button
-                            onClick={(e) => {
-                              const row = e.currentTarget.closest('tr');
-                              const input = row?.querySelector('input[type="number"]') as HTMLInputElement;
-                              if (input && input.value && input.value.trim() !== '') {
-                                const newValue = parseFloat(input.value);
-                                if (!isNaN(newValue) && newValue >= 0) {
-                                  const change = newValue - item.current_stock;
-                                  updateStock(item.id, change);
-                                  input.value = '';
-                                } else {
-                                  alert('Please enter a valid number (0 or greater)');
-                                }
-                              } else {
-                                alert('Please enter a new stock value before clicking Update');
-                              }
-                            }}
-                            className="inline-flex items-center justify-center px-3 py-2 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                          >
-                            Update
-                          </button>
-                          <button
-                            onClick={() => removeStockItem(item.name)}
-                            className="inline-flex items-center justify-center px-3 py-2 text-xs bg-red-600 text-white rounded hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
-                          >
-                            Remove
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Category Table */}
+                  <table className="min-w-full divide-y divide-gray-200 mb-6">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Ürün Adı
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Mevcut Stok
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Min Seviye
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Birim
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Stok Güncelle
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {categoryItems.map((item) => {
+                        const status = getStockStatus(item);
+                        return (
+                          <tr key={item.id} className="hover:bg-gray-50">
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div className="flex items-center">
+                                {getStatusIcon(status)}
+                                <span className="ml-2 font-medium text-gray-900">
+                                  {item.name}
+                                </span>
+                              </div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(status)}`}>
+                                {item.current_stock.toLocaleString('tr-TR')} {item.unit}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                              {item.min_stock.toLocaleString('tr-TR')} {item.unit}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                              {item.unit}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                              <div className="flex items-center space-x-2">
+                                <input
+                                  type="number"
+                                  min="0"
+                                  step="0.01"
+                                  placeholder={`Yeni değer (${item.current_stock})`}
+                                  className="w-24 px-3 py-2 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                  onKeyPress={(e) => {
+                                    if (e.key === 'Enter') {
+                                      const target = e.target as HTMLInputElement;
+                                      if (target.value && target.value.trim() !== '') {
+                                        const newValue = parseFloat(target.value);
+                                        if (!isNaN(newValue) && newValue >= 0) {
+                                          const change = newValue - item.current_stock;
+                                          updateStock(item.id, change);
+                                          target.value = '';
+                                        } else {
+                                          alert('Please enter a valid number (0 or greater)');
+                                        }
+                                      } else {
+                                        alert('Please enter a new stock value before pressing Enter');
+                                      }
+                                    }
+                                  }}
+                                />
+                                <button
+                                  onClick={(e) => {
+                                    const row = e.currentTarget.closest('tr');
+                                    const input = row?.querySelector('input[type="number"]') as HTMLInputElement;
+                                    if (input && input.value && input.value.trim() !== '') {
+                                      const newValue = parseFloat(input.value);
+                                      if (!isNaN(newValue) && newValue >= 0) {
+                                        const change = newValue - item.current_stock;
+                                        updateStock(item.id, change);
+                                        input.value = '';
+                                      } else {
+                                        alert('Please enter a valid number (0 or greater)');
+                                      }
+                                    } else {
+                                      alert('Please enter a new stock value before clicking Update');
+                                    }
+                                  }}
+                                  className="inline-flex items-center justify-center px-3 py-2 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                                >
+                                  Güncelle
+                                </button>
+                                <button
+                                  onClick={() => removeStockItem(item.name)}
+                                  className="inline-flex items-center justify-center px-3 py-2 text-xs bg-red-600 text-white rounded hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                                >
+                                  Kaldır
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              );
+            })}
           </div>
           
           {filteredData.length === 0 && (
             <div className="text-center py-12">
-              <p className="text-gray-500">No items found matching your criteria.</p>
+              <p className="text-gray-500">Arama kriterlerinize uygun ürün bulunamadı.</p>
             </div>
           )}
         </div>
@@ -719,7 +804,7 @@ export default function StockList() {
           <div className="bg-white rounded-lg shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto">
             <div className="p-6">
               <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-semibold text-gray-900">Upload Daily Sales Excel</h3>
+                <h3 className="text-lg font-semibold text-gray-900">Günlük Satış Excel Yükle</h3>
                 <button
                   onClick={() => {
                     setShowUploadModal(false);
@@ -733,7 +818,7 @@ export default function StockList() {
               
               <div className="mb-6">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Select Excel File
+                  Excel Dosyası Seç
                 </label>
                 <input
                   type="file"
@@ -747,7 +832,7 @@ export default function StockList() {
                 />
                 {selectedFile && (
                   <p className="mt-2 text-sm text-gray-600">
-                    Selected: {selectedFile.name}
+                    Seçilen: {selectedFile.name}
                   </p>
                 )}
               </div>
@@ -760,14 +845,14 @@ export default function StockList() {
                   }}
                   className="flex-1 px-4 py-3 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 touch-manipulation min-h-[44px]"
                 >
-                  Cancel
+                  İptal
                 </button>
                 <button
                   onClick={handleFileUpload}
                   disabled={!selectedFile}
                   className="flex-1 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation min-h-[44px]"
                 >
-                  Upload
+                  Yükle
                 </button>
               </div>
             </div>
@@ -781,7 +866,7 @@ export default function StockList() {
           <div className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6">
               <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-bold text-gray-900">Add New Product</h2>
+                <h2 className="text-xl font-bold text-gray-900">Yeni Ürün Ekle</h2>
                 <button
                   onClick={() => setShowAddProductModal(false)}
                   className="text-gray-400 hover:text-gray-600"
@@ -793,40 +878,44 @@ export default function StockList() {
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Product Name *
+                    Ürün Adı *
                   </label>
                   <input
                     type="text"
                     value={newProduct.name}
                     onChange={(e) => setNewProduct({...newProduct, name: e.target.value})}
                     className="w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent touch-manipulation text-base"
-                    placeholder="Enter product name"
+                    placeholder="Ürün adını girin"
                   />
                 </div>
                 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Category *
+                    Kategori *
                   </label>
                   <select
                     value={newProduct.category}
                     onChange={(e) => setNewProduct({...newProduct, category: e.target.value})}
                     className="w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent touch-manipulation text-base"
                   >
-                    <option value="">Select category</option>
-                    <option value="surup_pureler">Syrups & Purees</option>
-                    <option value="ham_maddeler">Raw Materials</option>
-                    <option value="sut_urunleri">Dairy Products</option>
-                    <option value="unlu_mamuller">Bakery Products</option>
-                    <option value="icecekler">Beverages</option>
-                    <option value="diger">Other</option>
+                    <option value="">Kategori seçin</option>
+                    <option value="surup_pureler">Şuruplar & Püreler</option>
+                    <option value="bardak_kapaklar">Bardak & Kapaklar</option>
+                    <option value="kullan_at_urunleri">Kullan-at Ürünleri</option>
+                    <option value="sivi_turleri">Sıvı Türleri</option>
+                    <option value="sut_turleri">Süt Türleri</option>
+                    <option value="kahve_cekirdekleri">Kahve Çekirdekleri</option>
+                    <option value="hazir_urunler">Hazır Ürünler</option>
+                    <option value="diger_malzemeler">Diğer Malzemeler</option>
+                    <option value="hizmet_urunleri">Hizmet Ürünleri</option>
+                    <option value="cay_urunleri">Çay Ürünleri</option>
                   </select>
                 </div>
                 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Current Stock
+                      Mevcut Stok
                     </label>
                     <input
                       type="number"
@@ -840,7 +929,7 @@ export default function StockList() {
                   
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Min Stock Level
+                      Min Stok Seviyesi
                     </label>
                     <input
                       type="number"
@@ -856,7 +945,7 @@ export default function StockList() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Unit
+                      Birim
                     </label>
                     <select
                       value={newProduct.unit}
@@ -874,7 +963,7 @@ export default function StockList() {
                   
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Cost per Unit
+                      Birim Maliyet
                     </label>
                     <input
                       type="number"
@@ -895,7 +984,7 @@ export default function StockList() {
                       onChange={(e) => setNewProduct({...newProduct, is_ready_made: e.target.checked})}
                       className="mr-3 w-4 h-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
                     />
-                    <span className="text-sm font-medium text-gray-700">Ready-made product (not a raw material)</span>
+                    <span className="text-sm font-medium text-gray-700">Hazır ürün (ham madde değil)</span>
                   </label>
                 </div>
               </div>
@@ -905,13 +994,13 @@ export default function StockList() {
                   onClick={() => setShowAddProductModal(false)}
                   className="flex-1 px-4 py-3 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 touch-manipulation min-h-[44px]"
                 >
-                  Cancel
+                  İptal
                 </button>
                 <button
                   onClick={handleAddProduct}
                   className="flex-1 px-4 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 touch-manipulation min-h-[44px]"
                 >
-                  Add Product
+                  Ürün Ekle
                 </button>
               </div>
             </div>

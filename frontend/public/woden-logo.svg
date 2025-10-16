@@ -1,0 +1,74 @@
+<svg width="120" height="120" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background Circle with Gradient -->
+  <defs>
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#667eea;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#764ba2;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#06b6d4;stop-opacity:1" />
+    </linearGradient>
+    
+    <linearGradient id="iconGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#ffffff;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#f8fafc;stop-opacity:1" />
+    </linearGradient>
+    
+    <linearGradient id="accentGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#f59e0b;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#f97316;stop-opacity:1" />
+    </linearGradient>
+    
+    <!-- Glow effect -->
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+      <feMerge> 
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  
+  <!-- Main Background Circle -->
+  <circle cx="60" cy="60" r="58" fill="url(#bgGradient)" stroke="rgba(255,255,255,0.2)" stroke-width="2"/>
+  
+  <!-- Inner Circle for Depth -->
+  <circle cx="60" cy="60" r="50" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="1"/>
+  
+  <!-- Central Icon Container -->
+  <rect x="30" y="30" width="60" height="60" rx="12" fill="url(#iconGradient)" stroke="rgba(255,255,255,0.4)" stroke-width="1"/>
+  
+  <!-- AI Brain/Neural Network Symbol -->
+  <!-- Main brain shape -->
+  <path d="M45 45 Q50 40 60 45 Q70 40 75 45 Q75 50 70 55 Q60 60 50 55 Q45 50 45 45 Z" 
+        fill="url(#iconGradient)" stroke="#667eea" stroke-width="1.5"/>
+  
+  <!-- Neural connections -->
+  <circle cx="50" cy="50" r="2" fill="#667eea"/>
+  <circle cx="60" cy="48" r="2" fill="#667eea"/>
+  <circle cx="70" cy="50" r="2" fill="#667eea"/>
+  <circle cx="55" cy="55" r="2" fill="#667eea"/>
+  <circle cx="65" cy="55" r="2" fill="#667eea"/>
+  
+  <!-- Connection lines -->
+  <line x1="50" y1="50" x2="60" y2="48" stroke="#667eea" stroke-width="1"/>
+  <line x1="60" y1="48" x2="70" y2="50" stroke="#667eea" stroke-width="1"/>
+  <line x1="50" y1="50" x2="55" y2="55" stroke="#667eea" stroke-width="1"/>
+  <line x1="70" y1="50" x2="65" y2="55" stroke="#667eea" stroke-width="1"/>
+  <line x1="55" y1="55" x2="65" y2="55" stroke="#667eea" stroke-width="1"/>
+  
+  <!-- Stock/Inventory Symbol (Bar Chart) -->
+  <rect x="35" y="65" width="4" height="8" fill="#06b6d4" rx="1"/>
+  <rect x="42" y="60" width="4" height="13" fill="#06b6d4" rx="1"/>
+  <rect x="49" y="55" width="4" height="18" fill="#06b6d4" rx="1"/>
+  <rect x="56" y="62" width="4" height="11" fill="#06b6d4" rx="1"/>
+  <rect x="63" y="58" width="4" height="15" fill="#06b6d4" rx="1"/>
+  <rect x="70" y="65" width="4" height="8" fill="#06b6d4" rx="1"/>
+  
+  <!-- AI Spark/Energy Symbol -->
+  <g transform="translate(85, 25)">
+    <path d="M0 0 L3 6 L0 12 L6 9 L12 12 L9 6 L12 0 L6 3 Z" 
+          fill="url(#accentGradient)" filter="url(#glow)"/>
+  </g>
+  
+  <!-- Subtle inner glow -->
+  <circle cx="60" cy="60" r="45" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+</svg>

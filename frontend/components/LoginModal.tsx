@@ -49,7 +49,7 @@ export default function LoginModal({ onLogin }: LoginModalProps) {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-50 to-white flex items-center justify-center p-4 relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-amber-50/30 flex items-center justify-center p-4 relative overflow-hidden">
       {/* Animated Background Elements */}
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute -top-40 -right-40 w-80 h-80 bg-primary-100/70 rounded-[40%] blur-3xl animate-[blobMorph_14s_ease-in-out_infinite]"></div>
@@ -57,7 +57,7 @@ export default function LoginModal({ onLogin }: LoginModalProps) {
       </div>
 
       <div className="max-w-md w-full relative z-10">
-        <div className="bg-white rounded-3xl shadow-large border border-gray-100 p-8 animate-scale-in">
+        <div className="bg-white/95 backdrop-blur-sm rounded-3xl shadow-2xl border border-slate-200/50 p-8 animate-scale-in">
           {/* Header */}
           <div className="text-center mb-8">
             <div className="relative mx-auto w-24 h-24 mb-6">
@@ -69,19 +69,19 @@ export default function LoginModal({ onLogin }: LoginModalProps) {
                   <span key={i} className="particle absolute w-1.5 h-1.5 rounded-full bg-primary-500" style={{ top: `${28 + i*16}%`, left: `${36 + i*14}%`, animationDelay: `${i*0.25}s` }} />
                 ))
               }</div>
-              <div className="w-24 h-24 bg-gradient-primary rounded-2xl flex items-center justify-center shadow-medium">
-                <img src="/AI-LOGO.png" alt="WODEN AI" className="w-16 h-16 object-contain" />
+              <div className="w-24 h-24 bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl flex items-center justify-center shadow-2xl border border-amber-500/20">
+                <img src="/woden-logo-premium.svg" alt="WODEN AI" className="w-16 h-16 object-contain" />
               </div>
               <div className="absolute -top-2 -right-2 w-6 h-6 bg-gradient-accent rounded-full animate-bounce-subtle flex items-center justify-center">
                 <Zap className="w-3 h-3 text-white" />
               </div>
             </div>
             
-            <h1 className="text-3xl font-extrabold tracking-tight text-gray-900 mb-1">WODEN AI</h1>
-            <p className="text-gray-600 text-base font-medium">WODEN Stock AI — Inventory, Insights, Scheduling</p>
+            <h1 className="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent mb-1">WODEN AI</h1>
+            <p className="text-slate-600 text-base font-medium">WODEN Stock AI — Inventory, Insights, Scheduling</p>
             <div className="flex items-center justify-center space-x-2 mt-3">
               <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-              <span className="text-sm text-gray-600">AI‑Powered System</span>
+              <span className="text-sm text-slate-600">AI‑Powered System</span>
             </div>
           </div>
 
@@ -152,7 +152,7 @@ export default function LoginModal({ onLogin }: LoginModalProps) {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full btn-primary py-4 text-lg font-semibold group relative overflow-hidden disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full bg-gradient-to-r from-slate-800 to-slate-700 hover:from-slate-700 hover:to-slate-600 text-white py-4 text-lg font-semibold group relative overflow-hidden disabled:opacity-50 disabled:cursor-not-allowed rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 border border-slate-600/20"
             >
               {isLoading ? (
                 <div className="flex items-center justify-center space-x-2">

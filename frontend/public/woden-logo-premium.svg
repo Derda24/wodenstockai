@@ -1,0 +1,83 @@
+<svg width="120" height="120" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Premium dark gradient -->
+    <linearGradient id="premiumDark" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0f172a;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#1e293b;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#334155;stop-opacity:1" />
+    </linearGradient>
+    
+    <!-- Gold accent gradient -->
+    <linearGradient id="goldGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#fbbf24;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#f59e0b;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#d97706;stop-opacity:1" />
+    </linearGradient>
+    
+    <!-- Cyan accent -->
+    <linearGradient id="cyanGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#06b6d4;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#0891b2;stop-opacity:1" />
+    </linearGradient>
+    
+    <!-- Glow effects -->
+    <filter id="goldGlow">
+      <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+      <feMerge> 
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    
+    <filter id="cyanGlow">
+      <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+      <feMerge> 
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  
+  <!-- Main background with premium styling -->
+  <rect x="5" y="5" width="110" height="110" rx="25" fill="url(#premiumDark)" stroke="url(#goldGradient)" stroke-width="2"/>
+  
+  <!-- Inner container -->
+  <rect x="15" y="15" width="90" height="90" rx="20" fill="rgba(255,255,255,0.02)" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+  
+  <!-- Central AI symbol - sophisticated design -->
+  <g transform="translate(60, 50)">
+    <!-- Main AI brain/processor -->
+    <ellipse cx="0" cy="0" rx="20" ry="12" fill="url(#cyanGradient)" filter="url(#cyanGlow)" opacity="0.9"/>
+    
+    <!-- Neural network nodes -->
+    <circle cx="-15" cy="-8" r="3" fill="url(#goldGradient)" filter="url(#goldGlow)"/>
+    <circle cx="0" cy="-10" r="4" fill="url(#goldGradient)" filter="url(#goldGlow)"/>
+    <circle cx="15" cy="-8" r="3" fill="url(#goldGradient)" filter="url(#goldGlow)"/>
+    <circle cx="-10" cy="5" r="2.5" fill="url(#goldGradient)" filter="url(#goldGlow)"/>
+    <circle cx="10" cy="5" r="2.5" fill="url(#goldGradient)" filter="url(#goldGlow)"/>
+    <circle cx="0" cy="8" r="3" fill="url(#goldGradient)" filter="url(#goldGlow)"/>
+    
+    <!-- Connection lines -->
+    <line x1="-15" y1="-8" x2="0" y2="-10" stroke="url(#goldGradient)" stroke-width="1.5" opacity="0.7"/>
+    <line x1="0" y1="-10" x2="15" y2="-8" stroke="url(#goldGradient)" stroke-width="1.5" opacity="0.7"/>
+    <line x1="-15" y1="-8" x2="-10" y2="5" stroke="url(#goldGradient)" stroke-width="1.5" opacity="0.7"/>
+    <line x1="15" y1="-8" x2="10" y2="5" stroke="url(#goldGradient)" stroke-width="1.5" opacity="0.7"/>
+    <line x1="-10" y1="5" x2="0" y2="8" stroke="url(#goldGradient)" stroke-width="1.5" opacity="0.7"/>
+    <line x1="10" y1="5" x2="0" y2="8" stroke="url(#goldGradient)" stroke-width="1.5" opacity="0.7"/>
+  </g>
+  
+  <!-- WODEN text with premium styling -->
+  <text x="60" y="85" text-anchor="middle" fill="url(#goldGradient)" font-family="Inter, sans-serif" font-size="14" font-weight="800" letter-spacing="3px">WODEN</text>
+  
+  <!-- AI indicator -->
+  <text x="60" y="100" text-anchor="middle" fill="url(#cyanGradient)" font-family="Inter, sans-serif" font-size="10" font-weight="600" letter-spacing="1px">AI</text>
+  
+  <!-- Corner decorative elements -->
+  <circle cx="25" cy="25" r="1.5" fill="url(#goldGradient)" opacity="0.6"/>
+  <circle cx="95" cy="25" r="1.5" fill="url(#goldGradient)" opacity="0.6"/>
+  <circle cx="25" cy="95" r="1.5" fill="url(#goldGradient)" opacity="0.6"/>
+  <circle cx="95" cy="95" r="1.5" fill="url(#goldGradient)" opacity="0.6"/>
+  
+  <!-- Subtle inner border -->
+  <rect x="20" y="20" width="80" height="80" rx="18" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+</svg>

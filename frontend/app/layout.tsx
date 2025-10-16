@@ -8,9 +8,9 @@ export const metadata: Metadata = {
   title: 'WODEN Stock AI - Intelligent Stock Management System',
   description: 'AI-powered stock management system with recipe-based inventory control, sales analytics, and intelligent recommendations.',
   icons: {
-      icon: '/logo.svg',
-  shortcut: '/logo.svg',
-  apple: '/logo.svg',
+      icon: '/favicon.svg',
+  shortcut: '/favicon.svg',
+  apple: '/favicon.svg',
   },
 }
 
@@ -29,8 +29,8 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-              <link rel="icon" href="/logo.svg" />
-      <link rel="apple-touch-icon" href="/logo.svg" />
+              <link rel="icon" href="/favicon.svg" />
+      <link rel="apple-touch-icon" href="/favicon.svg" />
       </head>
       <body className={inter.className}>{children}</body>
     </html>

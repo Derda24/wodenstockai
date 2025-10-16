@@ -21,13 +21,14 @@ import {
   PieChart,
   ShoppingCart,
   Award,
-  RefreshCw
+  RefreshCw,
+  FileText
 } from 'lucide-react';
 import { API_ENDPOINTS } from '../config/api';
 
 interface Recommendation {
   id: string;
-  type: 'campaign' | 'product' | 'stock' | 'pricing';
+  type: 'campaign' | 'product' | 'stock' | 'pricing' | 'excel_insight' | 'demographic' | 'category';
   title: string;
   description: string;
   impact: 'high' | 'medium' | 'low';
@@ -36,6 +37,13 @@ interface Recommendation {
   priority: number;
   category?: string;
   urgency?: 'critical' | 'high' | 'medium' | 'low';
+  dataSource?: 'excel' | 'stock' | 'sales' | 'ai_analysis';
+  excelInsight?: {
+    productName?: string;
+    quantity?: number;
+    revenue?: number;
+    trend?: 'increasing' | 'decreasing' | 'stable';
+  };
 }
 
 interface CampaignSuggestion {
@@ -82,12 +90,145 @@ export default function AIRecommendations() {
       const response = await fetch(API_ENDPOINTS.RECOMMENDATIONS.GET);
       if (response.ok) {
         const data = await response.json();
-        setRecommendations(data.recommendations || []);
+        const baseRecommendations = data.recommendations || [];
+        
+        // Get Excel analysis data to generate data-driven recommendations
+        const analysisResponse = await fetch(`${API_ENDPOINTS.ANALYSIS.GET}?period=7d`);
+        if (analysisResponse.ok) {
+          const analysisData = await analysisResponse.json();
+          const excelRecommendations = generateExcelBasedRecommendations(analysisData);
+          setRecommendations([...baseRecommendations, ...excelRecommendations]);
+        } else {
+          setRecommendations(baseRecommendations);
+        }
       }
     } catch (error) {
       console.error('Error loading recommendations:', error);
       loadMockRecommendations();
     }
+  };
+
+  const generateExcelBasedRecommendations = (analysisData: any): Recommendation[] => {
+    const recommendations: Recommendation[] = [];
+    
+    // Generate recommendations based on top products
+    if (analysisData.topProducts && analysisData.topProducts.length > 0) {
+      const topProduct = analysisData.topProducts[0];
+      if (topProduct.revenue && topProduct.revenue > 1000) {
+        recommendations.push({
+          id: `excel-top-product-${Date.now()}`,
+          type: 'excel_insight',
+          title: `Promote ${topProduct.name} - High Revenue Generator`,
+          description: `${topProduct.name} generated ₺${topProduct.revenue.toLocaleString()} in revenue with ${topProduct.quantity} units sold. This is your top performer and should be prominently featured.`,
+          impact: 'high',
+          implementation: 'Create special promotions, increase visibility in menu, train staff to recommend this item.',
+          expectedResult: '15-25% increase in sales volume and revenue for this product.',
+          priority: 1,
+          category: 'revenue_optimization',
+          urgency: 'high',
+          dataSource: 'excel',
+          excelInsight: {
+            productName: topProduct.name,
+            quantity: topProduct.quantity,
+            revenue: topProduct.revenue,
+            trend: 'increasing'
+          }
+        });
+      }
+    }
+
+    // Generate recommendations based on demographics
+    if (analysisData.demographics) {
+      const { total_people, male_count, female_count, total_tables } = analysisData.demographics;
+      const malePercentage = (male_count / total_people) * 100;
+      const femalePercentage = (female_count / total_people) * 100;
+      
+      if (malePercentage > 60) {
+        recommendations.push({
+          id: `excel-demographic-male-${Date.now()}`,
+          type: 'demographic',
+          title: 'Male-Dominant Customer Base - Optimize Menu',
+          description: `${malePercentage.toFixed(1)}% of your customers are male. Consider adding more hearty, protein-rich items or larger portion sizes to appeal to this demographic.`,
+          impact: 'medium',
+          implementation: 'Add protein bowls, larger portions, or male-targeted menu items. Consider portion size adjustments.',
+          expectedResult: 'Increased customer satisfaction and potentially higher average order value.',
+          priority: 2,
+          category: 'menu_optimization',
+          urgency: 'medium',
+          dataSource: 'excel',
+          excelInsight: {
+            trend: 'stable'
+          }
+        });
+      } else if (femalePercentage > 60) {
+        recommendations.push({
+          id: `excel-demographic-female-${Date.now()}`,
+          type: 'demographic',
+          title: 'Female-Dominant Customer Base - Health & Wellness Focus',
+          description: `${femalePercentage.toFixed(1)}% of your customers are female. Consider adding healthier options, lighter portions, or wellness-focused menu items.`,
+          impact: 'medium',
+          implementation: 'Add healthy salads, light options, organic choices, or wellness drinks to the menu.',
+          expectedResult: 'Better customer retention and potential for premium pricing on health-focused items.',
+          priority: 2,
+          category: 'menu_optimization',
+          urgency: 'medium',
+          dataSource: 'excel',
+          excelInsight: {
+            trend: 'stable'
+          }
+        });
+      }
+    }
+
+    // Generate recommendations based on category breakdown
+    if (analysisData.excelAnalysis?.categoryStats) {
+      const categoryStats = analysisData.excelAnalysis.categoryStats;
+      const categories = Object.keys(categoryStats);
+      
+      if (categories.includes('coffee') && categoryStats.coffee.total_amount > 2000) {
+        recommendations.push({
+          id: `excel-coffee-category-${Date.now()}`,
+          type: 'category',
+          title: 'Coffee Category Dominance - Expand Coffee Menu',
+          description: `Coffee products generated ₺${categoryStats.coffee.total_amount.toLocaleString()} in revenue. Your customers love coffee - consider expanding your coffee offerings.`,
+          impact: 'high',
+          implementation: 'Add seasonal coffee drinks, premium coffee options, or coffee-based desserts to capitalize on this strong category.',
+          expectedResult: '20-30% increase in coffee category revenue through expanded offerings.',
+          priority: 1,
+          category: 'category_expansion',
+          urgency: 'high',
+          dataSource: 'excel',
+          excelInsight: {
+            trend: 'increasing'
+          }
+        });
+      }
+    }
+
+    // Generate low stock recommendations
+    if (analysisData.lowStockAlerts && analysisData.lowStockAlerts.length > 0) {
+      const criticalItems = analysisData.lowStockAlerts.filter((item: any) => 
+        item.current <= item.min && item.min > 0
+      );
+      
+      if (criticalItems.length > 0) {
+        recommendations.push({
+          id: `excel-stock-critical-${Date.now()}`,
+          type: 'stock',
+          title: `Critical Stock Alert - ${criticalItems.length} Items`,
+          description: `${criticalItems.length} items are at or below minimum stock levels. This could impact your ability to serve customers.`,
+          impact: 'high',
+          implementation: 'Immediately reorder critical items, consider temporary menu adjustments, or find alternative suppliers.',
+          expectedResult: 'Prevent stockouts and maintain customer satisfaction.',
+          priority: 1,
+          category: 'inventory_management',
+          urgency: 'critical',
+          dataSource: 'excel'
+        });
+      }
+    }
+
+    return recommendations;
   };
 
   const loadCampaigns = async () => {
@@ -284,6 +425,9 @@ export default function AIRecommendations() {
             <option value="stock">Stok</option>
             <option value="product">Ürünler</option>
             <option value="pricing">Fiyatlandırma</option>
+            <option value="excel_insight">Excel Verileri</option>
+            <option value="demographic">Demografik</option>
+            <option value="category">Kategori</option>
           </select>
         </div>
       </div>
@@ -327,6 +471,39 @@ export default function AIRecommendations() {
               <p className="text-2xl sm:text-3xl font-bold">{highPriorityRecommendations.length}</p>
             </div>
             <Star className="w-6 h-6 sm:w-8 sm:h-8 text-purple-200" />
+          </div>
+        </div>
+      </div>
+
+      {/* Excel Data Insights */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
+        <div className="bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-xl p-4 sm:p-6 text-white shadow-lg">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-emerald-100 text-xs sm:text-sm font-medium">Excel Tabanlı</p>
+              <p className="text-2xl sm:text-3xl font-bold">{recommendations.filter(r => r.dataSource === 'excel').length}</p>
+            </div>
+            <FileText className="w-6 h-6 sm:w-8 sm:h-8 text-emerald-200" />
+          </div>
+        </div>
+        
+        <div className="bg-gradient-to-r from-orange-500 to-orange-600 rounded-xl p-4 sm:p-6 text-white shadow-lg">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-orange-100 text-xs sm:text-sm font-medium">Demografik</p>
+              <p className="text-2xl sm:text-3xl font-bold">{recommendations.filter(r => r.type === 'demographic').length}</p>
+            </div>
+            <Users className="w-6 h-6 sm:w-8 sm:h-8 text-orange-200" />
+          </div>
+        </div>
+        
+        <div className="bg-gradient-to-r from-indigo-500 to-indigo-600 rounded-xl p-4 sm:p-6 text-white shadow-lg">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-indigo-100 text-xs sm:text-sm font-medium">Kategori Analizi</p>
+              <p className="text-2xl sm:text-3xl font-bold">{recommendations.filter(r => r.type === 'category').length}</p>
+            </div>
+            <PieChart className="w-6 h-6 sm:w-8 sm:h-8 text-indigo-200" />
           </div>
         </div>
       </div>
@@ -500,8 +677,27 @@ export default function AIRecommendations() {
                   </td>
                   <td className="px-6 py-4">
                     <div>
-                      <div className="text-sm font-semibold text-gray-900">{recommendation.title || 'Untitled'}</div>
+                      <div className="flex items-center space-x-2">
+                        <div className="text-sm font-semibold text-gray-900">{recommendation.title || 'Untitled'}</div>
+                        {recommendation.dataSource === 'excel' && (
+                          <div className="flex items-center space-x-1 px-2 py-1 bg-emerald-100 rounded-full">
+                            <FileText className="w-3 h-3 text-emerald-600" />
+                            <span className="text-xs font-medium text-emerald-700">Excel</span>
+                          </div>
+                        )}
+                        {recommendation.excelInsight?.revenue && (
+                          <div className="flex items-center space-x-1 px-2 py-1 bg-green-100 rounded-full">
+                            <DollarSign className="w-3 h-3 text-green-600" />
+                            <span className="text-xs font-medium text-green-700">₺{recommendation.excelInsight.revenue.toLocaleString()}</span>
+                          </div>
+                        )}
+                      </div>
                       <div className="text-sm text-gray-500 mt-1 max-w-md">{recommendation.description || 'No description available'}</div>
+                      {recommendation.excelInsight?.productName && (
+                        <div className="text-xs text-blue-600 mt-1 font-medium">
+                          📊 Based on: {recommendation.excelInsight.productName} ({recommendation.excelInsight.quantity} units)
+                        </div>
+                      )}
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">

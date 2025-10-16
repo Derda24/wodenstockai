@@ -24,7 +24,7 @@ export function LoadingScreen({ isLoading }: LoadingScreenProps) {
   return (
     <div className="fixed inset-0 z-50 flex flex-col items-center justify-center overflow-hidden">
       {/* Teal brand gradient */}
-      <div className="absolute inset-0 bg-gradient-to-br from-primary-50 to-white" />
+      <div className="absolute inset-0 bg-gradient-to-br from-slate-50 via-white to-amber-50/30" />
       {/* Morphing blobs */}
       <div className="absolute -top-24 -right-24 w-96 h-96 bg-primary-100/70 blur-3xl rounded-[40%] animate-[blobMorph_14s_ease-in-out_infinite]" />
       <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-primary-50/80 blur-3xl rounded-[50%] animate-[blobMorph_18s_ease-in-out_infinite]" />
@@ -37,13 +37,13 @@ export function LoadingScreen({ isLoading }: LoadingScreenProps) {
             {/* Orb ring */}
             <div className="absolute -inset-6 rounded-full orb-ring animate-[orbSpin_16s_linear_infinite]" />
             {/* Main logo */}
-            <img src="/AI-LOGO.png" alt="Woden AI Logo" className="relative w-32 h-32 md:w-40 md:h-40 rounded-2xl shadow-medium" />
+            <img src="/woden-logo-premium.svg" alt="Woden AI Logo" className="relative w-32 h-32 md:w-40 md:h-40 rounded-2xl shadow-2xl" />
           </div>
         </div>
         
         {/* Title and subtitle */}
         <div className="mb-12">
-          <h1 className="text-4xl md:text-6xl font-extrabold mb-4 bg-gradient-primary bg-clip-text text-transparent">
+          <h1 className="text-4xl md:text-6xl font-extrabold mb-4 bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent">
             WODEN Stock AI
           </h1>
           <p className="text-lg md:text-2xl text-gray-600 font-medium">

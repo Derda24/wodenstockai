@@ -135,15 +135,14 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
-      {/* Modern Header */}
-      <header className="bg-surface sticky top-0 z-40">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-amber-50/20">
+      {/* Elegant Header */}
+      <header className="bg-white/95 backdrop-blur-sm sticky top-0 z-40 border-b border-slate-200/50 shadow-sm">
         <div className="relative overflow-hidden">
-          <div className="absolute inset-0 opacity-80 bg-gradient-secondary" />
-          <div className="absolute -top-28 -right-32 w-80 h-80 blob-bg bg-primary-100/70 blur-3xl" />
-          <div className="absolute -bottom-24 -left-24 w-96 h-96 blob-bg bg-primary-50/70 blur-3xl" />
+          {/* Subtle background gradient */}
+          <div className="absolute inset-0 bg-gradient-to-r from-slate-50/50 via-white to-amber-50/30" />
         </div>
-        <div className="relative flex items-center justify-between px-6 py-6">
+        <div className="relative flex items-center justify-between px-6 py-4">
           <div className="flex items-center space-x-4">
             <button
               onClick={() => setIsSidebarOpen(!isSidebarOpen)}
@@ -155,40 +154,31 @@ export default function Dashboard() {
             <div className="flex items-center space-x-4">
               <div className="relative">
                 <img
-                  src="/AI-LOGO.png"
+                  src="/woden-logo-premium.svg"
                   alt="Woden AI Logo"
-                  className="w-12 h-12 rounded-2xl shadow-medium"
+                  className="w-10 h-10 rounded-xl shadow-sm"
                 />
-                <div className="absolute -top-1 -right-1 w-4 h-4 bg-gradient-accent rounded-full animate-pulse"></div>
+                <div className="absolute -top-1 -right-1 w-3 h-3 bg-gradient-to-r from-amber-400 to-amber-500 rounded-full animate-pulse shadow-sm"></div>
               </div>
               <div>
-                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight text-gray-900">
+                <h1 className="text-xl sm:text-2xl lg:text-3xl font-extrabold tracking-tight bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent">
                   WODEN Stock AI
                 </h1>
-                <p className="text-xs sm:text-sm lg:text-base text-gray-600 font-medium">AI‑powered inventory, insights, and scheduling</p>
+                <p className="text-xs sm:text-sm text-slate-600 font-medium">AI‑powered inventory, insights, and scheduling</p>
               </div>
             </div>
           </div>
-          {/* Animated Orb */}
-          <div className="block relative w-40 lg:w-56 h-40 lg:h-56 mr-2">
-            <div className="absolute inset-0 rounded-full orb-ring animate-[orbSpin_18s_linear_infinite]" />
-            <div className="absolute inset-2 rounded-full orb-core shadow-glow" />
-            <div className="absolute inset-0">{
-              [0,1,2,3,4].map(i => (
-                <span key={i} className="particle absolute w-1 h-1 lg:w-1.5 lg:h-1.5 rounded-full bg-primary-500" style={{ top: `${20 + i*12}%`, left: `${30 + i*10}%`, animationDelay: `${i*0.3}s` }} />
-              ))
-            }</div>
-          </div>
 
+          {/* Compact AI Status Indicator */}
           <div className="flex items-center space-x-4">
-            <div className="hidden md:flex items-center space-x-2 px-4 py-2 bg-primary-50 rounded-xl border border-primary-200">
-              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-              <span className="text-sm font-medium text-green-700">AI Active</span>
+            <div className="hidden md:flex items-center space-x-2 px-3 py-2 bg-gradient-to-r from-emerald-50 to-teal-50 rounded-lg border border-emerald-200/50">
+              <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse shadow-sm"></div>
+              <span className="text-sm font-medium text-emerald-700">AI Active</span>
             </div>
             
             <button
               onClick={handleLogout}
-              className="hidden lg:flex items-center space-x-2 px-4 py-2 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-xl transition-all duration-200 group"
+              className="hidden lg:flex items-center space-x-2 px-3 py-2 text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-all duration-200 group"
             >
               <LogOut size={16} className="group-hover:scale-110 transition-transform duration-200" />
               <span className="font-medium">Logout</span>
@@ -200,12 +190,12 @@ export default function Dashboard() {
 
       <div id="app" className="flex flex-col lg:flex-row">
         {/* Modern Sidebar - Hidden on mobile, shown on desktop */}
-        <aside className={`${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 fixed lg:static inset-y-0 left-0 z-50 w-80 bg-white/90 backdrop-blur-lg shadow-large lg:shadow-none border-r border-white/20 transform transition-all duration-300 ease-in-out hidden lg:block`}>
+        <aside className={`${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 fixed lg:static inset-y-0 left-0 z-50 w-80 bg-white/95 backdrop-blur-sm shadow-xl lg:shadow-none border-r border-slate-200/50 transform transition-all duration-300 ease-in-out hidden lg:block`}>
           <div className="h-full flex flex-col">
             {/* Sidebar Header */}
-            <div className="p-6 border-b border-gray-100">
-              <h2 className="text-lg font-semibold text-gray-800">Navigation</h2>
-              <p className="text-sm text-gray-500">Choose your workspace</p>
+            <div className="p-6 border-b border-slate-200/50">
+              <h2 className="text-lg font-semibold text-slate-800">Navigation</h2>
+              <p className="text-sm text-slate-500">Choose your workspace</p>
             </div>
             
             {/* Navigation */}
@@ -265,15 +255,15 @@ export default function Dashboard() {
             </nav>
             
             {/* Sidebar Footer */}
-            <div className="p-6 border-t border-gray-100">
-              <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-2xl p-4 border border-blue-100">
+            <div className="p-6 border-t border-slate-200/50">
+              <div className="bg-gradient-to-r from-slate-50 to-amber-50/50 rounded-2xl p-4 border border-slate-200/50">
                 <div className="flex items-center space-x-3">
-                  <div className="w-10 h-10 bg-gradient-primary rounded-xl flex items-center justify-center">
+                  <div className="w-10 h-10 bg-gradient-to-br from-slate-800 to-slate-700 rounded-xl flex items-center justify-center shadow-sm">
                     <Zap className="w-5 h-5 text-white" />
                   </div>
                   <div>
-                    <p className="text-sm font-semibold text-gray-800">AI Powered</p>
-                    <p className="text-xs text-gray-600">Smart inventory management</p>
+                    <p className="text-sm font-semibold text-slate-800">AI Powered</p>
+                    <p className="text-xs text-slate-600">Smart inventory management</p>
                   </div>
                 </div>
               </div>
@@ -282,14 +272,14 @@ export default function Dashboard() {
         </aside>
 
         {/* Mobile Header */}
-        <div className="lg:hidden bg-white border-b border-gray-200 px-4 py-3">
+        <div className="lg:hidden bg-white/95 backdrop-blur-sm border-b border-slate-200/50 px-4 py-3">
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-gray-900">
+            <h2 className="text-lg font-semibold text-slate-900">
               {tabs.find(tab => tab.id === activeTab)?.name || 'Dashboard'}
             </h2>
             <button
               onClick={() => setActiveTab('settings')}
-              className="p-2 rounded-lg text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-all duration-200"
+              className="p-2 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-all duration-200"
             >
               <SettingsIcon size={20} />
             </button>
@@ -306,7 +296,7 @@ export default function Dashboard() {
         </main>
 
         {/* Mobile Tab Navigation */}
-        <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50">
+        <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-sm border-t border-slate-200/50 z-50">
           <div className="flex">
             {tabs.slice(0, 4).map((tab) => {
               const Icon = tab.icon;
@@ -317,8 +307,8 @@ export default function Dashboard() {
                   onClick={() => setActiveTab(tab.id)}
                   className={`flex-1 flex flex-col items-center py-3 px-2 transition-all duration-200 ${
                     isActive 
-                      ? 'text-primary-600 bg-primary-50' 
-                      : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                      ? 'text-slate-700 bg-slate-100' 
+                      : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'
                   }`}
                 >
                   <Icon size={20} className="mb-1" />

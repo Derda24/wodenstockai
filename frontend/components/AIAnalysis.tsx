@@ -29,10 +29,23 @@ interface SalesRecord {
 
 interface AnalysisData {
   totalSales: number;
-  topProducts: Array<{ name: string; quantity: number; percentage: number }>;
-  lowStockAlerts: Array<{ name: string; current: number; min: number; unit: string }>;
+  totalRevenue: number;
+  topProducts: Array<{ name: string; quantity: number; percentage: number; revenue?: number }>;
+  lowStockAlerts: Array<{ name: string; current: number; min: number; unit: string; percentage: string }>;
   dailyTrends: Array<{ date: string; totalSales: number; products: number }>;
   categoryBreakdown: Array<{ category: string; count: number; percentage: number }>;
+  demographics?: {
+    total_people: number;
+    total_tables: number;
+    male_count: number;
+    female_count: number;
+  };
+  excelAnalysis?: {
+    company: string;
+    dateRange: string;
+    totalQuantity: number;
+    categoryStats: Record<string, { count: number; total_amount: number }>;
+  };
   dataInfo?: {
     using_outdated_data: boolean;
     requested_days: number;
@@ -43,10 +56,13 @@ interface AnalysisData {
 export default function AIAnalysis() {
   const [analysisData, setAnalysisData] = useState<AnalysisData>({
     totalSales: 0,
+    totalRevenue: 0,
     topProducts: [],
     lowStockAlerts: [],
     dailyTrends: [],
-    categoryBreakdown: []
+    categoryBreakdown: [],
+    demographics: undefined,
+    excelAnalysis: undefined
   });
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
@@ -85,10 +101,13 @@ export default function AIAnalysis() {
         // Ensure all required fields exist with fallbacks
         setAnalysisData({
           totalSales: data.totalSales || 0,
+          totalRevenue: data.totalRevenue || 0,
           topProducts: data.topProducts || [],
           lowStockAlerts: data.lowStockAlerts || [],
           dailyTrends: data.dailyTrends || [],
-          categoryBreakdown: data.categoryBreakdown || []
+          categoryBreakdown: data.categoryBreakdown || [],
+          demographics: data.demographics,
+          excelAnalysis: data.excelAnalysis
         });
       } else {
         console.error('Analysis API error:', response.status, response.statusText);
@@ -335,6 +354,117 @@ export default function AIAnalysis() {
         </div>
       </div>
 
+      {/* Excel Data Insights Section */}
+      {analysisData.excelAnalysis && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Excel Revenue Card */}
+          {analysisData.totalRevenue > 0 && (
+            <div className="card-elevated group hover:scale-105 transition-all duration-300">
+              <div className="flex items-center justify-between mb-4">
+                <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-2xl flex items-center justify-center shadow-medium">
+                  <DollarSign className="w-6 h-6 text-white" />
+                </div>
+                <div className="text-right">
+                  <div className="flex items-center space-x-1 text-green-600">
+                    <FileText className="w-4 h-4" />
+                    <span className="text-sm font-medium">Excel</span>
+                  </div>
+                </div>
+              </div>
+              <div>
+                <p className="text-sm font-medium text-gray-600 mb-1">Total Revenue</p>
+                <p className="text-3xl font-bold text-gray-900 mb-2">₺{analysisData.totalRevenue.toLocaleString()}</p>
+                <p className="text-xs text-gray-500">From Excel sales data</p>
+                {analysisData.excelAnalysis.dateRange && (
+                  <p className="text-xs text-blue-600 mt-1">{analysisData.excelAnalysis.dateRange}</p>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Excel Quantity Card */}
+          {analysisData.excelAnalysis.totalQuantity > 0 && (
+            <div className="card-elevated group hover:scale-105 transition-all duration-300">
+              <div className="flex items-center justify-between mb-4">
+                <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl flex items-center justify-center shadow-medium">
+                  <Package className="w-6 h-6 text-white" />
+                </div>
+                <div className="text-right">
+                  <div className="flex items-center space-x-1 text-orange-600">
+                    <Upload className="w-4 h-4" />
+                    <span className="text-sm font-medium">Items</span>
+                  </div>
+                </div>
+              </div>
+              <div>
+                <p className="text-sm font-medium text-gray-600 mb-1">Total Items Sold</p>
+                <p className="text-3xl font-bold text-gray-900 mb-2">{analysisData.excelAnalysis.totalQuantity.toLocaleString()}</p>
+                <p className="text-xs text-gray-500">From Excel uploads</p>
+                {analysisData.excelAnalysis.company && (
+                  <p className="text-xs text-blue-600 mt-1">{analysisData.excelAnalysis.company}</p>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Demographics Section */}
+      {analysisData.demographics && (
+        <div className="card-elevated">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center">
+                <Users className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <h3 className="text-xl font-bold text-gray-900">Customer Demographics</h3>
+                <p className="text-sm text-gray-600">Insights from Excel sales data</p>
+              </div>
+            </div>
+            <div className="flex items-center space-x-2 px-3 py-1 bg-purple-100 rounded-full">
+              <Brain className="w-4 h-4 text-purple-600" />
+              <span className="text-sm font-medium text-purple-700">AI Analysis</span>
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="text-center p-4 bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl">
+              <div className="text-2xl font-bold text-blue-600 mb-1">{analysisData.demographics.total_people}</div>
+              <div className="text-sm text-blue-700 font-medium">Total People</div>
+            </div>
+            <div className="text-center p-4 bg-gradient-to-br from-green-50 to-green-100 rounded-xl">
+              <div className="text-2xl font-bold text-green-600 mb-1">{analysisData.demographics.total_tables}</div>
+              <div className="text-sm text-green-700 font-medium">Tables Served</div>
+            </div>
+            <div className="text-center p-4 bg-gradient-to-br from-indigo-50 to-indigo-100 rounded-xl">
+              <div className="text-2xl font-bold text-indigo-600 mb-1">{analysisData.demographics.male_count}</div>
+              <div className="text-sm text-indigo-700 font-medium">Male Customers</div>
+            </div>
+            <div className="text-center p-4 bg-gradient-to-br from-pink-50 to-pink-100 rounded-xl">
+              <div className="text-2xl font-bold text-pink-600 mb-1">{analysisData.demographics.female_count}</div>
+              <div className="text-sm text-pink-700 font-medium">Female Customers</div>
+            </div>
+          </div>
+          
+          {analysisData.demographics.total_tables > 0 && (
+            <div className="mt-4 p-4 bg-gradient-to-r from-slate-50 to-slate-100 rounded-xl">
+              <div className="text-center">
+                <div className="text-lg font-semibold text-slate-700 mb-1">
+                  Average: {(analysisData.demographics.total_people / analysisData.demographics.total_tables).toFixed(1)} people per table
+                </div>
+                <div className="text-sm text-slate-600">
+                  {analysisData.demographics.male_count > analysisData.demographics.female_count ? 
+                    `${((analysisData.demographics.male_count / analysisData.demographics.total_people) * 100).toFixed(1)}% male customers` :
+                    `${((analysisData.demographics.female_count / analysisData.demographics.total_people) * 100).toFixed(1)}% female customers`
+                  }
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Top Products Table */}
       <div className="card-elevated">
         <div className="flex items-center justify-between mb-6">
@@ -379,6 +509,11 @@ export default function AIAnalysis() {
                     </h4>
                     <p className="text-sm text-gray-500">
                       {product.quantity} units sold
+                      {product.revenue && (
+                        <span className="ml-2 text-green-600 font-medium">
+                          • ₺{product.revenue.toLocaleString()}
+                        </span>
+                      )}
                     </p>
                   </div>
                 </div>
