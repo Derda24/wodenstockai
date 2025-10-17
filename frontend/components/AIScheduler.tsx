@@ -74,6 +74,29 @@ export default function AIScheduler() {
     preferredOpening: number[];
     preferredClosing: number[];
   }}>({});
+  const [draggedBarista, setDraggedBarista] = useState<string | null>(null);
+  const [draggedShift, setDraggedShift] = useState<string | null>(null);
+  const [dragOverBarista, setDragOverBarista] = useState<string | null>(null);
+  const [draggedEvent, setDraggedEvent] = useState<string | null>(null);
+  const [dragOverDay, setDragOverDay] = useState<string | null>(null);
+  const [manualSchedule, setManualSchedule] = useState<{[key: string]: {
+    openings: string[];
+    closings: string[];
+    off: string[];
+  }}>({});
+  
+  const [baristaShifts, setBaristaShifts] = useState<{[key: string]: {[shiftType: string]: string}}>({});
+  const [dayEvents, setDayEvents] = useState<{[key: string]: string[]}>({});
+
+  // Available shift times
+  const shiftTimes = [
+    '07:30-16:30',
+    '07:30-15:30', 
+    '15:30-00:30',
+    '17:30-00:30',
+    '18:30-00:30',
+    '19:30-00:30'
+  ];
 
   // Load real data from API
   useEffect(() => {
@@ -262,79 +285,7 @@ export default function AIScheduler() {
     return start;
   };
 
-  const generateAISchedule = async () => {
-    // First show preferences if not already shown
-    if (!showPreferences) {
-      initializePreferences();
-      setShowPreferences(true);
-      return;
-    }
-
-    try {
-      setIsLoading(true);
-      const weekStart = getWeekStart(selectedWeek).toISOString().split('T')[0];
-      
-      const formData = new FormData();
-      formData.append('week_start', weekStart);
-      formData.append('preferences', JSON.stringify(baristaPreferences));
-      
-      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-      const headers: Record<string, string> = {};
-      if (token) headers['Authorization'] = `Bearer ${token}`;
-
-      const response = await fetch(API_ENDPOINTS.SCHEDULER.SCHEDULES.GENERATE, {
-        method: 'POST',
-        body: formData,
-        headers
-      });
-      
-      if (response.ok) {
-        const result = await response.json();
-        console.log('AI Schedule generated:', result);
-        // Reload schedules to show the new one
-        if (result?.schedule_id) {
-          // Immediately reflect new schedule
-          setCurrentSchedule({
-            id: result.schedule_id,
-            week_start: result.week_start,
-            week_end: result.week_end,
-            status: 'draft',
-            created_by: 'AI Scheduler',
-            notes: result.message,
-            shifts: []
-          } as WeeklySchedule);
-        }
-        if (Array.isArray(result?.shifts)) {
-          setCurrentShifts(result.shifts as Shift[]);
-        } else if (result?.schedule_id) {
-          await loadShifts(result.schedule_id);
-        } else {
-          await loadSchedules();
-        }
-        setShowPreferences(false);
-        alert('AI Schedule generated successfully!');
-        // Trigger subtle confetti pulse
-        try {
-          const el = document.createElement('div');
-          el.className = 'fixed inset-0 pointer-events-none';
-          el.innerHTML = '<div style="position:absolute;inset:0;animation:fadeConfetti 1s ease-out forwards;">\
-            <svg width="0" height="0"><defs><filter id="goo"><feGaussianBlur in="SourceGraphic" stdDeviation="6" result="blur"/><feColorMatrix in="blur" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 18 -7" result="goo"/><feBlend in="SourceGraphic" in2="goo"/></filter></defs></svg>\
-          </div>';
-          document.body.appendChild(el);
-          setTimeout(() => document.body.removeChild(el), 1200);
-        } catch {}
-      } else {
-        const text = await response.text().catch(() => '');
-        console.error('Failed to generate schedule', { status: response.status, body: text });
-        alert(`Failed to generate schedule (status ${response.status}).`);
-      }
-    } catch (error) {
-      console.error('Error generating schedule:', error);
-      alert('Error generating schedule. Please try again.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  // Removed AI schedule generation - now using drag and drop interface
 
   const getWeekDates = (date: Date) => {
     const start = new Date(date);
@@ -580,41 +531,181 @@ export default function AIScheduler() {
     return baristas.find(b => b.id === baristaId) || baristas.find(b => b.name === baristaId);
   };
 
-  const initializePreferences = () => {
-    const preferences: {[key: string]: {
-      dayOff: number;
-      preferredOpening: number[];
-      preferredClosing: number[];
-    }} = {};
-    
-    baristas.forEach(barista => {
-      preferences[barista.id] = {
-        dayOff: -1,
-        preferredOpening: [],
-        preferredClosing: []
-      };
-    });
-    
-    setBaristaPreferences(preferences);
+  // Removed preference functions - now using drag and drop interface
+
+  // Drag and Drop Functions
+  const handleDragStart = (e: React.DragEvent, baristaName: string) => {
+    setDraggedBarista(baristaName);
+    e.dataTransfer.effectAllowed = 'move';
   };
 
-  const updateBaristaPreference = (baristaId: string, type: 'dayOff' | 'preferredOpening' | 'preferredClosing', value: number | number[]) => {
-    setBaristaPreferences(prev => ({
-      ...prev,
-      [baristaId]: {
-        ...prev[baristaId],
-        [type]: value
+  const handleShiftDragStart = (e: React.DragEvent, shiftTime: string) => {
+    setDraggedShift(shiftTime);
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
+  const handleEventDragStart = (e: React.DragEvent, eventName: string) => {
+    setDraggedEvent(eventName);
+    e.dataTransfer.effectAllowed = 'copy';
+  };
+
+  const handleEventDragEnd = (e: React.DragEvent) => {
+    setDraggedEvent(null);
+    setDragOverDay(null);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+  };
+
+  const handleDrop = (e: React.DragEvent, dayIndex: number, shiftType: 'openings' | 'closings' | 'off') => {
+    e.preventDefault();
+    if (!draggedBarista) return;
+
+    const dayKey = dayIndex.toString();
+    setManualSchedule(prev => {
+      const newSchedule = { ...prev };
+      if (!newSchedule[dayKey]) {
+        newSchedule[dayKey] = { openings: [], closings: [], off: [] };
       }
+
+      // Check if this barista is already in this specific shift
+      const isAlreadyInThisShift = newSchedule[dayKey][shiftType].includes(draggedBarista);
+      
+      if (!isAlreadyInThisShift) {
+        // Add to new position (allow multiple assignments of same barista)
+        newSchedule[dayKey][shiftType].push(draggedBarista);
+      }
+
+      return newSchedule;
+    });
+
+    setDraggedBarista(null);
+  };
+
+  const handleBaristaDragOver = (e: React.DragEvent, baristaName: string) => {
+    e.preventDefault();
+    if (draggedShift) {
+      setDragOverBarista(baristaName);
+      e.dataTransfer.dropEffect = 'copy';
+    }
+  };
+
+  const handleBaristaDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setDragOverBarista(null);
+  };
+
+  const handleDayDragOver = (e: React.DragEvent, dayKey: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (draggedEvent) {
+      setDragOverDay(dayKey);
+      e.dataTransfer.dropEffect = 'copy';
+    }
+  };
+
+  const handleDayDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setDragOverDay(null);
+  };
+
+  const handleBaristaDrop = (e: React.DragEvent, baristaName: string, shiftType?: string) => {
+    e.preventDefault();
+    if (!draggedShift) return;
+
+    console.log(`Dropping shift ${draggedShift} on barista ${baristaName} for shift type ${shiftType}`); // Debug log
+
+    setBaristaShifts(prev => ({
+      ...prev,
+      [baristaName]: {
+        ...prev[baristaName],
+        [shiftType || 'default']: draggedShift
+      }
+    }));
+
+    setDraggedShift(null);
+    setDragOverBarista(null);
+  };
+
+  const handleDayDrop = (e: React.DragEvent, dayKey: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!draggedEvent) return;
+
+    console.log(`Dropping event ${draggedEvent} on day ${dayKey}`); // Debug log
+
+    setDayEvents(prev => {
+      const currentEvents = prev[dayKey] || [];
+      // Check if event already exists on this day
+      if (currentEvents.includes(draggedEvent)) {
+        console.log(`Event ${draggedEvent} already exists on day ${dayKey}`);
+        return prev;
+      }
+      
+      return {
+        ...prev,
+        [dayKey]: [...currentEvents, draggedEvent]
+      };
+    });
+
+    setDraggedEvent(null);
+    setDragOverDay(null);
+  };
+
+  const removeEventFromDay = (dayKey: string, eventName: string) => {
+    setDayEvents(prev => ({
+      ...prev,
+      [dayKey]: (prev[dayKey] || []).filter(event => event !== eventName)
     }));
   };
 
-  const toggleDayPreference = (baristaId: string, type: 'preferredOpening' | 'preferredClosing', dayIndex: number) => {
-    const current = baristaPreferences[baristaId]?.[type] || [];
-    const updated = current.includes(dayIndex) 
-      ? current.filter(d => d !== dayIndex)
-      : [...current, dayIndex];
+  const removeShiftFromBarista = (baristaName: string, shiftType?: string) => {
+    setBaristaShifts(prev => {
+      const newShifts = { ...prev };
+      if (shiftType) {
+        if (newShifts[baristaName]) {
+          delete newShifts[baristaName][shiftType];
+          if (Object.keys(newShifts[baristaName]).length === 0) {
+            delete newShifts[baristaName];
+          }
+        }
+      } else {
+        delete newShifts[baristaName];
+      }
+      return newShifts;
+    });
+  };
+
+  const removeFromSchedule = (baristaName: string, dayIndex: number, shiftType: 'openings' | 'closings' | 'off') => {
+    const dayKey = dayIndex.toString();
+    setManualSchedule(prev => {
+      const newSchedule = { ...prev };
+      if (newSchedule[dayKey]) {
+        if (shiftType === 'openings') {
+          newSchedule[dayKey].openings = newSchedule[dayKey].openings.filter(name => name !== baristaName);
+        } else if (shiftType === 'closings') {
+          newSchedule[dayKey].closings = newSchedule[dayKey].closings.filter(name => name !== baristaName);
+        } else if (shiftType === 'off') {
+          newSchedule[dayKey].off = newSchedule[dayKey].off.filter(name => name !== baristaName);
+        }
+      }
+      return newSchedule;
+    });
+  };
+
+  const getAvailableBaristas = (dayIndex: number) => {
+    const dayKey = dayIndex.toString();
+    const scheduledBaristas = new Set<string>();
     
-    updateBaristaPreference(baristaId, type, updated);
+    if (manualSchedule[dayKey]) {
+      manualSchedule[dayKey].openings.forEach(name => scheduledBaristas.add(name));
+      manualSchedule[dayKey].closings.forEach(name => scheduledBaristas.add(name));
+      manualSchedule[dayKey].off.forEach(name => scheduledBaristas.add(name));
+    }
+
+    return baristas.filter(barista => !scheduledBaristas.has(barista.name));
   };
 
   const weekDates = getWeekDates(selectedWeek);
@@ -731,198 +822,86 @@ export default function AIScheduler() {
       </div>
 
       {/* Quick Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-        <div className="card-elevated group hover:scale-105 transition-all duration-300">
-          <div className="flex items-center justify-between mb-4">
-            <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center shadow-medium">
-              <Users className="w-6 h-6 text-white" />
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className="bg-white border border-gray-200 rounded-lg p-3 hover:shadow-sm transition-all duration-200">
+          <div className="flex items-center justify-between mb-2">
+            <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
+              <Users className="w-4 h-4 text-white" />
             </div>
-            <div className="text-right">
-              <div className="flex items-center space-x-1 text-blue-600">
-                <Coffee className="w-4 h-4" />
-                <span className="text-sm font-medium">Active</span>
-              </div>
+            <div className="flex items-center space-x-1 text-blue-600">
+              <Coffee className="w-3 h-3" />
+              <span className="text-xs font-medium">Active</span>
             </div>
           </div>
           <div>
-            <p className="text-sm font-medium text-gray-600 mb-1">Total Baristas</p>
-            <p className="text-3xl font-bold text-gray-900 mb-2">{baristas.length}</p>
-            <p className="text-xs text-gray-500">Ready to schedule</p>
+            <p className="text-xs font-medium text-gray-600 mb-1">Total Baristas</p>
+            <p className="text-xl font-bold text-gray-900">{baristas.length}</p>
           </div>
         </div>
 
-        <div className="card-elevated group hover:scale-105 transition-all duration-300">
-          <div className="flex items-center justify-between mb-4">
-            <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-2xl flex items-center justify-center shadow-medium">
-              <Clock className="w-6 h-6 text-white" />
+        <div className="bg-white border border-gray-200 rounded-lg p-3 hover:shadow-sm transition-all duration-200">
+          <div className="flex items-center justify-between mb-2">
+            <div className="w-8 h-8 bg-gradient-to-br from-green-500 to-green-600 rounded-lg flex items-center justify-center">
+              <Clock className="w-4 h-4 text-white" />
             </div>
-            <div className="text-right">
-              <div className="flex items-center space-x-1 text-green-600">
-                <CheckCircle className="w-4 h-4" />
-                <span className="text-sm font-medium">Covered</span>
-              </div>
+            <div className="flex items-center space-x-1 text-green-600">
+              <CheckCircle className="w-3 h-3" />
+              <span className="text-xs font-medium">Covered</span>
             </div>
           </div>
           <div>
-            <p className="text-sm font-medium text-gray-600 mb-1">Weekly Hours</p>
-            <p className="text-3xl font-bold text-gray-900 mb-2">315</p>
-            <p className="text-xs text-gray-500">Total coverage</p>
+            <p className="text-xs font-medium text-gray-600 mb-1">Weekly Hours</p>
+            <p className="text-xl font-bold text-gray-900">315</p>
           </div>
         </div>
 
-        <div className="card-elevated group hover:scale-105 transition-all duration-300">
-          <div className="flex items-center justify-between mb-4">
-            <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl flex items-center justify-center shadow-medium">
-              <Target className="w-6 h-6 text-white" />
+        <div className="bg-white border border-gray-200 rounded-lg p-3 hover:shadow-sm transition-all duration-200">
+          <div className="flex items-center justify-between mb-2">
+            <div className="w-8 h-8 bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg flex items-center justify-center">
+              <Target className="w-4 h-4 text-white" />
             </div>
-            <div className="text-right">
-              <div className="flex items-center space-x-1 text-orange-600">
-                <Brain className="w-4 h-4" />
-                <span className="text-sm font-medium">AI</span>
-              </div>
+            <div className="flex items-center space-x-1 text-orange-600">
+              <Brain className="w-3 h-3" />
+              <span className="text-xs font-medium">AI</span>
             </div>
           </div>
           <div>
-            <p className="text-sm font-medium text-gray-600 mb-1">Schedules</p>
-            <p className="text-3xl font-bold text-gray-900 mb-2">4</p>
-            <p className="text-xs text-gray-500">This month</p>
+            <p className="text-xs font-medium text-gray-600 mb-1">Schedules</p>
+            <p className="text-xl font-bold text-gray-900">4</p>
           </div>
         </div>
 
-        <div className="card-elevated group hover:scale-105 transition-all duration-300">
-          <div className="flex items-center justify-between mb-4">
-            <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-medium">
-              <BarChart3 className="w-6 h-6 text-white" />
+        <div className="bg-white border border-gray-200 rounded-lg p-3 hover:shadow-sm transition-all duration-200">
+          <div className="flex items-center justify-between mb-2">
+            <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg flex items-center justify-center">
+              <BarChart3 className="w-4 h-4 text-white" />
             </div>
-            <div className="text-right">
-              <div className="flex items-center space-x-1 text-purple-600">
-                <Zap className="w-4 h-4" />
-                <span className="text-sm font-medium">Optimized</span>
-              </div>
+            <div className="flex items-center space-x-1 text-purple-600">
+              <Zap className="w-3 h-3" />
+              <span className="text-xs font-medium">Optimized</span>
             </div>
           </div>
           <div>
-            <p className="text-sm font-medium text-gray-600 mb-1">Efficiency</p>
-            <p className="text-3xl font-bold text-gray-900 mb-2">94%</p>
-            <p className="text-xs text-gray-500">AI optimized</p>
+            <p className="text-xs font-medium text-gray-600 mb-1">Efficiency</p>
+            <p className="text-xl font-bold text-gray-900">94%</p>
           </div>
         </div>
       </div>
 
-      {/* Preferences Modal */}
-      {showPreferences && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6 border-b border-gray-200">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-2xl font-bold text-gray-900">Barista Preferences</h3>
-                  <p className="text-gray-600 mt-1">Set each barista's preferences for the week</p>
-                </div>
-                <button
-                  onClick={() => setShowPreferences(false)}
-                  className="text-gray-400 hover:text-gray-600"
-                >
-                  <X className="w-6 h-6" />
-                </button>
-              </div>
-            </div>
-            
-            <div className="p-6">
-              <div className="space-y-6">
-                {baristas.map((barista) => (
-                  <div key={barista.id} className="bg-gray-50 rounded-xl p-4">
-                    <div className="flex items-center space-x-3 mb-4">
-                      <div className="w-10 h-10 bg-gradient-to-br from-purple-400 to-pink-500 rounded-full flex items-center justify-center">
-                        <User className="w-5 h-5 text-white" />
-                      </div>
-                      <div>
-                        <h4 className="font-semibold text-gray-900">{barista.name}</h4>
-                        <p className="text-sm text-gray-500">{barista.type}</p>
-                      </div>
-                    </div>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      {/* Day Off Selection */}
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Day Off
-                        </label>
-                        <select
-                          value={baristaPreferences[barista.id]?.dayOff || ''}
-                          onChange={(e) => updateBaristaPreference(barista.id, 'dayOff', e.target.value ? parseInt(e.target.value) : -1)}
-                          className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                        >
-                          <option value="">Select day off</option>
-                          {['Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi', 'Pazar'].map((day, index) => (
-                            <option key={index} value={index}>{day}</option>
-                          ))}
-                        </select>
-                      </div>
-                      
-                      {/* Preferred Opening Days */}
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Preferred Opening Days
-                        </label>
-                        <div className="space-y-1">
-                          {['Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi', 'Pazar'].map((day, index) => (
-                            <label key={index} className="flex items-center space-x-2">
-                              <input
-                                type="checkbox"
-                                checked={baristaPreferences[barista.id]?.preferredOpening?.includes(index) || false}
-                                onChange={() => toggleDayPreference(barista.id, 'preferredOpening', index)}
-                                className="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
-                              />
-                              <span className="text-sm text-gray-700">{day}</span>
-                            </label>
-                          ))}
-                        </div>
-                      </div>
-                      
-                      {/* Preferred Closing Days */}
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Preferred Closing Days
-                        </label>
-                        <div className="space-y-1">
-                          {['Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi', 'Pazar'].map((day, index) => (
-                            <label key={index} className="flex items-center space-x-2">
-                              <input
-                                type="checkbox"
-                                checked={baristaPreferences[barista.id]?.preferredClosing?.includes(index) || false}
-                                onChange={() => toggleDayPreference(barista.id, 'preferredClosing', index)}
-                                className="w-4 h-4 text-green-600 border-gray-300 rounded focus:ring-green-500"
-                              />
-                              <span className="text-sm text-gray-700">{day}</span>
-                            </label>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-              
-              <div className="flex justify-end space-x-3 mt-6 pt-6 border-t border-gray-200">
-                <button
-                  onClick={() => setShowPreferences(false)}
-                  className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={generateAISchedule}
-                  disabled={isLoading}
-                  className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 transition-colors"
-                >
-                  {isLoading ? 'Generating...' : 'Generate Schedule'}
-                </button>
-              </div>
-            </div>
+      {/* Drag and Drop Instructions */}
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
+        <div className="flex items-center space-x-2">
+          <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0">
+            <span className="text-white text-xs font-bold">!</span>
+          </div>
+          <div>
+            <h4 className="font-medium text-blue-900 text-sm">Quick Guide:</h4>
+            <p className="text-blue-800 text-xs">
+              Drag baristas to shifts • Drag shift times to baristas • Drag Cam/Bar events to days • Same barista can work multiple days
+            </p>
           </div>
         </div>
-      )}
+      </div>
 
       {/* Main Content Area */}
       {activeView === 'calendar' && (
@@ -933,22 +912,21 @@ export default function AIScheduler() {
                 <Calendar className="w-5 h-5 text-white" />
               </div>
               <div>
-                <h3 className="text-xl font-bold text-gray-900">Weekly Schedule</h3>
-                <p className="text-sm text-gray-600">AI-powered barista scheduling</p>
+                <h3 className="text-xl font-bold text-gray-900">Drag & Drop Schedule</h3>
+                <p className="text-sm text-gray-600">Drag barista names to arrange your weekly schedule</p>
               </div>
             </div>
             <div className="flex space-x-2">
               <button
-                onClick={generateAISchedule}
-                disabled={isLoading}
-                className="flex items-center space-x-2 px-4 py-3 bg-purple-500 text-white rounded-xl text-sm font-medium shadow-soft hover:bg-purple-600 focus:ring-2 focus:ring-purple-500 transition-all duration-200 touch-manipulation min-h-[44px] disabled:opacity-50 disabled:cursor-not-allowed"
+                onClick={() => {
+                  setManualSchedule({});
+                  setBaristaShifts({});
+                  setDayEvents({});
+                }}
+                className="flex items-center space-x-2 px-4 py-3 bg-gray-500 text-white rounded-xl text-sm font-medium shadow-soft hover:bg-gray-600 focus:ring-2 focus:ring-gray-500 transition-all duration-200 touch-manipulation min-h-[44px]"
               >
-                {isLoading ? (
-                  <RefreshCw className="w-4 h-4 animate-spin" />
-                ) : (
-                  <Brain className="w-4 h-4" />
-                )}
-                <span>{isLoading ? 'Generating...' : 'Generate AI Schedule'}</span>
+                <RefreshCw className="w-4 h-4" />
+                <span>Clear All</span>
               </button>
               <button onClick={exportStyledExcel} className="flex items-center space-x-2 px-4 py-3 bg-white border border-gray-200 text-gray-700 rounded-xl text-sm font-medium shadow-soft hover:bg-gray-50 focus:ring-2 focus:ring-purple-500 transition-all duration-200 touch-manipulation min-h-[44px]">
                 <Download className="w-4 h-4" />
@@ -957,96 +935,297 @@ export default function AIScheduler() {
             </div>
           </div>
 
-          {/* Weekly Schedule - Days as Columns */}
-          <div className="overflow-x-auto">
-            <div className="min-w-full">
-              {/* Days as columns */}
-              <div className="grid grid-cols-7 gap-4">
-                {weekDates.map((date, dayIndex) => {
-                  const dayName = ['Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi', 'Pazar'][dayIndex];
-                  const shifts = getShiftsForDay(dayIndex);
-                  const openingShifts = shifts.filter((s: any) => s.shift_type === 'morning');
-                  const closingShifts = shifts.filter((s: any) => s.shift_type === 'evening');
-                  const openRequired = 2;
-                  const closeRequired = 4;
-                  const offList = getOffBaristasForDay(dayIndex);
-                  
-                  return (
-                    <div key={dayIndex} className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
-                      {/* Day Header */}
-                      <div className="text-center mb-4 pb-3 border-b border-gray-100">
-                        <div className="text-lg font-bold text-gray-900">{dayName}</div>
-                        <div className="text-sm text-gray-500">{date.getDate()}/{date.getMonth() + 1}</div>
+          {/* Drag and Drop Schedule */}
+          <div className="space-y-6">
+            {/* Available Baristas */}
+            <div className="bg-gray-50 rounded-xl p-4">
+              <h4 className="text-lg font-semibold text-gray-900 mb-3">Available Baristas</h4>
+              <div className="flex flex-wrap gap-2">
+                {baristas.map((barista) => (
+                  <div
+                    key={barista.id}
+                    draggable
+                    onDragStart={(e) => handleDragStart(e, barista.name)}
+                    onDragOver={(e) => handleBaristaDragOver(e, barista.name)}
+                    onDragLeave={handleBaristaDragLeave}
+                    onDrop={(e) => handleBaristaDrop(e, barista.name, 'default')}
+                    className={`px-3 py-2 border rounded-lg text-sm font-medium cursor-move transition-colors relative ${
+                      dragOverBarista === barista.name && draggedShift
+                        ? 'bg-orange-100 border-orange-400 text-orange-800'
+                        : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-gray-300'
+                    }`}
+                  >
+                    {barista.name}
+                    {baristaShifts[barista.name] && (
+                      <div className="absolute -top-1 -right-1 flex flex-col gap-1">
+                        {Object.entries(baristaShifts[barista.name]).map(([shiftType, time]) => (
+                          <div 
+                            key={shiftType}
+                            className="bg-blue-500 text-white text-xs px-1 py-0.5 rounded-full cursor-pointer hover:bg-blue-600"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              removeShiftFromBarista(barista.name, shiftType);
+                            }}
+                            title={`Click to remove ${shiftType} shift time`}
+                          >
+                            {time}
+                          </div>
+                        ))}
                       </div>
-                      
-                      {/* Opening Shifts (2 people) */}
-                      <div className="mb-4">
-                        <div className="text-xs font-semibold text-blue-600 mb-2 uppercase tracking-wide">
-                          Açılış (2 kişi)
-                        </div>
-                        <div className="space-y-2">
-                          {openingShifts.slice(0, openRequired).map((shift: any, idx: number) => {
-                            const barista = getBaristaById(shift.barista_id);
-                            return (
-                              <div key={idx} className="bg-blue-50 rounded-lg p-2 text-sm">
-                                <div className="font-medium text-blue-900">{barista?.name || 'Unknown'}</div>
-                                <div className="text-blue-700">{(shift.start_time || '07:30').toString().slice(0,5)}-{(shift.end_time || '16:30').toString().slice(0,5)}</div>
-                              </div>
-                            );
-                          })}
-                          {openingShifts.length < openRequired &&
-                            Array.from({ length: openRequired - openingShifts.length }).map((_, i) => (
-                              <div key={`open-empty-${i}`} className="bg-gray-100 rounded-lg p-2 text-sm text-gray-400 italic">
-                                Boş
-                              </div>
-                            ))}
-                        </div>
+                    )}
+                    {dragOverBarista === barista.name && draggedShift && (
+                      <div className="absolute -bottom-1 -right-1 bg-orange-500 text-white text-xs px-1 py-0.5 rounded-full">
+                        {draggedShift}
                       </div>
-                      
-                      {/* Closing Shifts (4 people) */}
-                      <div>
-                        <div className="text-xs font-semibold text-green-600 mb-2 uppercase tracking-wide">
-                          Kapanış (4 kişi)
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Available Shift Times */}
+            <div className="bg-orange-50 rounded-xl p-4">
+              <h4 className="text-lg font-semibold text-gray-900 mb-3">Available Shift Times</h4>
+              <div className="flex flex-wrap gap-2">
+                {shiftTimes.map((shiftTime) => (
+                  <div
+                    key={shiftTime}
+                    draggable
+                    onDragStart={(e) => handleShiftDragStart(e, shiftTime)}
+                    className="px-3 py-2 bg-orange-100 border border-orange-200 rounded-lg text-sm font-medium text-orange-800 cursor-move hover:bg-orange-200 hover:border-orange-300 transition-colors"
+                  >
+                    <Clock className="w-3 h-3 inline mr-1" />
+                    {shiftTime}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Available Events */}
+            <div className="bg-purple-50 rounded-xl p-4">
+              <h4 className="text-lg font-semibold text-gray-900 mb-3">Available Events</h4>
+              <div className="flex flex-wrap gap-2">
+                <div
+                  draggable
+                  onDragStart={(e) => handleEventDragStart(e, 'Cam')}
+                  onDragEnd={handleEventDragEnd}
+                  className="px-3 py-2 bg-purple-100 border border-purple-200 rounded-lg text-sm font-medium text-purple-800 cursor-move hover:bg-purple-200 hover:border-purple-300 transition-colors"
+                >
+                  Cam
+                </div>
+                <div
+                  draggable
+                  onDragStart={(e) => handleEventDragStart(e, 'Bar')}
+                  onDragEnd={handleEventDragEnd}
+                  className="px-3 py-2 bg-purple-100 border border-purple-200 rounded-lg text-sm font-medium text-purple-800 cursor-move hover:bg-purple-200 hover:border-purple-300 transition-colors"
+                >
+                  Bar
+                </div>
+              </div>
+            </div>
+
+            {/* Weekly Schedule Grid */}
+            <div className="grid grid-cols-7 gap-4">
+              {weekDates.map((date, dayIndex) => {
+                const dayName = ['Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi', 'Pazar'][dayIndex];
+                const dayKey = dayIndex.toString();
+                const daySchedule = manualSchedule[dayKey] || { openings: [], closings: [], off: [] };
+                
+                console.log(`Day ${dayIndex}: ${dayName}, key: ${dayKey}`); // Debug log
+                
+                return (
+                  <div key={dayIndex} className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
+                    {/* Day Header */}
+                    <div 
+                      className={`text-center mb-4 pb-3 border-b border-gray-100 transition-colors ${
+                        dragOverDay === dayKey && draggedEvent
+                          ? 'bg-purple-50 border-purple-200'
+                          : ''
+                      }`}
+                      onDragOver={(e) => handleDayDragOver(e, dayKey)}
+                      onDragLeave={handleDayDragLeave}
+                      onDrop={(e) => handleDayDrop(e, dayKey)}
+                    >
+                      <div className="text-lg font-bold text-gray-900">{dayName}</div>
+                      <div className="text-sm text-gray-500">{date.getDate()}/{date.getMonth() + 1}</div>
+                      {dayEvents[dayKey] && dayEvents[dayKey].length > 0 && (
+                        <div className="flex flex-wrap justify-center gap-1 mt-2">
+                          {dayEvents[dayKey].map((event, idx) => (
+                            <div 
+                              key={idx}
+                              className="bg-purple-100 text-purple-800 text-xs px-2 py-1 rounded-full flex items-center gap-1"
+                            >
+                              {event}
+                              <button
+                                onClick={() => removeEventFromDay(dayKey, event)}
+                                className="text-purple-600 hover:text-purple-800"
+                              >
+                                <X className="w-3 h-3" />
+                              </button>
+                            </div>
+                          ))}
                         </div>
-                        <div className="space-y-2">
-                          {closingShifts.slice(0, closeRequired).map((shift: any, idx: number) => {
-                            const barista = getBaristaById(shift.barista_id);
-                            return (
-                              <div key={idx} className="bg-green-50 rounded-lg p-2 text-sm">
-                                <div className="font-medium text-green-900">{barista?.name || 'Unknown'}</div>
-                                <div className="text-green-700">{(shift.start_time || '15:30').toString().slice(0,5)}-{(shift.end_time || '00:30').toString().slice(0,5)}</div>
+                      )}
+                      {dragOverDay === dayKey && draggedEvent && (
+                        <div className="text-xs text-purple-600 font-medium mt-1">
+                          → {draggedEvent}
+                        </div>
+                      )}
+                    </div>
+                    
+                    {/* Opening Shifts Drop Zone */}
+                    <div className="mb-4">
+                      <div className="text-xs font-semibold text-blue-600 mb-2 uppercase tracking-wide">
+                        Açılış
+                      </div>
+                      <div
+                        className="min-h-[80px] bg-blue-50 rounded-lg p-2 border-2 border-dashed border-blue-200"
+                        onDragOver={handleDragOver}
+                        onDrop={(e) => handleDrop(e, dayIndex, 'openings')}
+                      >
+                        <div className="space-y-1">
+                          {daySchedule.openings.map((baristaName, idx) => (
+                            <div 
+                              key={idx} 
+                              draggable
+                              onDragStart={(e) => handleDragStart(e, baristaName)}
+                              onDragOver={(e) => handleBaristaDragOver(e, baristaName)}
+                              onDragLeave={handleBaristaDragLeave}
+                              onDrop={(e) => handleBaristaDrop(e, baristaName, 'opening')}
+                              className={`bg-blue-100 rounded p-2 text-sm flex items-center justify-between cursor-move transition-colors ${
+                                dragOverBarista === baristaName && draggedShift
+                                  ? 'bg-orange-100 border-2 border-orange-400'
+                                  : 'hover:bg-blue-200'
+                              }`}
+                            >
+                              <div className="flex flex-col">
+                                <span className="font-medium text-blue-900">{baristaName}</span>
+                                {baristaShifts[baristaName]?.opening && (
+                                  <span className="text-xs text-blue-700">{baristaShifts[baristaName].opening}</span>
+                                )}
+                                {dragOverBarista === baristaName && draggedShift && (
+                                  <span className="text-xs text-orange-600 font-medium">→ {draggedShift}</span>
+                                )}
                               </div>
-                            );
-                          })}
-                          {closingShifts.length < closeRequired && (
-                            <div className="bg-gray-100 rounded-lg p-2 text-sm text-gray-500 italic">
-                              {closeRequired - closingShifts.length} kişi daha gerekli
+                              <button
+                                onClick={() => removeFromSchedule(baristaName, dayIndex, 'openings')}
+                                className="text-blue-600 hover:text-blue-800"
+                              >
+                                <X className="w-3 h-3" />
+                              </button>
+                            </div>
+                          ))}
+                          {daySchedule.openings.length === 0 && (
+                            <div className="text-xs text-blue-500 italic">
+                              Drop baristas here for opening shift
                             </div>
                           )}
                         </div>
                       </div>
-
-                      {/* Off Baristas */}
-                      <div className="mt-4 pt-3 border-t border-gray-100">
-                        <div className="text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide">
-                          İzinli
+                    </div>
+                    
+                    {/* Closing Shifts Drop Zone */}
+                    <div className="mb-4">
+                      <div className="text-xs font-semibold text-green-600 mb-2 uppercase tracking-wide">
+                        Kapanış
+                      </div>
+                      <div
+                        className="min-h-[120px] bg-green-50 rounded-lg p-2 border-2 border-dashed border-green-200"
+                        onDragOver={handleDragOver}
+                        onDrop={(e) => handleDrop(e, dayIndex, 'closings')}
+                      >
+                        <div className="space-y-1">
+                          {daySchedule.closings.map((baristaName, idx) => (
+                            <div 
+                              key={idx} 
+                              draggable
+                              onDragStart={(e) => handleDragStart(e, baristaName)}
+                              onDragOver={(e) => handleBaristaDragOver(e, baristaName)}
+                              onDragLeave={handleBaristaDragLeave}
+                              onDrop={(e) => handleBaristaDrop(e, baristaName, 'closing')}
+                              className={`bg-green-100 rounded p-2 text-sm flex items-center justify-between cursor-move transition-colors ${
+                                dragOverBarista === baristaName && draggedShift
+                                  ? 'bg-orange-100 border-2 border-orange-400'
+                                  : 'hover:bg-green-200'
+                              }`}
+                            >
+                              <div className="flex flex-col">
+                                <span className="font-medium text-green-900">{baristaName}</span>
+                                {baristaShifts[baristaName]?.closing && (
+                                  <span className="text-xs text-green-700">{baristaShifts[baristaName].closing}</span>
+                                )}
+                                {dragOverBarista === baristaName && draggedShift && (
+                                  <span className="text-xs text-orange-600 font-medium">→ {draggedShift}</span>
+                                )}
+                              </div>
+                              <button
+                                onClick={() => removeFromSchedule(baristaName, dayIndex, 'closings')}
+                                className="text-green-600 hover:text-green-800"
+                              >
+                                <X className="w-3 h-3" />
+                              </button>
+                            </div>
+                          ))}
+                          {daySchedule.closings.length === 0 && (
+                            <div className="text-xs text-green-500 italic">
+                              Drop baristas here for closing shift
+                            </div>
+                          )}
                         </div>
-                        {offList.length > 0 ? (
-                          <div className="flex flex-wrap gap-2">
-                            {offList.map((b) => (
-                              <span key={b.id} className="px-2 py-1 bg-gray-100 rounded-full text-xs text-gray-700">
-                                {b.name}
-                              </span>
-                            ))}
-                          </div>
-                        ) : (
-                          <div className="text-xs text-gray-400">Yok</div>
-                        )}
                       </div>
                     </div>
-                  );
-                })}
-              </div>
+
+                    {/* Off Baristas Drop Zone */}
+                    <div>
+                      <div className="text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide">
+                        İzinli
+                      </div>
+                      <div
+                        className="min-h-[60px] bg-gray-50 rounded-lg p-2 border-2 border-dashed border-gray-200"
+                        onDragOver={handleDragOver}
+                        onDrop={(e) => handleDrop(e, dayIndex, 'off')}
+                      >
+                        <div className="space-y-1">
+                          {daySchedule.off.map((baristaName, idx) => (
+                            <div 
+                              key={idx} 
+                              draggable
+                              onDragStart={(e) => handleDragStart(e, baristaName)}
+                              onDragOver={(e) => handleBaristaDragOver(e, baristaName)}
+                              onDragLeave={handleBaristaDragLeave}
+                              onDrop={(e) => handleBaristaDrop(e, baristaName, 'off')}
+                              className={`bg-gray-100 rounded p-2 text-sm flex items-center justify-between cursor-move transition-colors ${
+                                dragOverBarista === baristaName && draggedShift
+                                  ? 'bg-orange-100 border-2 border-orange-400'
+                                  : 'hover:bg-gray-200'
+                              }`}
+                            >
+                              <div className="flex flex-col">
+                                <span className="font-medium text-gray-700">{baristaName}</span>
+                                {baristaShifts[baristaName]?.off && (
+                                  <span className="text-xs text-gray-600">{baristaShifts[baristaName].off}</span>
+                                )}
+                                {dragOverBarista === baristaName && draggedShift && (
+                                  <span className="text-xs text-orange-600 font-medium">→ {draggedShift}</span>
+                                )}
+                              </div>
+                              <button
+                                onClick={() => removeFromSchedule(baristaName, dayIndex, 'off')}
+                                className="text-gray-600 hover:text-gray-800"
+                              >
+                                <X className="w-3 h-3" />
+                              </button>
+                            </div>
+                          ))}
+                          {daySchedule.off.length === 0 && (
+                            <div className="text-xs text-gray-400 italic">Drop here for day off</div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
         </div>

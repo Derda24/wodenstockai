@@ -6,12 +6,11 @@ STAFF: List[Dict[str, Any]] = [
     {"name": "Derda", "type": "full-time", "max_hours": 54, "preferred_shifts": ["morning", "evening"], "skills": ["cashier", "barback", "support"]},
     {"name": "İlker", "type": "full-time", "max_hours": 54, "preferred_shifts": ["morning", "evening"], "skills": ["cashier", "barback", "support"]},
     {"name": "Ahmet C.", "type": "full-time", "max_hours": 54, "preferred_shifts": ["morning", "evening"], "skills": ["cashier", "barback", "support"]},
-    {"name": "Ahmet S.", "type": "part-time", "max_hours": 30, "preferred_shifts": ["evening"], "skills": ["barback", "support"]},
-    {"name": "Boran", "type": "part-time", "max_hours": 30, "preferred_shifts": ["evening"], "skills": ["barback", "support"]},
-    {"name": "Can", "type": "part-time", "max_hours": 30, "preferred_shifts": ["evening"], "skills": ["barback", "support"]},
-    {"name": "Özge", "type": "part-time", "max_hours": 30, "preferred_shifts": ["morning", "cashier"], "skills": ["cashier"]},
-    {"name": "Bedi", "type": "part-time", "max_hours": 30, "preferred_shifts": ["evening"], "skills": ["barback", "support"]},
-    {"name": "Emin", "type": "part-time", "max_hours": 30, "preferred_shifts": ["evening"], "skills": ["barback", "support"]},
+    {"name": "Boran", "type": "part-time", "max_hours": 40, "preferred_shifts": ["evening"], "skills": ["barback", "support"]},
+    {"name": "Can", "type": "part-time", "max_hours": 25, "preferred_shifts": ["evening"], "skills": ["barback", "support"]},
+    {"name": "Özge", "type": "part-time", "max_hours": 25, "preferred_shifts": ["morning", "cashier"], "skills": ["cashier"]},
+    {"name": "Bedi", "type": "part-time", "max_hours": 40, "preferred_shifts": ["evening"], "skills": ["barback", "support"]},
+    {"name": "Emin", "type": "part-time", "max_hours": 40, "preferred_shifts": ["evening"], "skills": ["barback", "support"]},
 ]
 
 

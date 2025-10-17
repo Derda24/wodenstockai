@@ -492,3 +492,19 @@ body {
     border-width: 0.5px;
   }
 }
+
+/* Confetti animation for AI Scheduler */
+@keyframes fadeConfetti {
+  0% {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1);
+  }
+}

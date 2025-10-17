@@ -142,20 +142,14 @@ class AIScheduler:
         print(f"✅ {len(preferences)} barista için tercihler yüklendi")
     
     def generate_weekly_schedule(self, start_date: date) -> Dict[str, Any]:
-        """Haftalık vardiya planı oluştur"""
+        """Haftalık vardiya planı oluştur - Sadece kullanıcı tercihlerini uygula"""
         print(f"Haftalık vardiya planı oluşturuluyor: {start_date}")
         
-        # Manuel atamaları önce uygula
+        # Sadece manuel atamaları uygula
         self._apply_manual_assignments(start_date)
         
-        # Açılış vardiyalarını planla (2 kişi gerekli)
-        self._schedule_openings(start_date)
-        
-        # Kapanış vardiyalarını planla (4 kişi gerekli)
-        self._schedule_closings(start_date)
-        
-        # Çalışma günlerini kontrol et ve düzenle
-        self._validate_and_adjust_schedule(start_date)
+        # Sadece kullanıcı tercihlerini uygula
+        self._apply_user_preferences(start_date)
         
         return self._format_schedule(start_date)
     
@@ -171,292 +165,51 @@ class AIScheduler:
                         employee.add_working_day(day, shift_type)
                         self._assign_to_schedule(employee_name, day, shift_type)
     
-    def _schedule_openings(self, start_date: date):
-        """Açılış vardiyalarını planla (2 kişi) - Dengeli full barista dağılımı"""
-        print("Açılış vardiyaları planlanıyor...")
-        
-        # Önce full baristalar için haftalık açılış planlaması yap
-        self._plan_full_barista_openings(start_date)
+    def _apply_user_preferences(self, start_date: date):
+        """Sadece kullanıcının belirttiği tercihleri uygula"""
+        print("Kullanıcı tercihleri uygulanıyor...")
         
         for day_offset in range(7):
             current_day = start_date + timedelta(days=day_offset)
             day_name = current_day.strftime('%A')
+            day_weekday = current_day.weekday()
             
-            # Bu gün için açılış atanmış mı kontrol et
-            opening_assigned = self._count_shift_type_for_day(current_day, ShiftType.OPENING)
-            
-            if opening_assigned < 2:  # 2 kişi gerekli
-                needed = 2 - opening_assigned
-                self._assign_remaining_openings(current_day, needed)
+            # Her çalışan için tercihlerini kontrol et
+            for employee_name, employee in self.employees.items():
+                preferences = employee.preferences
+                
+                # Tercih edilen açılış günleri
+                if "preferred_opening_days" in preferences and day_weekday in preferences["preferred_opening_days"]:
+                    if not self._is_assigned(current_day, employee_name):
+                        self._assign_to_schedule(employee_name, current_day, ShiftType.OPENING)
+                        employee.add_working_day(current_day, ShiftType.OPENING)
+                        print(f"✅ Açılış tercihi uygulandı: {employee_name} - {day_name}")
+                
+                # Tercih edilen kapanış günleri
+                if "preferred_closing_days" in preferences and day_weekday in preferences["preferred_closing_days"]:
+                    if not self._is_assigned(current_day, employee_name):
+                        self._assign_to_schedule(employee_name, current_day, ShiftType.CLOSING)
+                        employee.add_working_day(current_day, ShiftType.CLOSING)
+                        print(f"✅ Kapanış tercihi uygulandı: {employee_name} - {day_name}")
+                
+                # Tercih edilen izin günü
+                if "preferred_day_off" in preferences and preferences["preferred_day_off"] == day_weekday:
+                    employee.take_day_off(current_day)
+                    print(f"✅ İzin tercihi uygulandı: {employee_name} - {day_name}")
     
-    def _plan_full_barista_openings(self, start_date: date):
-        """Full baristalar için haftalık açılış planlaması"""
-        full_baristas = ["Derda", "Ahmet", "İlker"]
-        
-        # Önce izin günlerini planla
-        self._plan_full_barista_days_off(start_date)
-        
-        # Sonra açılışları planla
-        week_days = [start_date + timedelta(days=i) for i in range(7)]
-        
-        # Her gün için sadece 1 full barista açılışta olacak şekilde planla
-        # Toplam 6 açılış (her full barista 2 açılış)
-        
-        # Her gün için 1 full barista ata
-        # Toplam 7 gün var, her full barista 2 açılış yapacak (toplam 6 açılış)
-        # 1 gün part-time çalışanlar açılış yapacak
-        
-        assigned_openings = {name: 0 for name in full_baristas}
-        target_openings_per_barista = {
-            "Derda": 2,
-            "Ahmet": 2,
-            "İlker": 2
-        }
-        
-        # Her gün için 1 full barista ata
-        for day in week_days:
-            # Bu gün için full barista ata
-            assigned_this_day = False
-            
-            # Full baristaları açılış sayısına göre sırala (az açılış yapan önce)
-            sorted_baristas = sorted(full_baristas, key=lambda x: assigned_openings[x])
-            
-            for barista_name in sorted_baristas:
-                employee = self.employees[barista_name]
-                
-                # Bu barista izin gününde değilse ve henüz hedef açılış sayısına ulaşmadıysa ata
-                if (day not in employee.off_days and 
-                    assigned_openings[barista_name] < target_openings_per_barista[barista_name] and
-                    not self._is_assigned(day, barista_name)):
-                    
-                    self._assign_to_schedule(barista_name, day, ShiftType.OPENING)
-                    employee.add_working_day(day, ShiftType.OPENING)
-                    assigned_openings[barista_name] += 1
-                    assigned_this_day = True
-                    print(f"✅ Full barista açılış planlandı: {barista_name} - {day.strftime('%Y-%m-%d')}")
-                    break  # Bu gün için sadece 1 full barista
-            
-            # Eğer bu gün için full barista atanamadıysa, part-time çalışanlar açılış yapacak
-            if not assigned_this_day:
-                print(f"ℹ️ {day.strftime('%Y-%m-%d')}: Full barista yok, part-time çalışanlar açılış yapacak")
+    # Removed complex scheduling rules - now only applies user preferences
     
-    def _plan_full_barista_days_off(self, start_date: date):
-        """Full baristaların izin günlerini planla - tercihleri kullan"""
-        full_baristas = ["Derda", "Ahmet", "İlker"]
-        week_days = [start_date + timedelta(days=i) for i in range(7)]
-        
-        used_off_days = []  # Kullanılan izin günleri
-        
-        # Her full barista için 1 izin günü ata
-        for barista_name in full_baristas:
-            # İzin günü: açılış yapmadığı günlerden birini seç
-            available_off_days = []
-            
-            for day in week_days:
-                if not self._is_assigned(day, barista_name):
-                    available_off_days.append(day)
-            
-            # İzin günü ata - önce tercihleri kontrol et
-            if available_off_days:
-                off_day = None
-                employee = self.employees[barista_name]
-                
-                # Kullanıcı tercihi var mı?
-                preferred_day_off = employee.preferences.get("preferred_day_off")
-                
-                if preferred_day_off is not None:
-                    # Tercih edilen günü bul
-                    for day in available_off_days:
-                        if day.weekday() == preferred_day_off and day not in used_off_days:
-                            off_day = day
-                            print(f"✅ Tercih kullanıldı: {barista_name} - {off_day.strftime('%A')}")
-                            break
-                
-                # Tercih yoksa veya kullanılamıyorsa, otomatik ata
-                if not off_day:
-                    # Varsayılan tercihler
-                    default_preferences = {
-                        "Derda": [6, 0],      # Pazar, Pazartesi
-                        "Ahmet": [4, 5],      # Cuma, Cumartesi  
-                        "İlker": [6, 1]       # Pazar, Salı
-                    }
-                    
-                    for preferred_day in default_preferences.get(barista_name, [6]):
-                        for day in available_off_days:
-                            if day.weekday() == preferred_day and day not in used_off_days:
-                                off_day = day
-                                break
-                        if off_day:
-                            break
-                
-                # Eğer hala bulunamadıysa, başka bir gün seç
-                if not off_day:
-                    for day in available_off_days:
-                        if day not in used_off_days:
-                            off_day = day
-                            break
-                
-                # Hala bulunamadıysa, ilk müsait günü al
-                if not off_day:
-                    off_day = available_off_days[0]
-                
-                used_off_days.append(off_day)
-                self.employees[barista_name].take_day_off(off_day)
-                
-                # İzin günü için schedule'a özel işaretleme yap
-                day_str = off_day.strftime('%Y-%m-%d')
-                if day_str not in self.weekly_schedule:
-                    self.weekly_schedule[day_str] = {
-                        "day_name": off_day.strftime('%A'),
-                        "openings": [],
-                        "closings": []
-                    }
-                # İzin günü bilgisini kaydet
-                if "off_days" not in self.weekly_schedule[day_str]:
-                    self.weekly_schedule[day_str]["off_days"] = []
-                self.weekly_schedule[day_str]["off_days"].append(barista_name)
-                print(f"✅ Full barista izin planlandı: {barista_name} - {off_day.strftime('%Y-%m-%d')}")
+    # Removed complex full barista planning - now only applies user preferences
     
-    def _assign_remaining_openings(self, day: date, needed: int):
-        """Kalan açılışları ata - Part-time çalışanları öncelikli"""
-        available_employees = []
-        
-        # Açılış yapabilen çalışanları bul
-        for name, employee in self.employees.items():
-            if (employee.can_work_day(day) and 
-                employee.can_do_opening() and 
-                not self._is_assigned(day, name)):
-                
-                available_employees.append(employee)
-        
-        # Part-time ve full-time çalışanları ayır
-        part_time_employees = [emp for emp in available_employees if emp.employee_type == EmployeeType.PART_TIME]
-        full_time_employees = [emp for emp in available_employees if emp.employee_type == EmployeeType.FULL]
-        
-        # Tercihlere göre sırala
-        high_priority = []  # Tercih eden çalışanlar
-        medium_priority = []  # Tercih etmeyen ama uygun olanlar
-        low_priority = []  # Tercih etmeyen
-        
-        for emp in part_time_employees:
-            preferred_opening_days = emp.preferences.get("preferred_opening_days", [])
-            
-            # Özge için özel kontrol (eski sistem uyumluluğu)
-            if emp.name == "Özge" and "preferred_days" in emp.preferences:
-                preferred_opening_days = emp.preferences.get("preferred_days", [])
-            
-            if preferred_opening_days and day.weekday() in preferred_opening_days:
-                high_priority.append(emp)
-                print(f"✅ Açılış tercihi kullanıldı: {emp.name} - {day.strftime('%A')}")
-            else:
-                medium_priority.append(emp)
-        
-        # Full-time çalışanları da tercihlere göre sırala
-        for emp in full_time_employees:
-            if emp.openings_count < 2:  # Henüz 2 açılış yapmamışsa
-                preferred_opening_days = emp.preferences.get("preferred_opening_days", [])
-                
-                if preferred_opening_days and day.weekday() in preferred_opening_days:
-                    high_priority.append(emp)
-                    print(f"✅ Açılış tercihi kullanıldı: {emp.name} - {day.strftime('%A')}")
-                else:
-                    low_priority.append(emp)
-        
-        # Öncelik sırası: Tercih edenler -> Tercih etmeyenler
-        prioritized_employees = high_priority + medium_priority + low_priority
-        
-        # Gerekli sayıda atama yap
-        assigned_count = 0
-        for employee in prioritized_employees:
-            if assigned_count >= needed:
-                break
-                
-            self._assign_to_schedule(employee.name, day, ShiftType.OPENING)
-            employee.add_working_day(day, ShiftType.OPENING)
-            assigned_count += 1
-        
-        # Eğer hala yeterli değilse, zorla atama yap (SADECE PART-TIME)
-        if assigned_count < needed:
-            print(f"⚠️ {day}: Açılış için yeterli part-time çalışan yok, zorla atama yapılıyor")
-            remaining_needed = needed - assigned_count
-            
-            # Önce part-time çalışanları dene (çifte vardiya yapabilirler)
-            for name, employee in self.employees.items():
-                if (remaining_needed > 0 and 
-                    employee.employee_type == EmployeeType.PART_TIME and
-                    employee.can_work_day(day)):
-                    
-                    self._assign_to_schedule(employee.name, day, ShiftType.OPENING)
-                    employee.add_working_day(day, ShiftType.OPENING)
-                    remaining_needed -= 1
-            
-            # Hala yeterli değilse, full baristaları da ekle (son çare)
-            if remaining_needed > 0:
-                print(f"⚠️ {day}: Part-time yetmedi, full baristaları da ekliyorum")
-                for name, employee in self.employees.items():
-                    if (remaining_needed > 0 and 
-                        employee.employee_type == EmployeeType.FULL and
-                        not self._is_assigned(day, name) and
-                        employee.can_work_day(day)):
-                        
-                        self._assign_to_schedule(employee.name, day, ShiftType.OPENING)
-                        employee.add_working_day(day, ShiftType.OPENING)
-                        remaining_needed -= 1
+    # Removed complex day-off planning - now only applies user preferences
+    
+    # Removed complex opening assignment - now only applies user preferences
     
     
-    def _schedule_closings(self, start_date: date):
-        """Kapanış vardiyalarını planla (4 kişi)"""
-        print("Kapanış vardiyaları planlanıyor...")
-        
-        for day_offset in range(7):
-            current_day = start_date + timedelta(days=day_offset)
-            
-            # Bu gün için kapanış atanmış mı kontrol et
-            closing_assigned = self._count_shift_type_for_day(current_day, ShiftType.CLOSING)
-            
-            if closing_assigned < 4:  # 4 kişi gerekli
-                needed = 4 - closing_assigned
-                self._assign_closing_shift(current_day, needed)
+    # Removed complex closing scheduling - now only applies user preferences
     
     
-    def _assign_closing_shift(self, day: date, needed: int):
-        """Kapanış vardiyası ata"""
-        available_employees = []
-        
-        # Kapanış yapabilen çalışanları bul
-        for name, employee in self.employees.items():
-            if (employee.can_work_day(day) and 
-                not self._is_assigned(day, name)):
-                
-                # Sultan için özel kontrol (sadece kapanış)
-                if name == "Sultan":
-                    available_employees.insert(0, employee)  # Öncelik
-                # Can için özel kontrol (full baristaların tatil günlerinde)
-                elif name == "Can" and self._is_full_barista_off_day(day):
-                    available_employees.insert(0, employee)  # Öncelik
-                else:
-                    available_employees.append(employee)
-        
-        # Eğer yeterli çalışan yoksa, zorla atama yap
-        if len(available_employees) < needed:
-            print(f"⚠️ {day}: Yeterli çalışan yok, zorla atama yapılıyor")
-            # Zaten çalışan çalışanları da dahil et (çifte vardiya)
-            for name, employee in self.employees.items():
-                if (not self._is_assigned(day, name) or 
-                    (self._is_assigned(day, name) and len(self._get_assigned_employees_for_day(day, ShiftType.CLOSING)) < 4)):
-                    
-                    if employee not in available_employees:
-                        available_employees.append(employee)
-        
-        # Gerekli sayıda atama yap
-        assigned_count = 0
-        for employee in available_employees:
-            if assigned_count >= needed:
-                break
-                
-            self._assign_to_schedule(employee.name, day, ShiftType.CLOSING)
-            employee.add_working_day(day, ShiftType.CLOSING)
-            assigned_count += 1
+    # Removed complex closing assignment - now only applies user preferences
     
     def _assign_to_schedule(self, employee_name: str, day: date, shift_type: ShiftType):
         """Vardiyayı programa ata"""
@@ -529,41 +282,9 @@ class AIScheduler:
             return [shift["employee"] for shift in shifts]
         return []
     
-    def _is_full_barista_off_day(self, day: date) -> bool:
-        """Bu gün full baristaların tatil günü mü?"""
-        full_baristas = ["Derda", "Ahmet", "İlker"]
-        for name in full_baristas:
-            if name in self.employees and day in self.employees[name].working_days:
-                return False  # En az biri çalışıyor
-        return True  # Hepsi tatilde
+    # Removed full barista off day check - no longer needed with simplified approach
     
-    def _validate_and_adjust_schedule(self, start_date: date):
-        """Programı kontrol et ve düzenle"""
-        print("Program kontrol ediliyor...")
-        
-        for day_offset in range(7):
-            current_day = start_date + timedelta(days=day_offset)
-            self._ensure_minimum_coverage(current_day)
-    
-    def _ensure_minimum_coverage(self, day: date):
-        """Minimum kapsama alanını garanti et"""
-        day_str = day.strftime('%Y-%m-%d')
-        
-        if day_str in self.weekly_schedule:
-            openings = len(self.weekly_schedule[day_str]["openings"])
-            closings = len(self.weekly_schedule[day_str]["closings"])
-            
-            # Açılış için minimum 2 kişi
-            if openings < 2:
-                needed = 2 - openings
-                print(f"⚠️ {day_str}: Açılış yetersiz ({openings}/2), {needed} kişi daha atanıyor")
-                self._assign_opening_shift(day, needed)
-            
-            # Kapanış için minimum 4 kişi
-            if closings < 4:
-                needed = 4 - closings
-                print(f"⚠️ {day_str}: Kapanış yetersiz ({closings}/4), {needed} kişi daha atanıyor")
-                self._assign_closing_shift(day, needed)
+    # Removed validation and minimum coverage enforcement - now only applies user preferences
     
     def _format_schedule(self, start_date: date) -> Dict[str, Any]:
         """Programı formatla"""
