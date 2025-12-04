@@ -85,7 +85,7 @@ export default function AIScheduler() {
     off: string[];
   }}>({});
   
-  const [baristaShifts, setBaristaShifts] = useState<{[key: string]: {[shiftType: string]: string}}>({});
+  const [baristaShifts, setBaristaShifts] = useState<{[key: string]: {[dayIndex: string]: {[shiftType: string]: string}}}>({});
   const [dayEvents, setDayEvents] = useState<{[key: string]: string[]}>({});
 
   // Available shift times
@@ -611,17 +611,21 @@ export default function AIScheduler() {
     setDragOverDay(null);
   };
 
-  const handleBaristaDrop = (e: React.DragEvent, baristaName: string, shiftType?: string) => {
+  const handleBaristaDrop = (e: React.DragEvent, baristaName: string, dayIndex: number, shiftType?: string) => {
     e.preventDefault();
     if (!draggedShift) return;
 
-    console.log(`Dropping shift ${draggedShift} on barista ${baristaName} for shift type ${shiftType}`); // Debug log
+    console.log(`Dropping shift ${draggedShift} on barista ${baristaName} for day ${dayIndex} shift type ${shiftType}`); // Debug log
 
+    const dayKey = dayIndex.toString();
     setBaristaShifts(prev => ({
       ...prev,
       [baristaName]: {
         ...prev[baristaName],
-        [shiftType || 'default']: draggedShift
+        [dayKey]: {
+          ...(prev[baristaName]?.[dayKey] || {}),
+          [shiftType || 'default']: draggedShift
+        }
       }
     }));
 
@@ -661,18 +665,23 @@ export default function AIScheduler() {
     }));
   };
 
-  const removeShiftFromBarista = (baristaName: string, shiftType?: string) => {
+  const removeShiftFromBarista = (baristaName: string, dayIndex: number, shiftType?: string) => {
     setBaristaShifts(prev => {
       const newShifts = { ...prev };
-      if (shiftType) {
-        if (newShifts[baristaName]) {
-          delete newShifts[baristaName][shiftType];
-          if (Object.keys(newShifts[baristaName]).length === 0) {
-            delete newShifts[baristaName];
-          }
+      const dayKey = dayIndex.toString();
+      if (shiftType && newShifts[baristaName]?.[dayKey]) {
+        delete newShifts[baristaName][dayKey][shiftType];
+        if (Object.keys(newShifts[baristaName][dayKey]).length === 0) {
+          delete newShifts[baristaName][dayKey];
         }
-      } else {
-        delete newShifts[baristaName];
+        if (Object.keys(newShifts[baristaName]).length === 0) {
+          delete newShifts[baristaName];
+        }
+      } else if (newShifts[baristaName]?.[dayKey]) {
+        delete newShifts[baristaName][dayKey];
+        if (Object.keys(newShifts[baristaName]).length === 0) {
+          delete newShifts[baristaName];
+        }
       }
       return newShifts;
     });
@@ -948,7 +957,14 @@ export default function AIScheduler() {
                     onDragStart={(e) => handleDragStart(e, barista.name)}
                     onDragOver={(e) => handleBaristaDragOver(e, barista.name)}
                     onDragLeave={handleBaristaDragLeave}
-                    onDrop={(e) => handleBaristaDrop(e, barista.name, 'default')}
+                    onDrop={(e) => {
+                      // Only handle barista-to-barista drops here, not shift time drops
+                      // Shift times should only be dropped on baristas in day schedules
+                      if (draggedShift) {
+                        e.preventDefault();
+                        return;
+                      }
+                    }}
                     className={`px-3 py-2 border rounded-lg text-sm font-medium cursor-move transition-colors relative ${
                       dragOverBarista === barista.name && draggedShift
                         ? 'bg-orange-100 border-orange-400 text-orange-800'
@@ -956,26 +972,19 @@ export default function AIScheduler() {
                     }`}
                   >
                     {barista.name}
-                    {baristaShifts[barista.name] && (
+                    {/* Show summary of assigned shifts across all days */}
+                    {baristaShifts[barista.name] && Object.keys(baristaShifts[barista.name]).length > 0 && (
                       <div className="absolute -top-1 -right-1 flex flex-col gap-1">
-                        {Object.entries(baristaShifts[barista.name]).map(([shiftType, time]) => (
-                          <div 
-                            key={shiftType}
-                            className="bg-blue-500 text-white text-xs px-1 py-0.5 rounded-full cursor-pointer hover:bg-blue-600"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              removeShiftFromBarista(barista.name, shiftType);
-                            }}
-                            title={`Click to remove ${shiftType} shift time`}
-                          >
-                            {time}
-                          </div>
-                        ))}
+                        <div className="bg-blue-500 text-white text-xs px-1 py-0.5 rounded-full">
+                          {Object.values(baristaShifts[barista.name]).reduce((acc, dayShifts) => {
+                            return acc + Object.keys(dayShifts).length;
+                          }, 0)} shifts
+                        </div>
                       </div>
                     )}
                     {dragOverBarista === barista.name && draggedShift && (
                       <div className="absolute -bottom-1 -right-1 bg-orange-500 text-white text-xs px-1 py-0.5 rounded-full">
-                        {draggedShift}
+                        Drop on day schedule
                       </div>
                     )}
                   </div>
@@ -1091,7 +1100,7 @@ export default function AIScheduler() {
                               onDragStart={(e) => handleDragStart(e, baristaName)}
                               onDragOver={(e) => handleBaristaDragOver(e, baristaName)}
                               onDragLeave={handleBaristaDragLeave}
-                              onDrop={(e) => handleBaristaDrop(e, baristaName, 'opening')}
+                              onDrop={(e) => handleBaristaDrop(e, baristaName, dayIndex, 'opening')}
                               className={`bg-blue-100 rounded p-2 text-sm flex items-center justify-between cursor-move transition-colors ${
                                 dragOverBarista === baristaName && draggedShift
                                   ? 'bg-orange-100 border-2 border-orange-400'
@@ -1100,8 +1109,20 @@ export default function AIScheduler() {
                             >
                               <div className="flex flex-col">
                                 <span className="font-medium text-blue-900">{baristaName}</span>
-                                {baristaShifts[baristaName]?.opening && (
-                                  <span className="text-xs text-blue-700">{baristaShifts[baristaName].opening}</span>
+                                {baristaShifts[baristaName]?.[dayIndex.toString()]?.opening && (
+                                  <div className="flex items-center gap-1">
+                                    <span className="text-xs text-blue-700">{baristaShifts[baristaName][dayIndex.toString()].opening}</span>
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        removeShiftFromBarista(baristaName, dayIndex, 'opening');
+                                      }}
+                                      className="text-blue-600 hover:text-blue-800"
+                                      title="Remove shift time"
+                                    >
+                                      <X className="w-2 h-2" />
+                                    </button>
+                                  </div>
                                 )}
                                 {dragOverBarista === baristaName && draggedShift && (
                                   <span className="text-xs text-orange-600 font-medium">→ {draggedShift}</span>
@@ -1110,6 +1131,7 @@ export default function AIScheduler() {
                               <button
                                 onClick={() => removeFromSchedule(baristaName, dayIndex, 'openings')}
                                 className="text-blue-600 hover:text-blue-800"
+                                title="Remove barista from schedule"
                               >
                                 <X className="w-3 h-3" />
                               </button>
@@ -1142,7 +1164,7 @@ export default function AIScheduler() {
                               onDragStart={(e) => handleDragStart(e, baristaName)}
                               onDragOver={(e) => handleBaristaDragOver(e, baristaName)}
                               onDragLeave={handleBaristaDragLeave}
-                              onDrop={(e) => handleBaristaDrop(e, baristaName, 'closing')}
+                              onDrop={(e) => handleBaristaDrop(e, baristaName, dayIndex, 'closing')}
                               className={`bg-green-100 rounded p-2 text-sm flex items-center justify-between cursor-move transition-colors ${
                                 dragOverBarista === baristaName && draggedShift
                                   ? 'bg-orange-100 border-2 border-orange-400'
@@ -1151,8 +1173,20 @@ export default function AIScheduler() {
                             >
                               <div className="flex flex-col">
                                 <span className="font-medium text-green-900">{baristaName}</span>
-                                {baristaShifts[baristaName]?.closing && (
-                                  <span className="text-xs text-green-700">{baristaShifts[baristaName].closing}</span>
+                                {baristaShifts[baristaName]?.[dayIndex.toString()]?.closing && (
+                                  <div className="flex items-center gap-1">
+                                    <span className="text-xs text-green-700">{baristaShifts[baristaName][dayIndex.toString()].closing}</span>
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        removeShiftFromBarista(baristaName, dayIndex, 'closing');
+                                      }}
+                                      className="text-green-600 hover:text-green-800"
+                                      title="Remove shift time"
+                                    >
+                                      <X className="w-2 h-2" />
+                                    </button>
+                                  </div>
                                 )}
                                 {dragOverBarista === baristaName && draggedShift && (
                                   <span className="text-xs text-orange-600 font-medium">→ {draggedShift}</span>
@@ -1161,6 +1195,7 @@ export default function AIScheduler() {
                               <button
                                 onClick={() => removeFromSchedule(baristaName, dayIndex, 'closings')}
                                 className="text-green-600 hover:text-green-800"
+                                title="Remove barista from schedule"
                               >
                                 <X className="w-3 h-3" />
                               </button>
@@ -1193,7 +1228,7 @@ export default function AIScheduler() {
                               onDragStart={(e) => handleDragStart(e, baristaName)}
                               onDragOver={(e) => handleBaristaDragOver(e, baristaName)}
                               onDragLeave={handleBaristaDragLeave}
-                              onDrop={(e) => handleBaristaDrop(e, baristaName, 'off')}
+                              onDrop={(e) => handleBaristaDrop(e, baristaName, dayIndex, 'off')}
                               className={`bg-gray-100 rounded p-2 text-sm flex items-center justify-between cursor-move transition-colors ${
                                 dragOverBarista === baristaName && draggedShift
                                   ? 'bg-orange-100 border-2 border-orange-400'
@@ -1202,8 +1237,20 @@ export default function AIScheduler() {
                             >
                               <div className="flex flex-col">
                                 <span className="font-medium text-gray-700">{baristaName}</span>
-                                {baristaShifts[baristaName]?.off && (
-                                  <span className="text-xs text-gray-600">{baristaShifts[baristaName].off}</span>
+                                {baristaShifts[baristaName]?.[dayIndex.toString()]?.off && (
+                                  <div className="flex items-center gap-1">
+                                    <span className="text-xs text-gray-600">{baristaShifts[baristaName][dayIndex.toString()].off}</span>
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        removeShiftFromBarista(baristaName, dayIndex, 'off');
+                                      }}
+                                      className="text-gray-600 hover:text-gray-800"
+                                      title="Remove shift time"
+                                    >
+                                      <X className="w-2 h-2" />
+                                    </button>
+                                  </div>
                                 )}
                                 {dragOverBarista === baristaName && draggedShift && (
                                   <span className="text-xs text-orange-600 font-medium">→ {draggedShift}</span>
@@ -1212,6 +1259,7 @@ export default function AIScheduler() {
                               <button
                                 onClick={() => removeFromSchedule(baristaName, dayIndex, 'off')}
                                 className="text-gray-600 hover:text-gray-800"
+                                title="Remove barista from schedule"
                               >
                                 <X className="w-3 h-3" />
                               </button>
