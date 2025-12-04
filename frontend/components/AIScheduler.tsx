@@ -615,19 +615,23 @@ export default function AIScheduler() {
     e.preventDefault();
     if (!draggedShift) return;
 
-    console.log(`Dropping shift ${draggedShift} on barista ${baristaName} for day ${dayIndex} shift type ${shiftType}`); // Debug log
-
     const dayKey = dayIndex.toString();
-    setBaristaShifts(prev => ({
-      ...prev,
-      [baristaName]: {
-        ...prev[baristaName],
-        [dayKey]: {
-          ...(prev[baristaName]?.[dayKey] || {}),
-          [shiftType || 'default']: draggedShift
+    console.log(`Dropping shift ${draggedShift} on barista ${baristaName} for day ${dayIndex} (key: ${dayKey}) shift type ${shiftType}`); // Debug log
+
+    setBaristaShifts(prev => {
+      const updated = {
+        ...prev,
+        [baristaName]: {
+          ...prev[baristaName],
+          [dayKey]: {
+            ...(prev[baristaName]?.[dayKey] || {}),
+            [shiftType || 'default']: draggedShift
+          }
         }
-      }
-    }));
+      };
+      console.log('Updated baristaShifts:', JSON.stringify(updated, null, 2)); // Debug log
+      return updated;
+    });
 
     setDraggedShift(null);
     setDragOverBarista(null);
@@ -701,6 +705,27 @@ export default function AIScheduler() {
         }
       }
       return newSchedule;
+    });
+    
+    // Also clean up shift times for this barista on this day
+    setBaristaShifts(prev => {
+      const newShifts = { ...prev };
+      if (newShifts[baristaName]?.[dayKey]) {
+        // Map shift type from schedule to shift time key
+        const shiftTimeKey = shiftType === 'openings' ? 'opening' : shiftType === 'closings' ? 'closing' : 'off';
+        if (newShifts[baristaName][dayKey][shiftTimeKey]) {
+          delete newShifts[baristaName][dayKey][shiftTimeKey];
+          // If no more shifts for this day, remove the day entry
+          if (Object.keys(newShifts[baristaName][dayKey]).length === 0) {
+            delete newShifts[baristaName][dayKey];
+          }
+          // If no more days for this barista, remove the barista entry
+          if (Object.keys(newShifts[baristaName]).length === 0) {
+            delete newShifts[baristaName];
+          }
+        }
+      }
+      return newShifts;
     });
   };
 
