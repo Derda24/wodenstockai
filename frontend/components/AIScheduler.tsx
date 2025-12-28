@@ -115,17 +115,17 @@ export default function AIScheduler() {
         console.error('Baristas API returned non-JSON response');
       }
 
-      if (Array.isArray(data)) {
+      if (Array.isArray(data) && data.length > 0) {
         setBaristas(data);
         console.log(`Loaded ${data.length} baristas from API`);
-      } else if (response.ok) {
-        // ok but unexpected shape
-        console.warn('Baristas API ok but unexpected payload, using mock');
-        setError('Using mock data - Unexpected API payload');
-        loadMockBaristas();
       } else {
-        console.error('Failed to load baristas from API, using mock data', { status: response.status });
-        setError('Using mock data - API not available');
+        // Fallback to mock data if API fails or returns empty/invalid data
+        console.warn('Baristas API returned invalid data or failed, using mock data', { 
+          isArray: Array.isArray(data), 
+          length: Array.isArray(data) ? data.length : 'N/A',
+          status: response.status 
+        });
+        setError('Using mock data - API not available or returned invalid data');
         loadMockBaristas();
       }
     } catch (error) {
@@ -975,7 +975,12 @@ export default function AIScheduler() {
             <div className="bg-gray-50 rounded-xl p-4">
               <h4 className="text-lg font-semibold text-gray-900 mb-3">Available Baristas</h4>
               <div className="flex flex-wrap gap-2">
-                {baristas.map((barista) => (
+                {baristas.length === 0 ? (
+                  <div className="text-sm text-gray-500 italic p-2">
+                    No baristas available. Loading...
+                  </div>
+                ) : (
+                  baristas.map((barista) => (
                   <div
                     key={barista.id}
                     draggable
@@ -1013,7 +1018,8 @@ export default function AIScheduler() {
                       </div>
                     )}
                   </div>
-                ))}
+                  ))
+                )}
               </div>
             </div>
 
