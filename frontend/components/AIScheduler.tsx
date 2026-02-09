@@ -1079,10 +1079,10 @@ export default function AIScheduler() {
                 const hasCamOrBar = dayEvents[dayKey] && (dayEvents[dayKey].includes('Cam') || dayEvents[dayKey].includes('Bar'));
                 
                 return (
-                  <div key={dayIndex} className={`${hasCamOrBar ? 'bg-yellow-50 border-yellow-300' : 'bg-white border-gray-200'} border rounded-xl p-4 shadow-sm transition-colors`}>
+                  <div key={dayIndex} className={`${hasCamOrBar ? 'bg-teal-50 border-teal-400' : 'bg-white border-gray-200'} border rounded-xl p-4 shadow-sm transition-colors`}>
                     {/* Day Header */}
                     <div 
-                      className={`text-center mb-4 pb-3 border-b ${hasCamOrBar ? 'border-yellow-200' : 'border-gray-100'} transition-colors ${
+                      className={`text-center mb-4 pb-3 border-b ${hasCamOrBar ? 'border-teal-300' : 'border-gray-100'} transition-colors ${
                         dragOverDay === dayKey && draggedEvent
                           ? 'bg-purple-50 border-purple-200'
                           : ''
