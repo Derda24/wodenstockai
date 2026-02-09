@@ -91,6 +91,9 @@ export default function AIScheduler() {
   // Available shift times
   const shiftTimes = [
     '07:30-16:30',
+    '09:00-15:00',
+    '09:00-18:00',
+    '09:00-17:00',
     '07:30-15:30', 
     '15:30-00:30',
     '17:30-00:30',
@@ -187,13 +190,13 @@ export default function AIScheduler() {
       },
       {
         id: '2',
-        name: 'Ahmet',
-        email: 'ahmet@woden.com',
+        name: 'Yusuf',
+        email: 'yusuf@woden.com',
         phone: '+90 555 234 5678',
         type: 'full-time',
         max_hours: 45,
         preferred_shifts: ['morning', 'evening'],
-        skills: ['coffee', 'management'],
+        skills: ['coffee', 'cashier', 'management'],
         is_active: true
       },
       {
@@ -220,17 +223,6 @@ export default function AIScheduler() {
       },
       {
         id: '5',
-        name: 'Bedi',
-        email: 'bedi@woden.com',
-        phone: '+90 555 567 8901',
-        type: 'part-time',
-        max_hours: 25,
-        preferred_shifts: ['evening'],
-        skills: ['coffee', 'cashier'],
-        is_active: true
-      },
-      {
-        id: '6',
         name: 'Emin',
         email: 'emin@woden.com',
         phone: '+90 555 678 9012',
@@ -241,7 +233,29 @@ export default function AIScheduler() {
         is_active: true
       },
       {
+        id: '6',
+        name: 'Bedi',
+        email: 'bedi@woden.com',
+        phone: '+90 555 567 8901',
+        type: 'part-time',
+        max_hours: 25,
+        preferred_shifts: ['evening'],
+        skills: ['coffee', 'cashier'],
+        is_active: true
+      },
+      {
         id: '7',
+        name: 'Ahmet',
+        email: 'ahmet@woden.com',
+        phone: '+90 555 234 5678',
+        type: 'full-time',
+        max_hours: 45,
+        preferred_shifts: ['morning', 'evening'],
+        skills: ['coffee', 'management'],
+        is_active: true
+      },
+      {
+        id: '8',
         name: 'Özge',
         email: 'ozge@woden.com',
         phone: '+90 555 789 0123',
@@ -249,17 +263,6 @@ export default function AIScheduler() {
         max_hours: 20,
         preferred_shifts: ['morning'],
         skills: ['coffee', 'cashier'],
-        is_active: true
-      },
-      {
-        id: '8',
-        name: 'Sultan',
-        email: 'sultan@woden.com',
-        phone: '+90 555 890 1234',
-        type: 'part-time',
-        max_hours: 20,
-        preferred_shifts: ['evening'],
-        skills: ['coffee', 'cleaning'],
         is_active: true
       },
       {
@@ -1073,11 +1076,13 @@ export default function AIScheduler() {
                 
                 console.log(`Day ${dayIndex}: ${dayName}, key: ${dayKey}`); // Debug log
                 
+                const hasCamOrBar = dayEvents[dayKey] && (dayEvents[dayKey].includes('Cam') || dayEvents[dayKey].includes('Bar'));
+                
                 return (
-                  <div key={dayIndex} className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
+                  <div key={dayIndex} className={`${hasCamOrBar ? 'bg-yellow-50 border-yellow-300' : 'bg-white border-gray-200'} border rounded-xl p-4 shadow-sm transition-colors`}>
                     {/* Day Header */}
                     <div 
-                      className={`text-center mb-4 pb-3 border-b border-gray-100 transition-colors ${
+                      className={`text-center mb-4 pb-3 border-b ${hasCamOrBar ? 'border-yellow-200' : 'border-gray-100'} transition-colors ${
                         dragOverDay === dayKey && draggedEvent
                           ? 'bg-purple-50 border-purple-200'
                           : ''
